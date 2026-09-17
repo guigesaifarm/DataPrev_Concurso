@@ -1,1 +1,885 @@
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Interativo: Gestão e Governança de TI</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            500: '#2563eb',
+                            600: '#1d4ed8',
+                            700: '#1e40af',
+                            800: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Aumenta a base de todas as fontes do site */
+    html {
+        font-size: 19px; /* O padrão é 16px. Aumente para 18px ou 20px */
+    }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col justify-between">
 
+    <!-- Navbar -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="bg-brand-600 text-white p-2.5 rounded-xl shadow-sm">
+                    <i class="fa-solid fa-[#fa-book-open] text-xl"></i>
+                    <i class="fa-solid fa-pen-nib text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold text-slate-900 leading-tight">Quiz de SCRUM  LEAN  KANBAN</h1>
+                    <p class="text-xs text-slate-500">Tipos de Abordagem: tradicional, hibrida e ágil</p>
+                </div>
+            </div>
+
+            <!-- Mode Selector & Stats -->
+            <div class="flex items-center gap-4">
+                <div class="hidden sm:flex bg-slate-100 p-1 rounded-lg text-xs font-semibold">
+                    <button id="btnModeStudy" onclick="setMode('study')" class="px-3 py-1.5 rounded-md transition-all bg-white text-brand-600 shadow-sm">
+                        <i class="fa-solid fa-[#fa-graduation-cap] mr-1"></i> Modo Estudo
+                    </button>
+                    <button id="btnModeExam" onclick="setMode('exam')" class="px-3 py-1.5 rounded-md transition-all text-slate-600 hover:text-slate-900">
+                        <i class="fa-solid fa-stopwatch mr-1"></i> Modo Simulado
+                    </button>
+                </div>
+
+                <div class="flex items-center gap-2 bg-brand-50 text-brand-700 px-3 py-1.5 rounded-lg border border-brand-100 text-sm font-semibold">
+                    <i class="fa-solid fa-trophy text-brand-500"></i>
+                    <span id="scoreDisplay">0 / 30</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-6xl mx-auto px-4 py-6 flex-1 w-full grid grid-cols-1 lg:grid-cols-4 gap-6">
+
+        <!-- Sidebar Navigation Grid (Desktop) -->
+        <aside class="lg:col-span-1 order-2 lg:order-1 bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col h-fit">
+            <div class="flex justify-between items-center mb-3">
+                <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wider">Navegador</h2>
+                <span id="progressPercent" class="text-xs font-semibold text-brand-600">0% concluído</span>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden mb-4">
+                <div id="progressBar" class="bg-brand-600 h-full w-0 transition-all duration-300"></div>
+            </div>
+
+            <!-- Question Grid Buttons -->
+            <div id="questionGrid" class="grid grid-cols-5 gap-2 mb-4">
+                <!-- Javascript will insert 20 question buttons here -->
+            </div>
+
+            <!-- Legend -->
+            <div class="text-xs text-slate-500 border-t border-slate-100 pt-3 space-y-1.5">
+                <div class="flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full bg-slate-200 inline-block"></span>
+                    <span>Não respondida</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full bg-brand-600 inline-block"></span>
+                    <span>Respondida</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full bg-amber-400 inline-block"></span>
+                    <span>Marcada p/ revisão</span>
+                </div>
+            </div>
+
+            <button onclick="finishQuiz()" class="mt-5 w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm rounded-lg transition shadow">
+                <i class="fa-solid fa-flag-checkered mr-2"></i> Finalizar Quiz
+            </button>
+        </aside>
+
+        <!-- Question Section -->
+        <section class="lg:col-span-3 order-1 lg:order-2 flex flex-col justify-between">
+            
+            <!-- Quiz Screen -->
+            <div id="quizCard" class="bg-white p-6 sm:p-8 rounded-xl border border-slate-200 shadow-sm mb-4 min-h-[420px] flex flex-col justify-between">
+                <div>
+                    <!-- Header Question Info -->
+                    <div class="flex justify-between items-start mb-4 pb-3 border-b border-slate-100">
+                        <div class="flex items-center gap-2">
+                            <span id="questionCategory" class="px-2.5 py-1 bg-brand-50 text-brand-700 text-xs font-semibold rounded-md border border-brand-100">
+                                Categoria
+                            </span>
+                            <span id="questionNumberBadge" class="text-xs font-semibold text-slate-400">
+                                Questão 1 de 30
+                            </span>
+                        </div>
+                        <button id="btnBookmark" onclick="toggleBookmark()" class="text-slate-400 hover:text-amber-500 text-sm font-medium transition flex items-center gap-1.5">
+                            <i class="fa-regular fa-bookmark"></i>
+                            <span class="hidden sm:inline">Revisar</span>
+                        </button>
+                    </div>
+
+                    <!-- Question Text -->
+                    <div class="mb-6">
+                        <h3 id="questionTitle" class="text-base sm:text-lg font-semibold text-slate-900 leading-relaxed">
+                            Carregando questão...
+                        </h3>
+                    </div>
+
+                    <!-- Answer Options -->
+                    <div id="optionsContainer" class="space-y-3">
+                        <!-- Dynamic options generated by JS -->
+                    </div>
+
+                    <!-- Explanation/Rationale Box (Study Mode) -->
+                    <div id="explanationBox" class="hidden mt-6 p-4 rounded-xl bg-slate-50 border border-slate-200 text-sm">
+                        <div class="flex items-center gap-2 font-bold mb-1 text-slate-800" id="explanationHeader">
+                            <i class="fa-solid fa-circle-info"></i> Justificativa Gramatical
+                        </div>
+                        <p id="explanationText" class="text-slate-600 leading-relaxed"></p>
+                    </div>
+                </div>
+
+                <!-- Footer Navigation Buttons -->
+                <div class="flex justify-between items-center mt-8 pt-4 border-t border-slate-100">
+                    <button id="btnPrev" onclick="navigateQuestion(-1)" class="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 font-medium text-sm transition disabled:opacity-40 disabled:cursor-not-allowed">
+                        <i class="fa-solid fa-chevron-left mr-1"></i> Anterior
+                    </button>
+                    <button id="btnNext" onclick="navigateQuestion(1)" class="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg font-medium text-sm transition shadow-sm">
+                        Próxima <i class="fa-solid fa-chevron-right ml-1"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Screen (Hidden initially) -->
+            <div id="resultsCard" class="hidden bg-white p-6 sm:p-8 rounded-xl border border-slate-200 shadow-sm text-center">
+                <div class="w-20 h-20 mx-auto mb-4 rounded-full flex items-center justify-center bg-brand-50 text-brand-600 text-3xl">
+                    <i class="fa-solid fa-award"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-slate-900 mb-1">Resultado do Quiz</h2>
+                <p class="text-sm text-slate-500 mb-6">Confira seu desempenho em Articulação e Coesão Textual</p>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-lg mx-auto mb-8">
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                        <span class="block text-xs font-semibold text-slate-400 uppercase">Pontuação</span>
+                        <span id="finalScore" class="text-2xl font-extrabold text-slate-800">0 / 30</span>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                        <span class="block text-xs font-semibold text-slate-400 uppercase">Aproveitamento</span>
+                        <span id="finalPercent" class="text-2xl font-extrabold text-brand-600">0%</span>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                        <span class="block text-xs font-semibold text-slate-400 uppercase">Desempenho</span>
+                        <span id="finalFeedback" class="text-sm font-bold text-slate-700 mt-1 block">Satisfatório</span>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap justify-center gap-3">
+                    <button onclick="restartQuiz()" class="px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-medium text-sm rounded-lg transition shadow">
+                        <i class="fa-solid fa-rotate-right mr-2"></i> Refazer Quiz
+                    </button>
+                    <button onclick="reviewQuiz()" class="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-sm rounded-lg transition">
+                        <i class="fa-solid fa-magnifying-glass mr-2"></i> Revisar Respostas
+                    </button>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-4 mt-8">
+        <div class="max-w-6xl mx-auto px-4 text-center text-xs text-slate-400">
+            Quiz Pedagógico de Coesão Textual &bull; Prática de Sintaxe, Semântica e Conectivos do Português.
+        </div>
+    </footer>
+
+    <!-- JavaScript Quiz Logic -->
+    <script>
+        // Database of 20 Portuguese Questions
+    
+      const questionsData = [
+    {
+        id: 1,
+        category: "Gerenciamento de Serviços (ITIL v4)",
+        question: "Qual é a definição correta de 'Serviço' segundo a ITIL v4?",
+        options: [
+            { text: "Um meio de permitir a co-criação de valor, facilitando os resultados que os clientes desejam alcançar sem que tenham que gerenciar custos e riscos específicos.", isCorrect: true, rationale: "Esta é a definição oficial da ITIL v4, destacando a co-criação de valor e a transferência de custos/riscos." },
+            { text: "Uma combinação de hardware, software e redes entregue a um cliente final.", isCorrect: false, rationale: "Esta é uma visão focada em recursos/tecnologia, não na definição de serviço centrada em valor." },
+            { text: "Um conjunto de recursos organizacionais destinados a realizar tarefas operacionais automatizadas.", isCorrect: false, rationale: "Isso descreve capacidades operacionais, não o conceito amplo de serviço." },
+            { text: "Um contrato formal que estabelece prazos de entrega e níveis de disponibilidade de software.", isCorrect: false, rationale: "Isso descreve um Acordo de Nível de Serviço (SLA), não o conceito de serviço." }
+        ],
+        hint: "Foque na co-criação de valor e na remoção de custos e riscos diretos do cliente."
+    },
+    {
+        id: 2,
+        category: "Gerenciamento de Serviços (ITIL v4)",
+        question: "Qual Princípio Orientador da ITIL sugere utilizar o que já existe em vez de recomeçar do zero?",
+        options: [
+            { text: "Começar de onde você está (Start where you are).", isCorrect: true, rationale: "Este princípio orienta a analisar o estado atual para reaproveitar serviços, processos e recursos existentes que já funcionam." },
+            { text: "Progredir iterativamente com feedback.", isCorrect: false, rationale: "Este princípio foca em dividir o trabalho em partes menores e colher feedback constante." },
+            { text: "Manter de forma simples e prática.", isCorrect: false, rationale: "Este princípio foca em eliminar etapas desnecessárias e focar no essencial." },
+            { text: "Pensar e trabalhar holisticamente.", isCorrect: false, rationale: "Este princípio aborda a visão integrada de toda a organização." }
+        ],
+        hint: "Busque a ideia de avaliar os recursos e serviços já disponíveis antes de descartá-los."
+    },
+    {
+        id: 3,
+        category: "Gerenciamento de Serviços (ITIL v4)",
+        question: "Quantos são os Princípios Orientadores (Guiding Principles) na ITIL v4?",
+        options: [
+            { text: "7 princípios.", isCorrect: true, rationale: "A ITIL v4 estabelece exatamente 7 Princípios Orientadores que guiam as decisões e ações da organização." },
+            { text: "5 princípios.", isCorrect: false, rationale: "Na ITIL v3 existiam 5 estágios do ciclo de vida, mas os princípios orientadores da ITIL v4 são 7." },
+            { text: "4 princípios.", isCorrect: false, rationale: "Existem 4 Dimensões do Gerenciamento de Serviços, não 4 princípios." },
+            { text: "9 princípios.", isCorrect: false, rationale: "A versão Practitioner anterior possuía 9 princípios, mas a ITIL v4 consolidou em 7." }
+        ],
+        hint: "Lembre-se dos 7 conselhos fundamentais da ITIL v4."
+    },
+    {
+        id: 4,
+        category: "Gerenciamento de Serviços (ITIL v4)",
+        question: "Quais são as 4 Dimensões do Gerenciamento de Serviços na ITIL v4?",
+        options: [
+            { text: "Organizações e Pessoas; Informação e Tecnologia; Parceiros e Fornecedores; Fluxos de Valor e Processos.", isCorrect: true, rationale: "Essas são as 4 dimensões fundamentais para garantir uma abordagem holística no gerenciamento de serviços." },
+            { text: "Estratégia; Desenho; Transição; Operação.", isCorrect: false, rationale: "Estes eram os estágios do ciclo de vida de serviço da ITIL v3." },
+            { text: "Pessoas; Processos; Produtos; Parceiros.", isCorrect: false, rationale: "Estes eram os '4 Ps' do Desenho de Serviço na ITIL v3." },
+            { text: "Entrada; Processamento; Saída; Feedback.", isCorrect: false, rationale: "Esta é uma representação genérica de teoria geral dos sistemas." }
+        ],
+        hint: "Pense no acrônimo/grupo que envolve Pessoas, Tecnologia, Parceiros e Processos."
+    },
+    {
+        id: 5,
+        category: "Gerenciamento de Serviços (ITIL v4)",
+        question: "O que é o Sistema de Valor de Serviço (SVS) na ITIL v4?",
+        options: [
+            { text: "Um modelo estrutural que descreve como todos os componentes e atividades da organização trabalham juntos para facilitar a criação de valor.", isCorrect: true, rationale: "O SVS representa a arquitetura geral da ITIL v4 para transformar oportunidade/demanda em valor real." },
+            { text: "Um banco de dados relacional que armazena os ativos de TI e itens de configuração.", isCorrect: false, rationale: "Isso descreve o CMS/CMDB (Sistema/Banco de Dados de Gerenciamento de Configuração)." },
+            { text: "Um conjunto rígido de processos operacionais para atendimento de chamados.", isCorrect: false, rationale: "A ITIL v4 substituiu o foco rígido em processos pela flexibilidade do SVS e das práticas." },
+            { text: "Um contrato de nível de serviço com foco financeiro e contábil.", isCorrect: false, rationale: "Isso se refere ao gerenciamento financeiro ou acordos de serviço." }
+        ],
+        hint: "É a visão macro que conecta Oportunidade/Demanda ao Valor."
+    },
+    {
+        id: 6,
+        category: "Gerenciamento de Serviços (ITIL v4)",
+        question: "Qual elemento fica no centro do Sistema de Valor de Serviço (SVS) e converte demanda em valor?",
+        options: [
+            { text: "A Cadeia de Valor do Serviço (Service Value Chain).", isCorrect: true, rationale: "A Cadeia de Valor é o elemento operacional central do SVS que transforma oportunidade/demanda em produtos e serviços." },
+            { text: "A Central de Serviços (Service Desk).", isCorrect: false, rationale: "A Central de Serviços é uma prática do gerenciamento de serviços, não o centro do SVS." },
+            { text: "O Gerenciamento de Incidentes.", isCorrect: false, rationale: "Incidentes são tratados dentro de uma das práticas de gerenciamento de serviços." },
+            { text: "A Governança.", isCorrect: false, rationale: "A Governança é um dos componentes do SVS, mas não a cadeia operacional central." }
+        ],
+        hint: "Trata-se do modelo operacional flexível com 6 atividades integradas."
+    },
+    {
+        id: 7,
+        category: "Gerenciamento de Serviços (ITIL v4)",
+        question: "Quantas atividades compõem a Cadeia de Valor do Serviço (Service Value Chain)?",
+        options: [
+            { text: "6 atividades (Plan, Improve, Engage, Design & Transition, Obtain/Build, Deliver & Support).", isCorrect: true, rationale: "A Cadeia de Valor possui exatamente 6 atividades chave interdependentes." },
+            { text: "4 atividades.", isCorrect: false, rationale: "4 é o número das Dimensões do Gerenciamento de Serviços." },
+            { text: "7 atividades.", isCorrect: false, rationale: "7 é o número de Princípios Orientadores." },
+            { text: "5 atividades.", isCorrect: false, rationale: "5 era o número de fases no ciclo de vida da ITIL v3." }
+        ],
+        hint: "Lembre-se de Planejar, Melhorar, Engajar, Desenhar/Transicionar, Obter/Construir e Entregar/Apoiar."
+    },
+    {
+        id: 8,
+        category: "Gerenciamento de Serviços (ITIL v4)",
+        question: "Na ITIL v4, os antigos 'processos' foram reorganizados e expandidos em qual conceito?",
+        options: [
+            { text: "Práticas de Gerenciamento (Management Practices).", isCorrect: true, rationale: "A ITIL v4 introduziu 34 Práticas, combinando recursos organizacionais, processos, pessoas e tecnologia." },
+            { text: "Funções da TI.", isCorrect: false, rationale: "'Funções' era um conceito usado na ITIL v3 (como a Central de Serviços)." },
+            { text: "Atividades em Cascata.", isCorrect: false, rationale: "Abordagens em cascata são típicas de métodos tradicionais, não das práticas ágeis do ITIL v4." },
+            { text: "Procedimentos Padrão de Operação (SOP).", isCorrect: false, rationale: "Procedimentos operacionais são apenas documentos instrucionais específicos." }
+        ],
+        hint: "Ao todo são 34 conjuntos de recursos organizacionais conhecidos por este nome."
+    },
+    {
+        id: 9,
+        category: "Gerenciamento de Serviços (ITIL v4)",
+        question: "Como estão divididas as 34 Práticas da ITIL v4?",
+        options: [
+            { text: "14 Práticas Gerais, 17 Práticas de Gerenciamento de Serviços e 3 Práticas Técnicas.", isCorrect: true, rationale: "Esta é a distribuição oficial das 34 práticas de gerenciamento do ITIL v4." },
+            { text: "10 Práticas Estratégicas, 10 Táticas e 14 Operacionais.", isCorrect: false, rationale: "A ITIL não divide suas práticas formalmente por níveis hierárquicos." },
+            { text: "12 Práticas de Pessoas, 12 de Processos e 10 de Tecnologia.", isCorrect: false, rationale: "Esta divisão não corresponde à classificação oficial do framework." },
+            { text: "20 Práticas Obrigatórias e 14 Práticas Opcionais.", isCorrect: false, rationale: "Todas as práticas são recomendações adaptáveis, não separadas por obrigação." }
+        ],
+        hint: "A maioria está no grupo de Gerenciamento de Serviços (17), seguidas das Gerais (14) e Técnicas (3)."
+    },
+    {
+        id: 10,
+        category: "Gerenciamento de Serviços (ITIL v4)",
+        question: "Qual é o objetivo principal da prática de 'Gerenciamento de Incidentes'?",
+        options: [
+            { text: "Restaurar a operação normal do serviço o mais rápido possível e minimizar o impacto negativo nos negócios.", isCorrect: true, rationale: "O foco de Incidentes é a restauração rápida do serviço afetado." },
+            { text: "Identificar a causa raiz de falhas recorrentes e propor soluções definitivas.", isCorrect: false, rationale: "Identificar a causa raiz e erros conhecidos é objetivo do Gerenciamento de Problemas." },
+            { text: "Maximizar o número de alterações bem-sucedidas em produtos e serviços.", isCorrect: false, rationale: "Isso é objetivo da Habilitação de Mudança (Change Enablement)." },
+            { text: "Atender requisições pré-aprovadas de usuários, como redefinição de senhas.", isCorrect: false, rationale: "Isso é objetivo do Gerenciamento de Requisições de Serviço." }
+        ],
+        hint: "Foque no restabelecimento rápido do serviço, muitas vezes usando contornos temporários."
+    },
+    {
+        id: 11,
+        category: "Gerenciamento de Serviços (ITIL v4)",
+        question: "Qual é a principal diferença entre um 'Incidente' e um 'Problema' na ITIL v4?",
+        options: [
+            { text: "Incidente é uma interrupção não planejada; Problema é a causa ou causa potencial de um ou mais incidentes.", isCorrect: true, rationale: "Incidente foca no sintoma/interrupção; Problema foca em entender e resolver a causa subjacente." },
+            { text: "Incidente é uma falha grave de hardware; Problema é um erro exclusivo de software.", isCorrect: false, rationale: "A diferença não é pelo tipo de tecnologia, mas pela perspectiva de interrupção x causa." },
+            { text: "Incidente é gerenciado pela equipe técnica; Problema é tratado diretamente pelo cliente.", isCorrect: false, rationale: "Ambos são gerenciados internamente pelas equipes de TI e práticas correspondentes." },
+            { text: "Incidente requer alteração de código; Problema requer apenas reinicialização de servidores.", isCorrect: false, rationale: "A complexidade da solução varia em ambos os casos e não define os conceitos." }
+        ],
+        hint: "Um foca na interrupção não planejada; o outro foca na causa raiz."
+    },
+    {
+        id: 12,
+        category: "Gerenciamento de Serviços (ITIL v4)",
+        question: "O que caracteriza uma 'Requisição de Serviço' (Service Request)?",
+        options: [
+            { text: "Uma solicitação de um usuário para algo que faz parte da prestação normal do serviço (ex: acesso, informações, troca de equipamento).", isCorrect: true, rationale: "Requisições são solicitações rotineiras, pré-aprovadas e padronizadas." },
+            { text: "Uma notificação de que um serviço crítico caiu e precisa de reparo imediato.", isCorrect: false, rationale: "Uma falha não planejada em serviço ativo configura um Incidente." },
+            { text: "Uma proposta de alteração na arquitetura da rede corporativa.", isCorrect: false, rationale: "Alterações na infraestrutura ou arquitetura exigem Habilitação de Mudança." },
+            { text: "Um relatório contendo a causa raiz de uma falha de sistema.", isCorrect: false, rationale: "Isso faz parte das investigações do Gerenciamento de Problemas." }
+        ],
+        hint: "Pensar em pedidos normais do dia a dia do usuário, como trocar toner ou criar e-mail."
+    },
+    {
+        id: 13,
+        category: "Gerenciamento de Serviços (ITIL v4)",
+        question: "Qual o propósito da prática de 'Habilitação de Mudança' (Change Enablement)?",
+        options: [
+            { text: "Garantir que os riscos sejam avaliados adequadamente, autorizando mudanças e gerenciando o calendário de alterações para maximizar o sucesso.", isCorrect: true, rationale: "A Habilitação de Mudança busca equilibrar a velocidade das alterações com a gestão de riscos." },
+            { text: "Atender chamados telefônicos e registrar tíquetes de suporte técnico para os usuários.", isCorrect: false, rationale: "Esta é a atribuição principal da Central de Serviços (Service Desk)." },
+            { text: "Monitorar eventos em infraestrutura e gerar alertas de falha automaticamente.", isCorrect: false, rationale: "Esta atividade pertence ao Gerenciamento de Monitoramento e Eventos." },
+            { text: "Testar códigos de programação para certificar que estão livres de bugs antes do deploy.", isCorrect: false, rationale: "A validação técnica do código faz parte do Gerenciamento de Liberação/Teste." }
+        ],
+        hint: "Foque no equilíbrio entre agilidade na inovação e controle dos riscos de impacto no negócio."
+    },
+    {
+        id: 14,
+        category: "Gerenciamento de Serviços (ITIL v4)",
+        question: "Quais são os 3 tipos de mudanças reconhecidos pela ITIL v4?",
+        options: [
+            { text: "Mudanças Padrão, Mudanças Normais e Mudanças Emergenciais.", isCorrect: true, rationale: "Mudanças Padrão são pré-autorizadas; Normais seguem processo completo; Emergenciais exigem ação rápida." },
+            { text: "Mudanças Pequenas, Médias e Grandes.", isCorrect: false, rationale: "Tamanho ou impacto podem ser critérios de avaliação, mas não a classificação oficial ITIL." },
+            { text: "Mudanças de Hardware, Software e Processos.", isCorrect: false, rationale: "Esta classificação refere-se ao objeto da mudança, não ao tipo de fluxo de aprovação." },
+            { text: "Mudanças Internas, Externas e Regulatórias.", isCorrect: false, rationale: "Esta classificação se refere à origem da demanda, não às categorias formais ITIL." }
+        ],
+        hint: "Uma é pré-autorizada, outra segue o fluxo normal e a terceira requer urgência máxima."
+    },
+    {
+        id: 15,
+        category: "Gerenciamento de Serviços (ITIL v4)",
+        question: "O que é uma 'Mudança Padrão' (Standard Change)?",
+        options: [
+            { text: "Uma mudança de baixo risco, pré-autorizada, bem compreendida e documentada, que segue um procedimento estabelecido.", isCorrect: true, rationale: "Por ser rotineira e de baixo risco, não exige novas autorizações a cada execução." },
+            { text: "Uma mudança crítica que precisa de aprovação urgente da diretoria em até 1 hora.", isCorrect: false, rationale: "Isso se aproxima do conceito de Mudança Emergencial." },
+            { text: "Uma mudança complexa que exige avaliação do Comitê de Mudanças (CAB).", isCorrect: false, rationale: "Mudanças complexas e de alto impacto são tratadas como Mudanças Normais." },
+            { text: "Qualquer atualização de software realizada diretamente pelo cliente.", isCorrect: false, rationale: "Mudanças são gerenciadas pela organização, e o cliente não define a categoria padrão." }
+        ],
+        hint: "É uma alteração corriqueira, de baixo risco, sem necessidade de aprovação a cada execução."
+    },
+    {
+        id: 16,
+        category: "Gerenciamento de Serviços (ITIL v4)",
+        question: "Qual é o papel principal da 'Central de Serviços' (Service Desk)?",
+        options: [
+            { text: "Servir como o ponto único de contato entre o provedor de serviços e todos os seus usuários para operacionalizar incidentes e requisições.", isCorrect: true, rationale: "A Central de Serviços captura a demanda de incidentes e requisições, oferecendo suporte aos usuários." },
+            { text: "Desenvolver código de programação e efetuar deploy em ambientes de produção.", isCorrect: false, rationale: "Isso é responsabilidade das equipes de Desenvolvimento de Software/DevOps." },
+            { text: "Auditar os demonstrativos financeiros da organização de TI ao fim de cada ano.", isCorrect: false, rationale: "Auditoria financeira é função da governança e do gerenciamento financeiro." },
+            { text: "Gerenciar contratos de fornecedores de links de internet e computação em nuvem.", isCorrect: false, rationale: "Isso é função da prática de Gerenciamento de Fornecedores (Supplier Management)." }
+        ],
+        hint: "É a porta de entrada para os usuários (ponto único de contato)."
+    },
+    {
+        id: 17,
+        category: "Gerenciamento de Serviços (ITIL v4)",
+        question: "Como o princípio 'Focar no Valor' (Focus on value) orienta as decisões das organizações?",
+        options: [
+            { text: "Tudo o que a organização faz deve ser vinculado, direta ou indiretamente, ao valor para os clientes e outras partes interessadas.", isCorrect: true, rationale: "Este princípio exige entender quem é o consumidor e o que realmente representa valor para ele." },
+            { text: "A organização deve focar exclusivamente em reduzir os custos operacionais da TI.", isCorrect: false, rationale: "Reduzir custos sem gerar valor ou mantendo serviços ruins não atende ao princípio." },
+            { text: "O valor é determinado unicamente pelo valor financeiro dos ativos de hardware da TI.", isCorrect: false, rationale: "O valor é percebido pelo cliente em termos de utilidade e garantia, não pelo custo do hardware." },
+            { text: "A TI deve focar em implementar a tecnologia mais moderna, independente da utilidade.", isCorrect: false, rationale: "Tecnologia por si só não gera valor se não atender às necessidades reais do negócio." }
+        ],
+        hint: "Sempre se pergunte: 'Como esta atividade contribui para a experiência do cliente ou resultado do negócio?'"
+    },
+    {
+        id: 18,
+        category: "Gerenciamento de Serviços (ITIL v4)",
+        question: "Na ITIL v4, o que significam os conceitos de 'Utilidade' (Utility) e 'Garantia' (Warranty)?",
+        options: [
+            { text: "Utilidade é a adequação ao propósito (o que o serviço faz); Garantia é a adequação ao uso (como o serviço se comporta em disponibilidade, capacidade, etc.).", isCorrect: true, rationale: "Utilidade se relaciona a remover restrições/aumentar desempenho; Garantia se relaciona à disponibilidade, segurança e continuidade." },
+            { text: "Utilidade é o custo total do software; Garantia é o prazo do contrato de manutenção.", isCorrect: false, rationale: "Esses termos têm definições conceituais específicas no ITIL relacionadas à entrega de valor." },
+            { text: "Utilidade é a garantia dada pelo fabricante; Garantia é a satisfação medida em pesquisas.", isCorrect: false, rationale: "A definição de utilidade e garantia na ITIL vai além de contratos de fornecedores." },
+            { text: "Utilidade se aplica somente a hardwares; Garantia se aplica somente a softwares.", isCorrect: false, rationale: "Ambos os conceitos se aplicam conjuntamente a qualquer serviço oferecido." }
+        ],
+        hint: "Utilidade = 'Fit for purpose' | Garantia = 'Fit for use'."
+    },
+    {
+        id: 19,
+        category: "Gerenciamento de Serviços (ITIL v4)",
+        question: "Qual o objetivo do Princípio Orientador 'Otimizar e Automatizar' (Optimize and automate)?",
+        options: [
+            { text: "Maximizar o valor do trabalho realizado por recursos humanos e tecnológicos eliminando desperdícios antes de aplicar tecnologia.", isCorrect: true, rationale: "Primeiro deve-se otimizar o fluxo para torna-o simples e eficaz; só depois automatizá-lo." },
+            { text: "Substituir todas as pessoas da organização por sistemas de inteligência artificial imediatamente.", isCorrect: false, rationale: "O objetivo é potencializar a capacidade humana e eliminar tarefas repetitivas, não substituir pessoas sem critério." },
+            { text: "Comprar a ferramenta de automação mais cara disponível no mercado.", isCorrect: false, rationale: "Automatizar um processo ruim/ineficiente apenas produz erros com maior rapidez." },
+            { text: "Automatizar processos sem a necessidade de mapear ou otimizar as etapas existentes.", isCorrect: false, rationale: "Automatizar sem otimizar previamente é um erro comum alertado por este princípio." }
+        ],
+        hint: "Primeiro simplifique e melhore o fluxo; só depois coloque tecnologia para rodar automaticamente."
+    },
+    {
+        id: 20,
+        category: "Gerenciamento de Serviços (ITIL v4)",
+        question: "O que descreve um 'Erro Conhecido' (Known Error) na prática de Gerenciamento de Problemas?",
+        options: [
+            { text: "Um problema que teve sua causa raiz analisada e para o qual existe uma solução contornável (workaround) ou definitiva documentada.", isCorrect: true, rationale: "Quando a causa é identificada e há uma solução temporária ou permanente, o problema vira Erro Conhecido." },
+            { text: "Um incidente recorrente cujos usuários decidiram não reportar para a Central de Serviços.", isCorrect: false, rationale: "Se não foi reportado ou analisado, não há registro formal de erro conhecido." },
+            { text: "Qualquer bug de software detectado no ambiente de desenvolvimento antes do lançamento.", isCorrect: false, rationale: "Bugs em dev são defeitos de desenvolvimento; Erro Conhecido é um registro da prática de Problemas." },
+            { text: "Uma falha de hardware que não possui nenhuma possibilidade de reparo.", isCorrect: false, rationale: "O erro conhecido exige o diagnóstico da causa e o registro de uma solução/contorno." }
+        ],
+        hint: "A causa foi diagnosticada e já há um contorno (workaround) documentado."
+    },
+    {
+        id: 21,
+        category: "Gerenciamento de Serviços (ITIL v4)",
+        question: "Qual o propósito da prática de 'Gerenciamento de Nível de Serviço' (Service Level Management)?",
+        options: [
+            { text: "Definir metas claras e baseadas nos negócios para os níveis de serviço e garantir que a prestação dos serviços seja monitorada e avaliada em relação a essas metas.", isCorrect: true, rationale: "Garante que os serviços atendam às expectativas reais de desempenho acordadas com os clientes." },
+            { text: "Garantir que a empresa tenha dinheiro suficiente para pagar os salários dos funcionários de TI.", isCorrect: false, rationale: "A gestão financeira de TI cuida do orçamento, custos e tarifação." },
+            { text: "Treinar os usuários finais no uso correto de ferramentas de escritório.", isCorrect: false, rationale: "O treinamento de usuários não é o objetivo central desta prática de nível de serviço." },
+            { text: "Manter o inventário físico atualizado de todos os computadores e roteadores.", isCorrect: false, rationale: "Isso é responsabilidade do Gerenciamento de Ativos de TI e de Configuração." }
+        ],
+        hint: "Foque na negociação, monitoramento e gestão de SLAs e SLAs de experiência (XLAs)."
+    },
+    {
+        id: 22,
+        category: "Gerenciamento de Serviços (ITIL v4)",
+        question: "O que é um 'SLA' (Service Level Agreement - Acordo de Nível de Serviço)?",
+        options: [
+            { text: "Um acordo documentado entre o provedor de serviços e o cliente que identifica os serviços exigidos e os níveis de desempenho esperados.", isCorrect: true, rationale: "O SLA alinha expectativas entre quem fornece e quem consome o serviço." },
+            { text: "Um contrato interno entre duas equipes técnicas da mesma empresa para suporte de infraestrutura.", isCorrect: false, rationale: "Acordos internos entre equipes de TI são chamados de OLA (Operational Level Agreement)." },
+            { text: "Um documento técnico detalhando a arquitetura de banco de dados do sistema.", isCorrect: false, rationale: "Documentos de arquitetura são especificações técnicas, não acordos de nível de serviço." },
+            { text: "Uma licença legal para uso de software proprietário comercial.", isCorrect: false, rationale: "Isso é um contrato de licença de uso de software (EULA)." }
+        ],
+        hint: "Trata-se do compromisso formal entre Provedor de TI e o Cliente."
+    },
+    {
+        id: 23,
+        category: "Gerenciamento de Serviços (ITIL v4)",
+        question: "Qual o foco da prática de 'Melhoria Contínua' (Continual Improvement)?",
+        options: [
+            { text: "Alinhar as práticas e serviços da organização com as necessidades de negócios em constante mudança por meio da identificação e melhoria contínua.", isCorrect: true, rationale: "A melhoria contínua é responsabilidade de todos na organização e ocorre em todos os níveis." },
+            { text: "Inspecionar código-fonte para encontrar falhas de segurança antes do ambiente de produção.", isCorrect: false, rationale: "Isso é parte de práticas de garantia de qualidade e desenvolvimento/segurança." },
+            { text: "Gerenciar a instalação física de cabos de rede e datacenters.", isCorrect: false, rationale: "Trata-se de gerenciamento de infraestrutura física." },
+            { text: "Garantir que nenhum serviço antigo seja descontinuado na empresa.", isCorrect: false, rationale: "Serviços obsoletos devem ser aposentados como parte da evolução dos negócios." }
+        ],
+        hint: "Trata-se de um esforço permanente para aprimorar serviços, processos e eficiência em todos os níveis."
+    },
+    {
+        id: 24,
+        category: "Gerenciamento de Serviços (ITIL v4)",
+        question: "Como o 'Modelo de Melhoria Contínua' da ITIL v4 auxilia as organizações?",
+        options: [
+            { text: "Fornece uma estrutura estruturada em etapas (ex: Qual é a visão?, Onde estamos agora?, Onde queremos estar?) para guiar iniciativas de melhoria.", isCorrect: true, rationale: "O modelo de 7 passos orienta desde a definição de metas até a manutenção do progresso obtido." },
+            { text: "Define prazos legais para a conclusão de auditorias externas corporativas.", isCorrect: false, rationale: "Prazos legais dependem de legislações e regulamentos externos, não do modelo ITIL." },
+            { text: "Garante a aprovação automática de qualquer orçamento solicitado para a TI.", isCorrect: false, rationale: "Aprovação de orçamento depende da análise de valor e viabilidade financeira." },
+            { text: "Substitui a necessidade de definir indicadores chave de desempenho (KPIs).", isCorrect: false, rationale: "Pelo contrário, medir o progresso via métricas/KPIs é etapa fundamental do modelo." }
+        ],
+        hint: "É um ciclo interativo que começa perguntando 'Qual é a Visão?' e termina em 'Como mantemos o impulso?'"
+    },
+    {
+        id: 25,
+        category: "Gerenciamento de Serviços (ITIL v4)",
+        question: "Qual o objetivo da prática de 'Gerenciamento de Configuração de Serviço' (Service Configuration Management)?",
+        options: [
+            { text: "Garantir que informações precisas e confiáveis sobre a configuração dos serviços e os ITs que os suportam estejam disponíveis quando e onde forem necessárias.", isCorrect: true, rationale: "Gerencia os Itens de Configuração (CIs) e os relacionamentos entre eles." },
+            { text: "Comprar equipamentos de informática pelo menor preço do mercado.", isCorrect: false, rationale: "Comprar equipamentos envolve Gestão de Compras e Fornecedores." },
+            { text: "Atender chamados de suporte do tipo esquecimento de senha.", isCorrect: false, rationale: "Atendimento de pedidos do usuário é Gerenciamento de Requisições de Serviço." },
+            { text: "Criar manuais de treinamento comercial para a equipe de vendas.", isCorrect: false, rationale: "Treinamentos comerciais não são o foco da gestão de configuração de TI." }
+        ],
+        hint: "Trata-se de manter o mapa de ativos e as dependências (CIs) entre serviços e infraestrutura."
+    },
+    {
+        id: 26,
+        category: "Gerenciamento de Serviços (ITIL v4)",
+        question: "O que é um 'Item de Configuração' (CI - Configuration Item)?",
+        options: [
+            { text: "Qualquer componente que precise ser gerenciado para entregar um serviço de TI.", isCorrect: true, rationale: "CIs podem ser hardwares, softwares, redes, edifícios ou até documentações e pessoas." },
+            { text: "Exclusivamente um servidor físico instalado em um rack.", isCorrect: false, rationale: "Servidores são CIs, mas a definição não se limita a hardwares físicos." },
+            { text: "Um documento que descreve apenas o valor cobrado do cliente.", isCorrect: false, rationale: "Isso seria uma fatura ou documento financeiro." },
+            { text: "Um erro não corrigido que causa impacto diário no sistema.", isCorrect: false, rationale: "Um erro não corrigido com causa identificada é um Erro Conhecido." }
+        ],
+        hint: "É qualquer componente (físico, lógico ou humano) necessário para entregar um serviço."
+    },
+    {
+        id: 27,
+        category: "Gerenciamento de Serviços (ITIL v4)",
+        question: "Qual o papel do princípio orientador 'Colaborar e promover visibilidade' (Collaborate and promote visibility)?",
+        options: [
+            { text: "Envolver as pessoas certas nos papéis corretos para obter maior engajamento, melhores decisões e evitar o trabalho em silos isolados.", isCorrect: true, rationale: "A colaboração transparente aumenta a confiança e alinha expectativas entre todas as partes." },
+            { text: "Publicar todos os salários dos funcionários em um mural público.", isCorrect: false, rationale: "O princípio fala de visibilidade de trabalho, fluxos e metas, e não da exposição de dados sensíveis." },
+            { text: "Esconder problemas técnicos dos clientes para evitar desgastes.", isCorrect: false, rationale: "Esconder informações vai contra a transparência e a colaboração incentivadas pela ITIL." },
+            { text: "Garantir que apenas a diretoria tome decisões sobre o dia a dia operacional.", isCorrect: false, rationale: "O princípio incentiva o envolvimento e engajamento ativo das partes interessadas." }
+        ],
+        hint: "Eliminar a cultura de 'silos isolados' compartilhando dados, metas e trabalho em equipe."
+    },
+    {
+        id: 28,
+        category: "Gerenciamento de Serviços (ITIL v4)",
+        question: "Qual o objetivo da prática de 'Gerenciamento de Ativos de TI' (IT Asset Management)?",
+        options: [
+            { text: "Planejar e gerenciar todo o ciclo de vida de todos os ativos de TI para maximizar valor, controlar custos e gerenciar riscos.", isCorrect: true, rationale: "Abrange aspectos financeiros, contratuais e de inventário do ciclo de vida dos ativos." },
+            { text: "Desenvolver sistemas de gestão de recursos humanos para a empresa.", isCorrect: false, rationale: "Recursos humanos possui práticas e sistemas corporativos específicos." },
+            { text: "Analisar o tráfego da rede para bloquear acesso a redes sociais.", isCorrect: false, rationale: "Isso envolve gerenciamento de segurança da informação e redes." },
+            { text: "Garantir a entrega de refeições no refeitório corporativo.", isCorrect: false, rationale: "Serviços prediais e de instalações gerais não são o foco principal dos Ativos de TI." }
+        ],
+        hint: "Trata dos aspectos financeiros, contratuais e de ciclo de vida dos equipamentos e licenças."
+    },
+    {
+        id: 29,
+        category: "Gerenciamento de Serviços (ITIL v4)",
+        question: "O que descreve o princípio 'Pensar e trabalhar holisticamente' (Think and work holistically)?",
+        options: [
+            { text: "Entender que nenhum serviço, prática ou departamento se sustenta isoladamente; a organização deve ser tratada como um sistema integrado.", isCorrect: true, rationale: "Aborda a complexidade da organização exigindo visão fim a fim da entrega de valor." },
+            { text: "Focar em resolver pequenos problemas isolados sem olhar o impacto global no cliente.", isCorrect: false, rationale: "Focar em partes isoladas ignora a abordagem holística do sistema de valor." },
+            { text: "Garantir que cada departamento da empresa tenha suas próprias regras independentes.", isCorrect: false, rationale: "Silos independentes prejudicam a entrega de valor de ponta a ponta." },
+            { text: "Trabalhar apenas no período noturno para não impactar o ambiente.", isCorrect: false, rationale: "Holístico refere-se ao todo/sistema integrado, não a horários de execução." }
+        ],
+        hint: "Nada funciona isoladamente: uma mudança em uma ponta afeta todo o sistema."
+    },
+    {
+        id: 30,
+        category: "Gerenciamento de Serviços (ITIL v4)",
+        question: "Qual é a função da prática de 'Gerenciamento de Liberação' (Release Management)?",
+        options: [
+            { text: "Tornar serviços e recursos novos e modificados disponíveis para uso pelos clientes.", isCorrect: true, rationale: "A Liberação junta as versões aprovadas e disponibiliza as funcionalidades para uso do consumidor." },
+            { text: "Aprovar formalmente os orçamentos do departamento financeiro.", isCorrect: false, rationale: "Finanças e orçamentos são de responsabilidade do Gerenciamento Financeiro." },
+            { text: "Atender chamados de suporte de baixa prioridade.", isCorrect: false, rationale: "Suporte e dúvidas do dia a dia são gerenciados via Requisições ou Central de Serviços." },
+            { text: "Descartar servidores físicos quebrados em aterros sanitários.", isCorrect: false, rationale: "O descarte de equipamentos faz parte do ciclo de vida dos ativos e sustentabilidade." }
+        ],
+        hint: "Trata da disponibilização prática de uma nova versão ou funcionalidade para o usuário final."
+    }
+];
+
+        // State Management
+        let currentQuestionIdx = 0;
+        let userAnswers = new Array(questionsData.length).fill(null);
+        let bookmarked = new Array(questionsData.length).fill(false);
+        let quizMode = 'study'; // 'study' or 'exam'
+        let isSubmitted = false;
+
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', () => {
+            renderGrid();
+            loadQuestion(0);
+        });
+
+        // Set Mode
+        function setMode(mode) {
+            if (isSubmitted) return;
+            quizMode = mode;
+            
+            const btnStudy = document.getElementById('btnModeStudy');
+            const btnExam = document.getElementById('btnModeExam');
+
+            if (mode === 'study') {
+                btnStudy.className = "px-3 py-1.5 rounded-md transition-all bg-white text-brand-600 shadow-sm";
+                btnExam.className = "px-3 py-1.5 rounded-md transition-all text-slate-600 hover:text-slate-900";
+            } else {
+                btnExam.className = "px-3 py-1.5 rounded-md transition-all bg-white text-brand-600 shadow-sm";
+                btnStudy.className = "px-3 py-1.5 rounded-md transition-all text-slate-600 hover:text-slate-900";
+            }
+
+            // Re-render current question view
+            loadQuestion(currentQuestionIdx);
+        }
+
+        // Render Side Navigation Grid
+        function renderGrid() {
+            const gridContainer = document.getElementById('questionGrid');
+            gridContainer.innerHTML = '';
+
+            questionsData.forEach((q, idx) => {
+                const btn = document.createElement('button');
+                btn.id = `gridBtn-${idx}`;
+                btn.onclick = () => jumpToQuestion(idx);
+                btn.className = getGridBtnClass(idx);
+                btn.innerText = idx + 1;
+                gridContainer.appendChild(btn);
+            });
+
+            updateProgress();
+        }
+
+        function getGridBtnClass(idx) {
+            let base = "w-8 h-8 rounded-lg font-bold text-xs flex items-center justify-center transition-all ";
+            
+            if (idx === currentQuestionIdx) {
+                base += "ring-2 ring-brand-600 ring-offset-2 ";
+            }
+
+            if (bookmarked[idx]) {
+                base += "bg-amber-400 text-amber-950 font-extrabold ";
+            } else if (userAnswers[idx] !== null) {
+                if (isSubmitted || quizMode === 'study') {
+                    const isCorrect = questionsData[idx].options[userAnswers[idx]].isCorrect;
+                    base += isCorrect ? "bg-emerald-500 text-white " : "bg-rose-500 text-white ";
+                } else {
+                    base += "bg-brand-600 text-white ";
+                }
+            } else {
+                base += "bg-slate-100 text-slate-600 hover:bg-slate-200 ";
+            }
+
+            return base;
+        }
+
+        // Update Progress Bar & Score
+        function updateProgress() {
+            const answeredCount = userAnswers.filter(a => a !== null).length;
+            const percent = Math.round((answeredCount / questionsData.length) * 100);
+            
+            document.getElementById('progressBar').style.width = `${percent}%`;
+            document.getElementById('progressPercent').innerText = `${percent}% concluído`;
+
+            // Calculate score
+            let correctCount = 0;
+            userAnswers.forEach((ans, i) => {
+                if (ans !== null && questionsData[i].options[ans].isCorrect) {
+                    correctCount++;
+                }
+            });
+
+            document.getElementById('scoreDisplay').innerText = `${correctCount} / ${questionsData.length}`;
+        }
+
+        // Load Question Data
+        function loadQuestion(idx) {
+            currentQuestionIdx = idx;
+            const q = questionsData[idx];
+
+            // Update Header Info
+            document.getElementById('questionCategory').innerText = q.category;
+            document.getElementById('questionNumberBadge').innerText = `Questão ${idx + 1} de ${questionsData.length}`;
+            document.getElementById('questionTitle').innerText = q.question;
+
+            // Update Bookmark Button
+            const btnBookmark = document.getElementById('btnBookmark');
+            if (bookmarked[idx]) {
+                btnBookmark.className = "text-amber-500 font-medium text-sm transition flex items-center gap-1.5";
+                btnBookmark.innerHTML = `<i class="fa-solid fa-bookmark"></i> <span class="hidden sm:inline">Marcada</span>`;
+            } else {
+                btnBookmark.className = "text-slate-400 hover:text-amber-500 text-sm font-medium transition flex items-center gap-1.5";
+                btnBookmark.innerHTML = `<i class="fa-regular fa-bookmark"></i> <span class="hidden sm:inline">Revisar</span>`;
+            }
+
+            // Render Options
+            const optionsContainer = document.getElementById('optionsContainer');
+            optionsContainer.innerHTML = '';
+
+            const selectedOpt = userAnswers[idx];
+            const showFeedback = isSubmitted || (quizMode === 'study' && selectedOpt !== null);
+
+            q.options.forEach((opt, optIdx) => {
+                const optBtn = document.createElement('button');
+                optBtn.className = getOptionClass(idx, optIdx, selectedOpt, showFeedback);
+                optBtn.onclick = () => selectOption(optIdx);
+                if (showFeedback || isSubmitted) {
+                    // Disable changing if already answered in study mode or if quiz is finished
+                    if (quizMode === 'study' || isSubmitted) {
+                        optBtn.disabled = true;
+                    }
+                }
+
+                const letter = String.fromCharCode(65 + optIdx); // A, B, C, D
+
+                let iconHtml = '';
+                if (showFeedback) {
+                    if (opt.isCorrect) {
+                        iconHtml = `<i class="fa-solid fa-circle-check text-emerald-600 text-lg ml-auto"></i>`;
+                    } else if (selectedOpt === optIdx) {
+                        iconHtml = `<i class="fa-solid fa-circle-xmark text-rose-600 text-lg ml-auto"></i>`;
+                    }
+                }
+
+                optBtn.innerHTML = `
+                    <div class="flex items-start gap-3 text-left w-full">
+                        <span class="w-6 h-6 rounded-full border border-current flex items-center justify-center font-bold text-xs flex-shrink-0 mt-0.5">
+                            ${letter}
+                        </span>
+                        <span class="text-sm font-medium leading-relaxed flex-1">${opt.text}</span>
+                        ${iconHtml}
+                    </div>
+                `;
+
+                optionsContainer.appendChild(optBtn);
+            });
+
+            // Handle Explanation Box
+            const explanationBox = document.getElementById('explanationBox');
+            const explanationHeader = document.getElementById('explanationHeader');
+            const explanationText = document.getElementById('explanationText');
+
+            if (showFeedback && selectedOpt !== null) {
+                explanationBox.classList.remove('hidden');
+                const chosenOptObj = q.options[selectedOpt];
+                const correctOptObj = q.options.find(o => o.isCorrect);
+
+                if (chosenOptObj.isCorrect) {
+                    explanationHeader.className = "flex items-center gap-2 font-bold mb-1 text-emerald-700";
+                    explanationHeader.innerHTML = `<i class="fa-solid fa-circle-check"></i> Correto!`;
+                    explanationText.innerText = chosenOptObj.rationale;
+                } else {
+                    explanationHeader.className = "flex items-center gap-2 font-bold mb-1 text-rose-700";
+                    explanationHeader.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> Incorreto.`;
+                    explanationText.innerText = `${chosenOptObj.rationale} (Gabarito: ${correctOptObj.text})`;
+                }
+            } else {
+                explanationBox.classList.add('hidden');
+            }
+
+            // Navigation Buttons State
+            document.getElementById('btnPrev').disabled = (idx === 0);
+            
+            const btnNext = document.getElementById('btnNext');
+            if (idx === questionsData.length - 1) {
+                btnNext.innerHTML = `Finalizar <i class="fa-solid fa-flag-checkered ml-1"></i>`;
+            } else {
+                btnNext.innerHTML = `Próxima <i class="fa-solid fa-chevron-right ml-1"></i>`;
+            }
+
+            renderGrid();
+        }
+
+        function getOptionClass(qIdx, optIdx, selectedOpt, showFeedback) {
+            let base = "w-full p-4 rounded-xl border text-left transition-all flex items-center ";
+
+            if (showFeedback) {
+                const isCorrect = questionsData[qIdx].options[optIdx].isCorrect;
+                if (isCorrect) {
+                    return base + "bg-emerald-50 border-emerald-300 text-emerald-950 font-medium ";
+                } else if (selectedOpt === optIdx) {
+                    return base + "bg-rose-50 border-rose-300 text-rose-950 ";
+                } else {
+                    return base + "bg-slate-50 border-slate-200 text-slate-400 opacity-60 ";
+                }
+            } else {
+                if (selectedOpt === optIdx) {
+                    return base + "bg-brand-50 border-brand-500 text-brand-900 shadow-sm ";
+                } else {
+                    return base + "bg-white border-slate-200 text-slate-700 hover:border-brand-300 hover:bg-slate-50 ";
+                }
+            }
+        }
+
+        // Action Handlers
+        function selectOption(optIdx) {
+            if (isSubmitted) return;
+            userAnswers[currentQuestionIdx] = optIdx;
+            loadQuestion(currentQuestionIdx);
+        }
+
+        function toggleBookmark() {
+            bookmarked[currentQuestionIdx] = !bookmarked[currentQuestionIdx];
+            loadQuestion(currentQuestionIdx);
+        }
+
+        function jumpToQuestion(idx) {
+            loadQuestion(idx);
+        }
+
+        function navigateQuestion(direction) {
+            const nextIdx = currentQuestionIdx + direction;
+            if (nextIdx >= 0 && nextIdx < questionsData.length) {
+                loadQuestion(nextIdx);
+            } else if (nextIdx >= questionsData.length) {
+                finishQuiz();
+            }
+        }
+
+        // Finish Quiz & Show Results
+        function finishQuiz() {
+            const unanswered = userAnswers.filter(a => a === null).length;
+            if (unanswered > 0 && !isSubmitted) {
+                const confirmSubmit = confirm(`Você ainda tem ${unanswered} questão(ões) não respondida(s). Deseja realmente finalizar?`);
+                if (!confirmSubmit) return;
+            }
+
+            isSubmitted = true;
+            document.getElementById('quizCard').classList.add('hidden');
+            document.getElementById('resultsCard').classList.remove('hidden');
+
+            // Calculate final statistics
+            let correctCount = 0;
+            userAnswers.forEach((ans, i) => {
+                if (ans !== null && questionsData[i].options[ans].isCorrect) {
+                    correctCount++;
+                }
+            });
+
+            const percent = Math.round((correctCount / questionsData.length) * 100);
+
+            document.getElementById('finalScore').innerText = `${correctCount} / ${questionsData.length}`;
+            document.getElementById('finalPercent').innerText = `${percent}%`;
+
+            let feedbackText = "Insuficiente";
+            let feedbackColor = "text-rose-600";
+            if (percent >= 85) {
+                feedbackText = "Excelente!";
+                feedbackColor = "text-emerald-600";
+            } else if (percent >= 70) {
+                feedbackText = "Muito Bom!";
+                feedbackColor = "text-brand-600";
+            } else if (percent >= 50) {
+                feedbackText = "Regular";
+                feedbackColor = "text-amber-600";
+            }
+
+            const feedbackElem = document.getElementById('finalFeedback');
+            feedbackElem.innerText = feedbackText;
+            feedbackElem.className = `text-sm font-bold mt-1 block ${feedbackColor}`;
+
+            renderGrid();
+        }
+
+        function restartQuiz() {
+            userAnswers = new Array(questionsData.length).fill(null);
+            bookmarked = new Array(questionsData.length).fill(false);
+            isSubmitted = false;
+            currentQuestionIdx = 0;
+
+            document.getElementById('resultsCard').classList.add('hidden');
+            document.getElementById('quizCard').classList.remove('hidden');
+
+            renderGrid();
+            loadQuestion(0);
+        }
+
+        function reviewQuiz() {
+            document.getElementById('resultsCard').classList.add('hidden');
+            document.getElementById('quizCard').classList.remove('hidden');
+            loadQuestion(0);
+        }
+    </script>
+</body>
+</html>
