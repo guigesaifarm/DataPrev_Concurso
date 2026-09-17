@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcards Interativos: Gestão e Governança de TI</title>
+    <style>
+        :root {
+            --bg-color: #f4f6f9;
+            --card-bg: #ffffff;
+            --primary-color: #1e293b;
+            --accent-color: #0284c7;
+            --text-color: #334155;
+            --text-muted: #64748b;
+            --shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+            --border-radius: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            margin-top: 10px;
+        }
+
+        header h1 {
+            font-size: 2.1rem;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .tracker {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--accent-color);
+            margin-bottom: 15px;
+        }
+
+        /* Flashcard Container */
+        .scene {
+            width: 100%;
+            max-width: 650px;
+            height: 380px;
+            perspective: 1000px;
+            margin-bottom: 25px;
+            cursor: pointer;
+        }
+
+        .card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+            transform-style: preserve-3d;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+
+        .card.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: var(--border-radius);
+            background: var(--card-bg);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 30px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .card-face-front {
+            background: #ffffff;
+        }
+
+        .card-face-back {
+            background: #f8fafc;
+            transform: rotateY(180deg);
+            border-left: 6px solid var(--accent-color);
+        }
+
+        .card-category {
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            font-weight: 700;
+            color: var(--accent-color);
+        }
+
+        .card-content {
+            font-size: 1.5rem; 
+            line-height: 1.5;
+            color: var(--primary-color);
+            font-weight: 500;
+            text-align: center;
+            margin: auto 0;
+        }
+
+        .card-face-back .card-content {
+            font-size: 1.15rem; 
+            text-align: left;
+            color: #334155;
+        }
+
+        .card-hint {
+            font-size: 1rem;
+            color: var(--text-muted);
+            text-align: center;
+            font-style: italic;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        button {
+            background-color: var(--card-bg);
+            color: var(--primary-color);
+            border: 1px solid #cbd5e1;
+            padding: 12px 24px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+
+        button:hover {
+            background-color: var(--accent-color);
+            color: #ffffff;
+            border-color: var(--accent-color);
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        @media (max-width: 640px) {
+            .scene {
+                height: 420px;
+            }
+            .card-content {
+                font-size: 1.3rem;
+            }
+            .card-face-back .card-content {
+                font-size: 1.05rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Flashcards Interativos</h1>
+        <p>Gestão e Governança de TI: Scrum, Lean e Kanban</p>
+    </header>
+
+    <div class="tracker" id="card-tracker">Card 1 de 30</div>
+
+    <div class="scene" onclick="flipCard()">
+        <div class="card" id="flashcard">
+            <div class="card-face card-face-front">
+                <div class="card-category" id="card-category">Categoria</div>
+                <div class="card-content" id="card-front">Carregando...</div>
+                <div class="card-hint">💡 Clique para ver a resposta</div>
+            </div>
+            <div class="card-face card-face-back">
+                <div class="card-category">Resposta Explicada</div>
+                <div class="card-content" id="card-back">Carregando...</div>
+                <div class="card-hint">💡 Clique para virar novamente</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button onclick="prevCard()">Anterior</button>
+        <button onclick="flipCard()">Virar Card</button>
+        <button onclick="nextCard()">Próximo</button>
+    </div>
+
+    <script>
+        const cardsData = [
+            {
+                category: "Pilares do Scrum",
+                front: "Quais são os 3 pilares fundamentais do Scrum?",
+                back: "<b>1. Transparência:</b> Aspectos visíveis aos responsáveis pelo resultado.<br><b>2. Inspeção:</b> Avaliação frequente dos artefatos e do progresso.<br><b>3. Adaptação:</b> Ajuste do processo ou produto se houver desvio."
+            },
+            {
+                category: "Papéis do Scrum",
+                front: "Qual é a responsabilidade principal do Product Owner (PO)?",
+                back: "Maximizar o valor do produto resultante do trabalho do Scrum Team. É o único responsável por gerenciar o <b>Product Backlog</b> e priorizar seus itens."
+            },
+            {
+                category: "Papéis do Scrum",
+                front: "Qual é o papel do Scrum Master?",
+                back: "Líder que serve o time e a organização. Garante o entendimento e a aplicação do Scrum, remove impedimentos e facilita ritos e a auto-organização da equipe."
+            },
+            {
+                category: "Papéis do Scrum",
+                front: "O que caracteriza os Developers (Desenvolvedores) no Scrum?",
+                back: "Pessoas do Scrum Team comprometidas com a criação de qualquer aspecto de um incremento útil a cada Sprint. São multifuncionais, autogerenciados e estimam as tarefas."
+            },
+            {
+                category: "Eventos do Scrum",
+                front: "O que é a Sprint e qual deve ser sua duração?",
+                back: "É o contêiner para todos os outros ritos, com duração fixa de no máximo <b>1 mês</b> (time-boxed). Nela, um incremento de valor é criado para atingir a meta da Sprint."
+            },
+            {
+                category: "Eventos do Scrum",
+                front: "Qual é o objetivo da Sprint Planning (Planejamento)?",
+                back: "Definir o valor entregue na Sprint, o que pode ser feito e como o trabalho será realizado, resultando na criação da <b>Meta da Sprint (Sprint Goal)</b> e no <b>Sprint Backlog</b>."
+            },
+            {
+                category: "Eventos do Scrum",
+                front: "Quais as características da Daily Scrum (Reunião Diária)?",
+                back: "Evento de 15 minutos diário para os Developers inspecionarem o progresso em direção à Meta da Sprint e adaptarem o Sprint Backlog conforme necessário."
+            },
+            {
+                category: "Eventos do Scrum",
+                front: "Diferencie Sprint Review de Sprint Retrospective.",
+                back: "• <b>Review:</b> Inspeciona o incremento gerado com os stakeholders e adapta o Product Backlog (foco no <i>produto</i>).<br>• <b>Retrospective:</b> Inspeciona como foi a Sprint em relação a pessoas, relações, processos e ferramentas (foco na <i>melhoria contínua do time</i>)."
+            },
+            {
+                category: "Artefatos do Scrum",
+                front: "Quais são os 3 artefatos oficiais do Scrum e seus compromissos?",
+                back: "1. <b>Product Backlog</b> → Compromisso: Meta do Produto (Product Goal).<br>2. <b>Sprint Backlog</b> → Compromisso: Meta da Sprint (Sprint Goal).<br>3. <b>Incremento</b> → Compromisso: Definição de Concluído (Definition of Done)."
+            },
+            {
+                category: "Conceito Scrum",
+                front: "O que é a Definição de Concluído (Definition of Done - DoD)?",
+                back: "Uma descrição formal do estado do Incremento quando ele atende às medidas de qualidade exigidas para o produto. Garante a transparência e a qualidade entregue."
+            },
+            {
+                category: "Princípios do Lean",
+                front: "Quais são os 5 princípios essenciais do Lean?",
+                back: "1. Identificar o <b>Valor</b> na ótica do cliente.<br>2. Mapear o <b>Fluxo de Valor</b>.<br>3. Criar o <b>Fluxo Contínuo</b>.<br>4. Estabelecer a <b>Produção Puxada</b>.<br>5. Buscar a <b>Perfeição (Kaizen)</b>."
+            },
+            {
+                category: "Lean Software Development",
+                front: "O que significa 'Muda', 'Muri' e 'Mura' no Lean?",
+                back: "• <b>Muda:</b> Desperdício (atividades sem valor agregado).<br>• <b>Muri:</b> Sobrecarga (excesso de carga sobre pessoas/sistemas).<br>• <b>Mura:</b> Irregularidade (variabilidade no fluxo de trabalho)."
+            },
+            {
+                category: "Desperdícios do Lean",
+                front: "Quais são os 7 desperdícios clássicos no Lean Software Development?",
+                back: "1. Trabalho incompleto<br>2. Processos extras<br>3. Recursos/Funcionalidades extras (Gold Plating)<br>4. Troca de tarefas (Multitarefa)<br>5. Espera (Atrasos)<br>6. Movimentação/Devoluções<br>7. Defeitos"
+            },
+            {
+                category: "Princípio Lean",
+                front: "O que prega o princípio 'Adiar Decisões (Decidir no Último Momento Responsável)' no Lean?",
+                back: "Tomar decisões irreversíveis o mais tarde possível, quando houver o máximo de informação e contexto real disponível, reduzindo incertezas e retrabalho."
+            },
+            {
+                category: "Método Kanban",
+                front: "Quais são as 4 propriedades gerais (ou práticas) centrais do Kanban?",
+                back: "1. Visualizar o fluxo de trabalho.<br>2. Limitar o Trabalho em Progresso (WIP).<br>3. Gerenciar o Fluxo.<br>4. Tornar as políticas explícitas e promover a melhoria contínua."
+            },
+            {
+                category: "Métricas Kanban",
+                front: "O que é o WIP (Work in Progress) e por que deve ser limitado?",
+                back: "Quantidade de itens sendo trabalhados simultaneamente. Limitar o WIP evita gargalos, reduz multitarefa, diminui o tempo de ciclo e expõe ineficiências no processo."
+            },
+            {
+                category: "Métricas Kanban",
+                front: "Diferencie Lead Time de Cycle Time no Kanban.",
+                back: "• <b>Lead Time:</b> Tempo total do momento da solicitação (pedido) até a entrega final ao cliente.<br>• <b>Cycle Time:</b> Tempo em que a equipe efetivamente trabalhou no item (da entrada em 'Em Progresso' até 'Concluído')."
+            },
+            {
+                category: "Métricas Kanban",
+                front: "O que é Throughput (Vazão) no método Kanban?",
+                back: "Quantidade de itens de trabalho concluídos e entregues em um período específico de tempo (ex: 15 tarefas concluídas por semana)."
+            },
+            {
+                category: "Princípios do Kanban",
+                front: "O que caracteriza um Sistema Puxado (Pull System) em oposição ao Sistema Empurrado (Push System)?",
+                back: "No sistema puxado, novas tarefas só entram no processo quando há capacidade operacional disponível (respeitando os limites de WIP), enquanto no empurrado o trabalho é atribuído sem considerar restrições."
+            },
+            {
+                category: "Teoria de Filas no Kanban",
+                front: "O que estabelece a 'Lei de Little' e sua relação com o Kanban?",
+                back: "A lei estabelece que: <b>WIP = Lead Time × Throughput</b>. Indica que, para diminuir o tempo de entrega (Lead Time) mantendo a capacidade constante, deve-se reduzir o trabalho em progresso (WIP)."
+            },
+            {
+                category: "Metodologias Híbridas",
+                front: "O que é o Scrumban e qual sua principal aplicabilidade?",
+                back: "Uma abordagem híbrida que combina a estrutura, ritos e papéis do <b>Scrum</b> com a visualização do fluxo, limitação de WIP e fluxo contínuo do <b>Kanban</b>. Ideal para times em transição ou suporte/manutenção."
+            },
+            {
+                category: "Abordagem Híbrida",
+                front: "Em que consiste uma abordagem Híbrida Tradicional (Cascata) + Ágil?",
+                back: "Combina o planejamento prévio, escopo fechado e requisitos formais do modelo Cascata (geralmente nas fases iniciais e arquitetura) com a execução iterativa e incremental de métodos ágeis durante o desenvolvimento."
+            },
+            {
+                category: "Métricas Ágeis",
+                front: "Para que serve o gráfico Burndown no Scrum?",
+                back: "Mostra a quantidade de trabalho restante na Sprint ao longo do tempo. Permite visualizar se o time está no ritmo adequado para cumprir a Meta da Sprint."
+            },
+            {
+                category: "Métricas Ágeis",
+                front: "Qual é a diferença entre um gráfico Burndown e um Burnup?",
+                back: "• <b>Burndown:</b> Mede o trabalho que <i>falta fazer</i> até chegar a zero.<br>• <b>Burnup:</b> Mede o trabalho <i>já concluído</i> em relação ao escopo total (útil para ver aumentos de escopo)."
+            },
+            {
+                category: "Ferramentas Kanban",
+                front: "O que é um Diagrama de Fluxo Acumulado (CFD - Cumulative Flow Diagram)?",
+                back: "Ferramenta visual que mostra a quantidade de itens em cada etapa do fluxo ao longo do tempo. Permite identificar gargalos, instabilidades, variação de WIP e tendência de Lead Time."
+            },
+            {
+                category: "Técnicas de Estimativa",
+                front: "O que é Planning Poker e qual sua finalidade?",
+                back: "Técnica baseada em consenso para estimar o esforço de itens de backlog usando pontuações relativas (geralmente sequência de Fibonacci), promovendo a discussão técnica do time."
+            },
+            {
+                category: "Governança Ágil",
+                front: "Como o Ágil se alinha aos princípios de Governança de TI (ex: COBIT / ITIL)?",
+                back: "Fornecendo entregas frequentes de valor, feedback rápido, gestão transparente de riscos e priorização contínua orientada a benefícios de negócio."
+            },
+            {
+                category: "Lean-Agile",
+                front: "O que significa o conceito de MVP (Minimum Viable Product)?",
+                back: "Versão mais simples de um produto criada com o mínimo de esforço para validar hipóteses no mercado e obter aprendizado prático junto aos usuários."
+            },
+            {
+                category: "Papéis e Atribuições",
+                front: "Quem pode cancelar uma Sprint no Scrum e sob qual condição?",
+                back: "Apenas o <b>Product Owner</b> tem autoridade para cancelar a Sprint se a Meta da Sprint se tornar obsoleta."
+            },
+            {
+                category: "Valores Ágeis",
+                front: "Quais são os 4 valores centrais do Manifesto Ágil (2001)?",
+                back: "1. <b>Indivíduos e interações</b> mais que processos e ferramentas.<br>2. <b>Software em funcionamento</b> mais que documentação abrangente.<br>3. <b>Colaboração com o cliente</b> mais que negociação de contratos.<br>4. <b>Responder a mudanças</b> mais que seguir um plano."
+            }
+        ];
+
+        let currentIndex = 0;
+        const cardElement = document.getElementById('flashcard');
+        const categoryElement = document.getElementById('card-category');
+        const frontElement = document.getElementById('card-front');
+        const backElement = document.getElementById('card-back');
+        const trackerElement = document.getElementById('card-tracker');
+
+        function updateCard() {
+            cardElement.classList.remove('is-flipped');
+            setTimeout(() => {
+                const currentData = cardsData[currentIndex];
+                categoryElement.innerText = currentData.category;
+                frontElement.innerHTML = currentData.front;
+                backElement.innerHTML = currentData.back;
+                trackerElement.innerText = `Card ${currentIndex + 1} de ${cardsData.length}`;
+            }, 150);
+        }
+
+        function flipCard() {
+            cardElement.classList.toggle('is-flipped');
+        }
+
+        function nextCard() {
+            currentIndex = (currentIndex + 1) % cardsData.length;
+            updateCard();
+        }
+
+        function prevCard() {
+            currentIndex = (currentIndex - 1 + cardsData.length) % cardsData.length;
+            updateCard();
+        }
+
+        // Inicializar aplicação
+        updateCard();
+
+        // Suporte a teclas do teclado (setas esquerda/direita e barra de espaço)
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') nextCard();
+            if (e.key === 'ArrowLeft') prevCard();
+            if (e.key === ' ' || e.key === 'Enter') {
+                e.preventDefault();
+                flipCard();
+            }
+        });
+    </script>
+</body>
+</html>
