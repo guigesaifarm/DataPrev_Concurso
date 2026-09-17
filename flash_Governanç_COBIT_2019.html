@@ -259,158 +259,161 @@
     </div>
 
     <script>
-        const cardsData = [
+
+    const cardsData = [
             {
-                category: "Conceitos Chave - ITIL v4",
-                front: "O que é um **Serviço** segundo o ITIL v4?",
-                back: "Um meio de permitir a **co-criação de valor**, facilitando os **resultados** que os clientes desejam alcançar, sem que o cliente precise gerenciar **custos e riscos** específicos."
+                category: "Conceitos Básicos (COBIT 2019)",
+                front: "O que é o **COBIT 2019** e qual o seu foco principal?",
+                back: "O COBIT 2019 é uma **estrutura (framework) de governança e gerenciamento de TI corporativa** criada pela ISACA. Seu foco é garantir o alinhamento estratégico entre a TI e os objetivos de negócio, maximizando o valor gerado e otimizando riscos e recursos."
             },
             {
-                category: "Conceitos Chave - ITIL v4",
-                front: "O que é **Valor** e como ele é criado no ITIL v4?",
-                back: "<b>Valor</b> é o benefício percebido, utilidade e importância de algo. No ITIL v4, o valor é **co-criado** através de uma parceria ativa entre o provedor do serviço, os consumidores e outros stakeholders."
+                category: "Conceitos Básicos (COBIT 2019)",
+                front: "Qual a diferença fundamental entre **Governança** e **Gerenciamento** no COBIT 2019?",
+                back: "<b>Governança (EDM):</b> Avalia as necessidades dos stakeholders, direciona através de prioridades e decisões, e monitora o desempenho e conformidade.<br><br><b>Gerenciamento (PBRM):</b> Planeja, constrói, executa e monitora as atividades operacionais para atingir os objetivos estabelecidos pela governança."
             },
             {
-                category: "Conceitos Chave - ITIL v4",
-                front: "Diferencie **Saída (Output)** de **Resultado (Outcome)**.",
-                back: "• <b>Saída (Output):</b> Um entregável tangível ou intangível de uma atividade (ex: uma nova aplicação instalada).<br>• <b>Resultado (Outcome):</b> O resultado para um stakeholder alcançado por meio das saídas (ex: aumento de vendas online habilitado pela aplicação)."
+                category: "Conceitos Básicos (COBIT 2019)",
+                front: "O que significa a sigla **EDM** no domínio exclusivo de Governança?",
+                back: "Significa **Evaluate, Direct and Monitor** (Avaliar, Direcionar e Monitorar). É o único domínio do COBIT 2019 dedicado às responsabilidades diretas da Alta Direção e Conselho de Administração."
             },
             {
-                category: "Conceitos Chave - ITIL v4",
-                front: "O que significam **Utilidade (Utility)** e **Garantia (Warranty)**?",
-                back: "• <b>Utilidade:</b> A funcionalidade oferecida por um produto/serviço para atender a uma necessidade específica ('O que o serviço faz' / *Fit for purpose*).<br>• <b>Garantia:</b> A certeza de que o serviço atenderá aos requisitos de disponibilidade, capacidade, continuidade e segurança ('Como o serviço é entregue' / *Fit for use*)."
+                category: "Princípios da Governança e Estrutura",
+                front: "Quantos e quais são os **Princípios do Sistema de Governança** no COBIT 2019?",
+                back: "São **6 princípios**:<br>1. Prover valor às partes interessadas.<br>2. Abordagem holística.<br>3. Sistema de governança dinâmico.<br>4. Governança distinta do gerenciamento.<br>5. Adaptado às necessidades da empresa.<br>6. Sistema de governança de ponta a ponta."
             },
             {
-                category: "Conceitos Chave - ITIL v4",
-                front: "Quem são os diferentes papéis do **Consumidor do Serviço**?",
-                back: "1. <b>Cliente (Customer):</b> Define os requisitos do serviço e assume a responsabilidade pelo consumo.<br>2. <b>Usuário (User):</b> Pessoa que utiliza os serviços no dia a dia.<br>3. <b>Sponsor (Patrocinador):</b> Autoriza o orçamento para o consumo do serviço."
+                category: "Princípios da Governança e Estrutura",
+                front: "Quantos e quais são os **Princípios da Estrutura de Governança** (Governance Framework)?",
+                back: "São **3 princípios**:<br>1. **Baseado em módulos e aberto:** Permite adicionar novos conteúdos de forma flexível.<br>2. **Aberto e flexível:** Facilita a adaptação a novas tecnologias e contexto.<br>3. **Alinhado a padrões relevantes:** Compatível com ITIL, ISO, CMMI, TOGAF, etc."
             },
             {
-                category: "4 Dimensões da Gestão de Serviços",
-                front: "Quais são as **4 Dimensões da Gestão de Serviços** no ITIL v4?",
-                back: "1. <b>Organizações e Pessoas</b><br>2. <b>Informação e Tecnologia</b><br>3. <b>Parceiros e Fornecedores</b><br>4. <b>Fluxos de Valor e Processos</b><br><br><i>Elas devem ser balanceadas de forma holística para criar valor eficientemente.</i>"
+                category: "Princípios da Governança e Estrutura",
+                front: "O que representa o princípio de **Prover Valor aos Stakeholders**?",
+                back: "Significa equilibrar de forma contínua três pilares:<br>1. **Realização de Benefícios** (gerar valor para o negócio).<br>2. **Otimização de Riscos** (manter exposições sob controle).<br>3. **Otimização de Recursos** (usar ativos de TI com eficiência)."
             },
             {
-                category: "4 Dimensões da Gestão de Serviços",
-                front: "O que engloba a dimensão **Organizações e Pessoas**?",
-                back: "Engloba a cultura organizacional, estruturas formais, papéis e responsabilidades, competências e recursos humanos necessários para a entrega do serviço."
+                category: "Fatores de Concepção e Componentes",
+                front: "O que são os **Fatores de Concepção (Design Factors)**?",
+                back: "São variáveis e parâmetros internos e externos usados para **customizar e adaptar o sistema de governança** às necessidades específicas de cada organização (ex: Estratégia da empresa, Perfil de risco, Paisagem de ameaças)."
             },
             {
-                category: "4 Dimensões da Gestão de Serviços",
-                front: "O que abrange a dimensão **Fluxos de Valor e Processos**?",
-                back: "Define as atividades, fluxos de trabalho, controles e procedimentos necessários para transformar entradas em saídas de valor, garantindo eficiência e integração."
+                category: "Fatores de Concepção e Componentes",
+                front: "Quantos **Fatores de Concepção** são definidos no COBIT 2019?",
+                back: "Existem **11 Fatores de Concepção** no COBIT 2019, cobrindo aspectos como Estratégia, Metas, Perfil de Risco, Problemas de TI, Ameaças, Requisitos de Conformidade, Papel da TI, Modelo de Sourcing, Métodos de TI, Adoção de Tecnologia e Tamanho da Empresa."
             },
             {
-                category: "4 Dimensões - Fatores Externos",
-                front: "Quais fatores externos influenciam as 4 dimensões (Modelo PESTLE)?",
-                back: "Fatores **P**olíticos, **E**conômicos, **S**ocioculturais, **T**ecnológicos, **L**egais (*Legal*) e **E**cológicos (*Environmental*)."
+                category: "Fatores de Concepção e Componentes",
+                front: "O que são os **Componentes do Sistema de Governança**?",
+                back: "São os fatores que, individualmente e em conjunto, contribuem para o funcionamento do sistema de governança (evoluíram a partir do conceito de *Habilitadores/Enablers* do COBIT 5)."
             },
             {
-                category: "Sistema de Valor de Serviço (SVS)",
-                front: "O que é o **Sistema de Valor de Serviço (SVS)** da ITIL v4?",
-                back: "Representa como todos os componentes e atividades da organização trabalham juntos como um sistema para facilitar a criação de valor. Converte **Oportunidade/Demanda** em **Valor**."
+                category: "Fatores de Concepção e Componentes",
+                front: "Quantos e quais são os **Componentes do Sistema de Governança** no COBIT 2019?",
+                back: "São **7 componentes**:<br>1. Processos.<br>2. Estruturas Organizacionais.<br>3. Princípios, Políticas e Estruturas.<br>4. Informação.<br>5. Pessoas, Habilidades e Competências.<br>6. Serviços, Infraestrutura e Aplicações.<br>7. Cultura, Ética e Comportamento."
             },
             {
-                category: "Sistema de Valor de Serviço (SVS)",
-                front: "Quais são os 5 componentes do **SVS**?",
-                back: "1. <b>Princípios Orientadores</b> (Guiding Principles)<br>2. <b>Governança</b><br>3. <b>Cadeia de Valor do Serviço</b> (SVC)<br>4. <b>Práticas</b> (Practices)<br>5. <b>Melhoria Contínua</b>"
+                category: "Domínios e Objetivos",
+                front: "Quais são os **5 Domínios** do COBIT 2019?",
+                back: "1. **EDM** (Avaliar, Direcionar e Monitorar - Governança).<br>2. **APO** (Alinhar, Planejar e Organizar - Gerenciamento).<br>3. **BAI** (Construir, Adquirir e Implementar - Gerenciamento).<br>4. **DSS** (Entregar, Servir e Apoiar - Gerenciamento).<br>5. **MEA** (Monitorar, Avaliar e Analisar - Gerenciamento)."
             },
             {
-                category: "Princípios Orientadores",
-                front: "Quantos e quais são os **Princípios Orientadores** da ITIL v4?",
-                back: "São **7 princípios**:<br>1. Foco no valor<br>2. Começar de onde você está<br>3. Progredir iterativamente com feedback<br>4. Colaborar e promover visibilidade<br>5. Pensar e trabalhar holisticamente<br>6. Manter de forma simples e prática<br>7. Otimizar e automatizar"
+                category: "Domínios e Objetivos",
+                front: "Quantos **Objetivos de Governança e Gerenciamento** existem no COBIT 2019?",
+                back: "Existem **40 Objetivos** ao todo (anteriormente eram 37 no COBIT 5), divididos entre 5 domínios (5 em EDM, 14 em APO, 11 em BAI, 6 em DSS e 4 em MEA)."
             },
             {
-                category: "Princípios Orientadores",
-                front: "O que defende o princípio **'Começar de onde você está'**?",
-                back: "Avisar contra começar do zero sem analisar o que já existe. Deve-se avaliar o estado atual para aproveitar processos, ferramentas e conhecimentos válidos existentes."
+                category: "Domínios e Objetivos",
+                front: "Qual é a responsabilidade do domínio **APO (Alinhar, Planejar e Organizar)**?",
+                back: "Cobre a identificação de estratégias, organização da estrutura organizacional, gestão de custos, arquitetura, gestão de riscos, segurança e gestão de fornecedores de TI."
             },
             {
-                category: "Princípios Orientadores",
-                front: "O que prega o princípio **'Progredir iterativamente com feedback'**?",
-                back: "Dividir iniciativas em partes menores e gerenciáveis (iterações). Utilizar loops de feedback antes, durante e após cada iteração para ajustar o rumo."
+                category: "Domínios e Objetivos",
+                front: "Qual é a responsabilidade do domínio **BAI (Construir, Adquirir e Implementar)**?",
+                back: "Trata da definição de requisitos, aquisição ou desenvolvimento de soluções de TI, gestão de mudanças, gestão de ativos, projetos e integração dessas soluções nos processos de negócio."
             },
             {
-                category: "Cadeia de Valor do Serviço (SVC)",
-                front: "O que é a **Cadeia de Valor do Serviço (Service Value Chain - SVC)**?",
-                back: "É o elemento central do SVS. Um modelo operacional que delineia as atividades chave necessárias para responder à demanda e facilitar a realização de valor através da criação e gestão de serviços."
+                category: "Domínios e Objetivos",
+                front: "Qual é a responsabilidade do domínio **DSS (Entregar, Servir e Apoiar)**?",
+                back: "Trata da execução operacional prática dos serviços de TI, incluindo atendimento a incidentes e requisições, gestão de problemas, continuidade, segurança operacional e gerenciamento de dados."
             },
             {
-                category: "Cadeia de Valor do Serviço (SVC)",
-                front: "Quais são as 6 atividades da **Cadeia de Valor do Serviço (SVC)**?",
-                back: "1. <b>Planejar (Plan)</b><br>2. <b>Melhorar (Improve)</b><br>3. <b>Engajar (Engage)</b><br>4. <b>Desenho e Transição (Design & Transition)</b><br>5. <b>Obter/Construir (Obtain/Build)</b><br>6. <b>Entregar e Suportar (Deliver & Support)</b>"
+                category: "Domínios e Objetivos",
+                front: "Qual é a responsabilidade do domínio **MEA (Monitorar, Avaliar e Analisar)**?",
+                back: "Acompanha o desempenho interno e a conformidade da TI com metas de negócios, requisitos regulatórios, auditorias internas e eficácia dos controles do sistema de governança."
             },
             {
-                category: "Cadeia de Valor do Serviço (SVC)",
-                front: "Qual é o objetivo da atividade **Engajar (Engage)** na SVC?",
-                back: "Proporcionar uma boa compreensão das necessidades dos stakeholders, transparência e bom relacionamento contínuo com todos os envolvidos."
+                category: "Conceitos Básicos (COBIT 2019)",
+                front: "O que é a **Cascata de Objetivos (Goals Cascade)** no COBIT 2019?",
+                back: "É o mecanismo que traduz as **necessidades dos stakeholders** em **metas corporativas**, desdobrando-as em **objetivos de alinhamento** e, por fim, em **objetivos de governança e gerenciamento**."
             },
             {
-                category: "Práticas do ITIL v4",
-                front: "Como estão divididas as 34 **Práticas** no ITIL v4?",
-                back: "• <b>Práticas Gerais de Gestão:</b> 14 práticas<br>• <b>Práticas de Gestão de Serviços:</b> 17 práticas<br>• <b>Práticas de Gestão Técnica:</b> 3 práticas"
+                category: "Capacidade e Implementação",
+                front: "Qual modelo de medição de **Capacidade de Processos** é adotado pelo COBIT 2019?",
+                back: "O COBIT 2019 adota o modelo de medição baseado no **CMMI (Capability Maturity Model Integration)**, avaliando processos em níveis de capacidade de **0 a 5**."
             },
             {
-                category: "Práticas - Gestão de Serviços",
-                front: "Qual é a finalidade do **Gerenciamento de Incidentes**?",
-                back: "Minimizar o impacto negativo na operação dos negócios, restaurando a operação normal do serviço o mais rápido possível."
+                category: "Capacidade e Implementação",
+                front: "Quais são os **Níveis de Capacidade de Processo (0 a 5)** no COBIT 2019?",
+                back: "• **Nível 0:** Incompleto.<br>• **Nível 1:** Executado (Performed).<br>• **Nível 2:** Gerenciado (Managed).<br>• **Nível 3:** Definido (Defined).<br>• **Nível 4:** Previsível (Quantitative/Predictable).<br>• **Nível 5:** Otimizado (Optimizing)."
             },
             {
-                category: "Práticas - Gestão de Serviços",
-                front: "O que é um **Incidente** segundo o ITIL v4?",
-                back: "Uma interrupção não planejada de um serviço ou a redução da qualidade de um serviço de TI."
+                category: "Capacidade e Implementação",
+                front: "O que caracteriza o **Nível 0 (Incompleto)** e **Nível 1 (Executado)** de capacidade?",
+                back: "<b>Nível 0 (Incompleto):</b> O processo não é implementado ou não atinge seus objetivos.<br><br><b>Nível 1 (Executado):</b> O processo atinge seu propósito através da aplicação de um conjunto de atividades básicas, mas não é formalmente planejado/controlado."
             },
             {
-                category: "Práticas - Gestão de Serviços",
-                front: "Qual é a diferença entre **Incidente** e **Problema**?",
-                back: "• <b>Incidente:</b> Foco na restauração rápida do serviço (sintoma).<br>• <b>Problema:</b> Foco em identificar a causa raiz desconhecida de um ou mais incidentes para evitar reincidências."
+                category: "Capacidade e Implementação",
+                front: "O que caracteriza o **Nível 2 (Gerenciado)** e **Nível 3 (Definido)** de capacidade?",
+                back: "<b>Nível 2 (Gerenciado):</b> O processo é planejado, monitorado, ajustado e seus produtos de trabalho são estabelecidos e mantidos.<br><br><b>Nível 3 (Definido):</b> O processo está padronizado, bem documentado e alinhado aos padrões de toda a organização."
             },
             {
-                category: "Práticas - Gestão de Serviços",
-                front: "Quais são as 3 fases do **Gerenciamento de Problemas**?",
-                back: "1. <b>Identificação de Problemas:</b> Detecção via análise de incidentes.<br>2. <b>Controle de Problemas:</b> Análise de causa raiz e contornar (*Workaround*).<br>3. <b>Controle de Erros:</b> Gestão de erros conhecidos (*Known Errors*)."
+                category: "Capacidade e Implementação",
+                front: "O que caracteriza o **Nível 4 (Previsível)** e **Nível 5 (Otimizado)** de capacidade?",
+                back: "<b>Nível 4 (Previsível):</b> O processo é medido e controlado quantitativamente por meio de dados e métricas pré-definidas.<br><br><b>Nível 5 (Otimizado):</b> O processo é focado na melhoria contínua e inovação sistemática."
             },
             {
-                category: "Práticas - Gestão de Serviços",
-                front: "O que é um **Contorno (Workaround)** no Gerenciamento de Problemas?",
-                back: "Uma solução temporária que reduz ou elimina o impacto de um incidente ou problema para o qual uma resolução definitiva ainda não está disponível."
+                category: "Domínios e Objetivos",
+                front: "O que são as **Áreas de Foco (Focus Areas)** no COBIT 2019?",
+                back: "São tópicos ou domínios de governança específicos que podem ser combinados com o COBIT para atender requisitos particulares (ex: Cibersegurança, DevOps, Pequenas e Médias Empresas, Nuvem, Transformação Digital)."
             },
             {
-                category: "Práticas - Gestão de Serviços",
-                front: "Qual é o papel da **Central de Serviços (Service Desk)**?",
-                back: "Servir como o **ponto único de contato (SPOC)** entre o provedor de serviço e os usuários para relatar incidentes, dúvidas e requisições de serviço."
+                category: "Princípios da Governança e Estrutura",
+                front: "O que estabelece o princípio do **Sistema de Governança Dinâmico**?",
+                back: "Estabelece que a governança deve ser **adaptativa**. Sempre que houver uma alteração em um fator de concepção (ex: mudança estratégica ou nova legislação), o impacto no sistema de governança deve ser reavaliado e atualizado."
             },
             {
-                category: "Práticas - Gestão de Serviços",
-                front: "O que é o **Gerenciamento de Requisições de Serviço**?",
-                back: "Prática para dar suporte à qualidade acordada do serviço, lidando com todas as solicitações pré-aprovadas e iniciadas pelo usuário (ex: trocar senha, solicitar um novo monitor)."
+                category: "Capacidade e Implementação",
+                front: "Qual é a função do **Guia de Implementação do COBIT 2019**?",
+                back: "Fazer a ponte entre a teoria do COBIT e a prática, oferecendo um roteiro em 7 fases para ajudar as empresas a planejar, executar e sustentar um programa de governança de TI adaptado ao seu contexto."
             },
             {
-                category: "Práticas - Gestão de Serviços",
-                front: "O que é **Habilitação de Mudança (Change Enablement)**?",
-                back: "Prática para maximizar o número de mudanças bem-sucedidas de produtos/serviços, garantindo que os riscos sejam avaliados, autorizando mudanças e gerenciando o calendário de mudanças."
+                category: "Capacidade e Implementação",
+                front: "Quantas fases possui o **Ciclo de Vida de Implementação** do COBIT 2019?",
+                back: "Possui **7 Fases**:<br>1. Quais são os direcionadores?<br>2. Onde estamos agora?<br>3. Onde queremos estar?<br>4. O que precisa ser feito?<br>5. Como chegamos lá?<br>6. Chegamos lá?<br>7. Como mantemos o impulso?"
             },
             {
-                category: "Práticas - Gestão de Serviços",
-                front: "Quais são os 3 tipos de mudanças tratadas pela Habilitação de Mudança?",
-                back: "1. <b>Padrão (Standard):</b> De baixo risco, pré-autorizada e rotineira.<br>2. <b>Normal:</b> Precisa de avaliação, agendamento e autorização formal.<br>3. <b>Emergencial:</b> Deve ser implementada o mais rápido possível para resolver/prevenir incidentes graves."
+                category: "Conceitos Básicos (COBIT 2019)",
+                front: "Como o COBIT 2019 se relaciona com outros frameworks como **ITIL v4** e **ISO 27001**?",
+                back: "O COBIT 2019 atua como um **framework integrador (guarda-chuva)**. Ele não substitui outros padrões, mas estabelece o nível de governança e conecta-se com o ITIL (gerenciamento de serviços) e ISO 27001 (segurança da informação) para a execução detalhada."
             },
             {
-                category: "Práticas - Gestão de Serviços",
-                front: "O que é o **Gerenciamento de Nível de Serviço (SLA)**?",
-                back: "Prática para definir metas claras baseadas no negócio para os níveis de serviço e garantir que a entrega dos serviços seja monitorada e gerenciada em relação a essas metas."
+                category: "Princípios da Governança e Estrutura",
+                front: "Qual o papel da **Alta Direção / Conselho de Administração** na Governança de TI?",
+                back: "É a responsável primária pelo domínio **EDM**. Cabe ao Conselho definir a orientação estratégica, estabelecer limites de apetite ao risco, alocar recursos e monitorar os resultados entregues pela TI."
             },
             {
-                category: "Práticas Gerais",
-                front: "O que é o modelo de **Melhoria Contínua** no ITIL v4?",
-                back: "Um guia estruturado para executar melhorias composto por 7 passos:<br>1. Qual é a visão?<br>2. Onde estamos agora?<br>3. Onde queremos chegar?<br>4. Como chegamost lá?<br>5. Agir (Tomar medidas)<br>6. Chegamos lá?<br>7. Como mantemos o impulso?"
+                category: "Domínios e Objetivos",
+                front: "O que é o objetivo **APO12 (Gerenciar Riscos)** no COBIT 2019?",
+                back: "É um objetivo de gerenciamento focado em identificar, avaliar e mitigar continuamente os riscos de TI para garantir que não ultrapassem o limite de apetite ao risco definido pelo conselho da organização."
             },
             {
-                category: "Práticas Gerais",
-                front: "O que é a **Gestão de Ativos de TI (IT Asset Management - ITAM)**?",
-                back: "Prática responsável por planejar e gerenciar todo o ciclo de vida dos ativos de TI (hardware, software, nuvem) para maximizar o valor, controlar custos e gerenciar riscos."
+                category: "Conceitos Básicos (COBIT 2019)",
+                front: "O que diferencia o **COBIT 2019** de seu antecessor (**COBIT 5**)?",
+                back: "O COBIT 2019 introduziu os **11 Fatores de Concepção** para customização, expandiu de 37 para **40 Objetivos**, adotou medição de capacidade **CMMI (0-5)**, incluiu **Áreas de Foco** e tornou o framework mais **dinâmico e adaptável** a metodologias modernas (como Agile e DevOps)."
             }
         ];
+
+        
 
         let currentIndex = 0;
         const cardElement = document.getElementById('flashcard');
