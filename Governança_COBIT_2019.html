@@ -1,1 +1,886 @@
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Interativo: Gestão e Governança de TI</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            500: '#2563eb',
+                            600: '#1d4ed8',
+                            700: '#1e40af',
+                            800: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Aumenta a base de todas as fontes do site */
+    html {
+        font-size: 19px; /* O padrão é 16px. Aumente para 18px ou 20px */
+    }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col justify-between">
 
+    <!-- Navbar -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="bg-brand-600 text-white p-2.5 rounded-xl shadow-sm">
+                    <i class="fa-solid fa-[#fa-book-open] text-xl"></i>
+                    <i class="fa-solid fa-pen-nib text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold text-slate-900 leading-tight">Quiz de  Gerenciamento de Serviços de ITIL v4</h1>
+                    <p class="text-xs text-slate-500">Tipos de Abordagem: tradicional, hibrida e ágil</p>
+                </div>
+            </div>
+
+            <!-- Mode Selector & Stats -->
+            <div class="flex items-center gap-4">
+                <div class="hidden sm:flex bg-slate-100 p-1 rounded-lg text-xs font-semibold">
+                    <button id="btnModeStudy" onclick="setMode('study')" class="px-3 py-1.5 rounded-md transition-all bg-white text-brand-600 shadow-sm">
+                        <i class="fa-solid fa-[#fa-graduation-cap] mr-1"></i> Modo Estudo
+                    </button>
+                    <button id="btnModeExam" onclick="setMode('exam')" class="px-3 py-1.5 rounded-md transition-all text-slate-600 hover:text-slate-900">
+                        <i class="fa-solid fa-stopwatch mr-1"></i> Modo Simulado
+                    </button>
+                </div>
+
+                <div class="flex items-center gap-2 bg-brand-50 text-brand-700 px-3 py-1.5 rounded-lg border border-brand-100 text-sm font-semibold">
+                    <i class="fa-solid fa-trophy text-brand-500"></i>
+                    <span id="scoreDisplay">0 / 30</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-6xl mx-auto px-4 py-6 flex-1 w-full grid grid-cols-1 lg:grid-cols-4 gap-6">
+
+        <!-- Sidebar Navigation Grid (Desktop) -->
+        <aside class="lg:col-span-1 order-2 lg:order-1 bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col h-fit">
+            <div class="flex justify-between items-center mb-3">
+                <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wider">Navegador</h2>
+                <span id="progressPercent" class="text-xs font-semibold text-brand-600">0% concluído</span>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden mb-4">
+                <div id="progressBar" class="bg-brand-600 h-full w-0 transition-all duration-300"></div>
+            </div>
+
+            <!-- Question Grid Buttons -->
+            <div id="questionGrid" class="grid grid-cols-5 gap-2 mb-4">
+                <!-- Javascript will insert 20 question buttons here -->
+            </div>
+
+            <!-- Legend -->
+            <div class="text-xs text-slate-500 border-t border-slate-100 pt-3 space-y-1.5">
+                <div class="flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full bg-slate-200 inline-block"></span>
+                    <span>Não respondida</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full bg-brand-600 inline-block"></span>
+                    <span>Respondida</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full bg-amber-400 inline-block"></span>
+                    <span>Marcada p/ revisão</span>
+                </div>
+            </div>
+
+            <button onclick="finishQuiz()" class="mt-5 w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm rounded-lg transition shadow">
+                <i class="fa-solid fa-flag-checkered mr-2"></i> Finalizar Quiz
+            </button>
+        </aside>
+
+        <!-- Question Section -->
+        <section class="lg:col-span-3 order-1 lg:order-2 flex flex-col justify-between">
+            
+            <!-- Quiz Screen -->
+            <div id="quizCard" class="bg-white p-6 sm:p-8 rounded-xl border border-slate-200 shadow-sm mb-4 min-h-[420px] flex flex-col justify-between">
+                <div>
+                    <!-- Header Question Info -->
+                    <div class="flex justify-between items-start mb-4 pb-3 border-b border-slate-100">
+                        <div class="flex items-center gap-2">
+                            <span id="questionCategory" class="px-2.5 py-1 bg-brand-50 text-brand-700 text-xs font-semibold rounded-md border border-brand-100">
+                                Categoria
+                            </span>
+                            <span id="questionNumberBadge" class="text-xs font-semibold text-slate-400">
+                                Questão 1 de 30
+                            </span>
+                        </div>
+                        <button id="btnBookmark" onclick="toggleBookmark()" class="text-slate-400 hover:text-amber-500 text-sm font-medium transition flex items-center gap-1.5">
+                            <i class="fa-regular fa-bookmark"></i>
+                            <span class="hidden sm:inline">Revisar</span>
+                        </button>
+                    </div>
+
+                    <!-- Question Text -->
+                    <div class="mb-6">
+                        <h3 id="questionTitle" class="text-base sm:text-lg font-semibold text-slate-900 leading-relaxed">
+                            Carregando questão...
+                        </h3>
+                    </div>
+
+                    <!-- Answer Options -->
+                    <div id="optionsContainer" class="space-y-3">
+                        <!-- Dynamic options generated by JS -->
+                    </div>
+
+                    <!-- Explanation/Rationale Box (Study Mode) -->
+                    <div id="explanationBox" class="hidden mt-6 p-4 rounded-xl bg-slate-50 border border-slate-200 text-sm">
+                        <div class="flex items-center gap-2 font-bold mb-1 text-slate-800" id="explanationHeader">
+                            <i class="fa-solid fa-circle-info"></i> Justificativa Gramatical
+                        </div>
+                        <p id="explanationText" class="text-slate-600 leading-relaxed"></p>
+                    </div>
+                </div>
+
+                <!-- Footer Navigation Buttons -->
+                <div class="flex justify-between items-center mt-8 pt-4 border-t border-slate-100">
+                    <button id="btnPrev" onclick="navigateQuestion(-1)" class="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 font-medium text-sm transition disabled:opacity-40 disabled:cursor-not-allowed">
+                        <i class="fa-solid fa-chevron-left mr-1"></i> Anterior
+                    </button>
+                    <button id="btnNext" onclick="navigateQuestion(1)" class="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg font-medium text-sm transition shadow-sm">
+                        Próxima <i class="fa-solid fa-chevron-right ml-1"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Screen (Hidden initially) -->
+            <div id="resultsCard" class="hidden bg-white p-6 sm:p-8 rounded-xl border border-slate-200 shadow-sm text-center">
+                <div class="w-20 h-20 mx-auto mb-4 rounded-full flex items-center justify-center bg-brand-50 text-brand-600 text-3xl">
+                    <i class="fa-solid fa-award"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-slate-900 mb-1">Resultado do Quiz</h2>
+                <p class="text-sm text-slate-500 mb-6">Confira seu desempenho em  Gestão e Governança de TI</p>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-lg mx-auto mb-8">
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                        <span class="block text-xs font-semibold text-slate-400 uppercase">Pontuação</span>
+                        <span id="finalScore" class="text-2xl font-extrabold text-slate-800">0 / 30</span>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                        <span class="block text-xs font-semibold text-slate-400 uppercase">Aproveitamento</span>
+                        <span id="finalPercent" class="text-2xl font-extrabold text-brand-600">0%</span>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                        <span class="block text-xs font-semibold text-slate-400 uppercase">Desempenho</span>
+                        <span id="finalFeedback" class="text-sm font-bold text-slate-700 mt-1 block">Satisfatório</span>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap justify-center gap-3">
+                    <button onclick="restartQuiz()" class="px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-medium text-sm rounded-lg transition shadow">
+                        <i class="fa-solid fa-rotate-right mr-2"></i> Refazer Quiz
+                    </button>
+                    <button onclick="reviewQuiz()" class="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-sm rounded-lg transition">
+                        <i class="fa-solid fa-magnifying-glass mr-2"></i> Revisar Respostas
+                    </button>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-4 mt-8">
+        <div class="max-w-6xl mx-auto px-4 text-center text-xs text-slate-400">
+            Quiz Gestão e Governaça de TI  &bull; COBIT 2019 práticas, conceitos Básicos & estrutura.
+        </div>
+    </footer>
+
+    <!-- JavaScript Quiz Logic -->
+    <script>
+        // Database of 20 Portuguese Questions
+
+const questionsData = [
+    {
+        id: 1,
+        category: "Governança de TI (COBIT 2019)",
+        question: "Qual é a principal diferença entre Governança e Gerenciamento segundo o COBIT 2019?",
+        options: [
+            { text: "A Governança avalia, direciona e monitora (EDM), enquanto o Gerenciamento planeja, constrói, executa e monitora (PBRM) as atividades operacionais.", isCorrect: true, rationale: "O COBIT 2019 estabelece uma separação clara entre Governança (responsabilidade da diretoria/conselho - EDM) e Gerenciamento (responsabilidade da executiva/gestão)." },
+            { text: "A Governança cuida do hardware e infraestrutura, enquanto o Gerenciamento cuida do software e bancos de dados.", isCorrect: false, rationale: "A diferença não é técnica nem baseada em ativos, mas sim no nível de responsabilidade decisória e operacional." },
+            { text: "A Governança é aplicada apenas ao setor público, enquanto o Gerenciamento é exclusivo de empresas privadas.", isCorrect: false, rationale: "Ambos os conceitos aplicam-se a qualquer tipo e tamanho de organização." },
+            { text: "Não há diferença; no COBIT 2019 Governança e Gerenciamento são termos sinônimos.", isCorrect: false, rationale: "A distinção entre governança e gerenciamento é um dos princípios fundamentais do COBIT." }
+        ],
+        hint: "Lembre-se da sigla EDM (Evaluate, Direct, Monitor) para Governança."
+    },
+    {
+        id: 2,
+        category: "Governança de TI (COBIT 2019)",
+        question: "Quantos Princípios do Sistema de Governança existem no COBIT 2019?",
+        options: [
+            { text: "6 princípios.", isCorrect: true, rationale: "O COBIT 2019 define 6 princípios para o sistema de governança (como prover valor aos stakeholders, abordagem holística, etc.)." },
+            { text: "3 princípios.", isCorrect: false, rationale: "Três é o número de domínios principais de gerenciamento em alguns frameworks, não os princípios do COBIT." },
+            { text: "7 princípios.", isCorrect: false, rationale: "Sete é o número de princípios orientadores do ITIL v4 ou de fatores de concepção do COBIT." },
+            { text: "10 princípios.", isCorrect: false, rationale: "O COBIT divide seus princípios em 6 para o Sistema de Governança e 3 para a Estrutura de Governança." }
+        ],
+        hint: "O Sistema de Governança possui 6 princípios, enquanto a Estrutura possui 3."
+    },
+    {
+        id: 3,
+        category: "Governança de TI (COBIT 2019)",
+        question: "Quantos Princípios da Estrutura de Governança (Governance Framework) existem no COBIT 2019?",
+        options: [
+            { text: "3 princípios (Baseado em módulos e aberto, Aberto e flexível, Alinhado a padrões relevantes).", isCorrect: true, rationale: "A estrutura/framework de governança do COBIT 2019 apoia-se em 3 princípios fundamentais." },
+            { text: "5 princípios.", isCorrect: false, rationale: "O COBIT 5 tinha 5 princípios gerais, mas o COBIT 2019 reformulou essa estrutura." },
+            { text: "6 princípios.", isCorrect: false, rationale: "Seis é o número de princípios do Sistema de Governança." },
+            { text: "4 princípios.", isCorrect: false, rationale: "Quatro é o número de dimensões do ITIL v4." }
+        ],
+        hint: "Diferente do sistema, a estrutura (framework) do COBIT apoia-se em uma tríade de princípios."
+    },
+    {
+        id: 4,
+        category: "Governança de TI (COBIT 2019)",
+        question: "Quantos Objetivos de Governança e Gerenciamento (processos) existem no COBIT 2019?",
+        options: [
+            { text: "40 objetivos.", isCorrect: true, rationale: "O COBIT 2019 expandiu os 37 processos do COBIT 5 para 40 Objetivos de Governança e Gerenciamento." },
+            { text: "34 objetivos.", isCorrect: false, rationale: "34 é o número de Práticas da ITIL v4." },
+            { text: "37 objetivos.", isCorrect: false, rationale: "37 era a quantidade de processos no antigo COBIT 5." },
+            { text: "25 objetivos.", isCorrect: false, rationale: "Existem mais de 25 objetivos distribuídos nos 5 domínios do COBIT 2019." }
+        ],
+        hint: "O COBIT 5 tinha 37; o COBIT 2019 adicionou mais 3, totalizando este número."
+    },
+    {
+        id: 5,
+        category: "Governança de TI (COBIT 2019)",
+        question: "Em quantos Domínios estão divididos os 40 Objetivos de Governança e Gerenciamento no COBIT 2019?",
+        options: [
+            { text: "5 domínios (1 de Governança e 4 de Gerenciamento).", isCorrect: true, rationale: "Domínio de Governança: EDM. Domínios de Gerenciamento: APO, BAI, DSS e MEA." },
+            { text: "4 domínios.", isCorrect: false, rationale: "Quatro é o número de domínios exclusivos de gerenciamento, mas inclui-se o de governança (EDM)." },
+            { text: "3 domínios.", isCorrect: false, rationale: "Três é o número de princípios da estrutura de governança." },
+            { text: "6 domínios.", isCorrect: false, rationale: "Seis é o número de princípios do sistema de governança." }
+        ],
+        hint: "Considere 1 domínio voltado à Governança e 4 voltados ao Gerenciamento."
+    },
+    {
+        id: 6,
+        category: "Governança de TI (COBIT 2019)",
+        question: "Qual domínio do COBIT 2019 é exclusivo da Governança?",
+        options: [
+            { text: "EDM (Avaliar, Direcionar e Monitorar).", isCorrect: true, rationale: "EDM (Evaluate, Direct and Monitor) é o único domínio contendo objetivos de Governança." },
+            { text: "APO (Alinhar, Planejar e Organizar).", isCorrect: false, rationale: "APO é um domínio de Gerenciamento." },
+            { text: "BAI (Construir, Adquirir e Implementar).", isCorrect: false, rationale: "BAI é um domínio de Gerenciamento." },
+            { text: "DSS (Entregar, Servir e Apoiar).", isCorrect: false, rationale: "DSS é um domínio de Gerenciamento." }
+        ],
+        hint: "Procure a sigla em inglês para 'Evaluate, Direct and Monitor'."
+    },
+    {
+        id: 7,
+        category: "Governança de TI (COBIT 2019)",
+        question: "Qual domínio do COBIT 2019 aborda a identificação de requisitos, compra e construção de soluções de TI?",
+        options: [
+            { text: "BAI (Build, Acquire and Implement / Construir, Adquirir e Implementar).", isCorrect: true, rationale: "O domínio BAI cobre a definição de soluções, sua aquisição, construção e integração aos processos." },
+            { text: "EDM (Evaluate, Direct and Monitor).", isCorrect: false, rationale: "EDM cuida das diretrizes estratégicas e tomada de decisão de alto nível." },
+            { text: "DSS (Deliver, Service and Support).", isCorrect: false, rationale: "DSS foca na execução operacional e entrega prática dos serviços de TI." },
+            { text: "MEA (Monitor, Evaluate and Assess).", isCorrect: false, rationale: "MEA foca em monitorar o desempenho interno e a conformidade legal." }
+        ],
+        hint: "Pense na fase do ciclo de vida que envolve criar ou comprar software/hardware."
+    },
+    {
+        id: 8,
+        category: "Governança de TI (COBIT 2019)",
+        question: "O domínio DSS (Deliver, Service and Support) foca em qual aspecto do gerenciamento de TI?",
+        options: [
+            { text: "Na entrega operacional dos serviços de TI, incluindo suporte, segurança e operações de rotina.", isCorrect: true, rationale: "DSS lida diretamente com a operação diária, suporte a usuários, gerenciamento de dados e problemas." },
+            { text: "No planejamento estratégico de TI para os próximos 5 anos.", isCorrect: false, rationale: "Planejamento e alinhamento estratégico pertencem ao domínio APO." },
+            { text: "Na auditoria financeira do orçamento corporativo.", isCorrect: false, rationale: "Auditorias e conformidade associam-se mais ao domínio MEA." },
+            { text: "Na definição dos membros do conselho de administração.", isCorrect: false, rationale: "Definição de papéis do conselho envolve a governança (EDM)." }
+        ],
+        hint: "Pensar no atendimento de chamados, operação e suporte do dia a dia."
+    },
+    {
+        id: 9,
+        category: "Governança de TI (COBIT 2019)",
+        question: "Qual o objetivo do domínio MEA (Monitor, Evaluate and Assess)?",
+        options: [
+            { text: "Acompanhar o desempenho do sistema de TI, garantindo a conformidade com metas internas e requisitos externos/regulatórios.", isCorrect: true, rationale: "MEA monitora os processos de TI para garantir que estejam alinhados com o negócio e com a legislação." },
+            { text: "Substituir o departamento de Recursos Humanos na contratação de profissionais de TI.", isCorrect: false, rationale: "Aspectos de pessoal são tratados dentro de práticas e processos do APO." },
+            { text: "Desenvolver sistemas computacionais utilizando código aberto.", isCorrect: false, rationale: "Desenvolvimento de sistemas é responsabilidade do domínio BAI." },
+            { text: "Aprovar aquisições financeiras para novos datacenters.", isCorrect: false, rationale: "Decisões orçamentárias estratégicas ficam em APO e decisões superiores em EDM." }
+        ],
+        hint: "É o domínio focado em monitoramento contínuo, avaliação de desempenho e compliance."
+    },
+    {
+        id: 10,
+        category: "Governança de TI (COBIT 2019)",
+        question: "O que são os 'Fatores de Concepção' (Design Factors) no COBIT 2019?",
+        options: [
+            { text: "Fatores que influenciam o projeto do sistema de governança de uma organização para adaptá-lo às suas necessidades específicas.", isCorrect: true, rationale: "Os 11 Design Factors ajudam a customizar o sistema de governança conforme a estratégia, perfil de risco e tamanho da empresa." },
+            { text: "Modelos de hardware homologados pela ISACA para executar o COBIT.", isCorrect: false, rationale: "O COBIT é um framework conceitual e independente de tecnologias de hardware." },
+            { text: "Métricas exclusivas para medir o tráfego de rede corporativa.", isCorrect: false, rationale: "Métricas de infraestrutura não definem a estrutura de governança do COBIT." },
+            { text: "Regras de sintaxe para programação de banco de dados SQL.", isCorrect: false, rationale: "O COBIT não é uma linguagem nem instrução de programação." }
+        ],
+        hint: "Eles servem para adaptar/customizar o COBIT ao contexto de cada empresa."
+    },
+    {
+        id: 11,
+        category: "Governança de TI (COBIT 2019)",
+        question: "Quantos 'Fatores de Concepção' (Design Factors) são definidos no COBIT 2019?",
+        options: [
+            { text: "11 fatores.", isCorrect: true, rationale: "O COBIT 2019 estabelece 11 Fatores de Concepção (ex: Estratégia da Empresa, Perfil de Risco, Ameaças, etc.)." },
+            { text: "7 fatores.", isCorrect: false, rationale: "Sete é a quantidade de Componentes do Sistema de Governança." },
+            { text: "5 fatores.", isCorrect: false, rationale: "Cinco é o número de domínios no COBIT." },
+            { text: "15 fatores.", isCorrect: false, rationale: "São 11 os Fatores de Concepção catalogados oficialmente." }
+        ],
+        hint: "São mais de 10 fatores usados para personalizar a governança da empresa."
+    },
+    {
+        id: 12,
+        category: "Governança de TI (COBIT 2019)",
+        question: "O que substituiu o antigo conceito de 'Habilitadores' (Enablers) do COBIT 5 na versão COBIT 2019?",
+        options: [
+            { text: "Componentes do Sistema de Governança (Components of the Governance System).", isCorrect: true, rationale: "O COBIT 2019 evoluiu o termo 'Habilitadores' para 'Componentes', mantendo a ideia de elementos indispensáveis para a governança." },
+            { text: "Práticas do Ciclo de Vida.", isCorrect: false, rationale: "Este é um conceito ligado ao ITIL e não substituiu os Habilitadores no COBIT." },
+            { text: "Métricas Nível C.", isCorrect: false, rationale: "Métricas de nível C referem-se à alta gestão, não à estrutura do framework." },
+            { text: "Regras do Negócio.", isCorrect: false, rationale: "Regras de negócio são entradas para a governança, não componentes da estrutura." }
+        ],
+        hint: "Antigamente chamavam-se Habilitadores; agora são os 7..."
+    },
+    {
+        id: 13,
+        category: "Governança de TI (COBIT 2019)",
+        question: "Quantos 'Componentes do Sistema de Governança' existem no COBIT 2019?",
+        options: [
+            { text: "7 componentes.", isCorrect: true, rationale: "Incluem: Processos, Estruturas Organizacionais, Princípios/Políticas, Informação, Pessoas/Competências, Serviços/Aplicações e Cultura/Comportamento." },
+            { text: "4 componentes.", isCorrect: false, rationale: "Quatro é o número de dimensões do ITIL v4." },
+            { text: "10 componentes.", isCorrect: false, rationale: "O número correto de componentes é 7." },
+            { text: "6 componentes.", isCorrect: false, rationale: "Seis é o número de princípios do Sistema de Governança." }
+        ],
+        hint: "O mesmo número de Princípios Orientadores do ITIL v4 e de Fatores de Concepção menos 4."
+    },
+    {
+        id: 14,
+        category: "Governança de TI (COBIT 2019)",
+        question: "Qual das opções abaixo representa um dos 'Componentes do Sistema de Governança' no COBIT 2019?",
+        options: [
+            { text: "Cultura, Ética e Comportamento.", isCorrect: true, rationale: "A cultura e os comportamentos individuais/organizacionais são fundamentais para o sucesso do sistema de governança." },
+            { text: "Linguagem de Programação Java.", isCorrect: false, rationale: "Linguagens técnicas específicas não são consideradas componentes do sistema." },
+            { text: "Plano de Cargos e Salários.", isCorrect: false, rationale: "Isso é um instrumento específico de RH, embora Recursos Humanos faça parte da gestão." },
+            { text: "Servidores de Arquivos do Windows.", isCorrect: false, rationale: "Infraestrutura técnica genérica insere-se de forma ampla em 'Serviços, Infraestrutura e Aplicações'." }
+        ],
+        hint: "Pense no fator humano e comportamental que molda o sucesso da TI."
+    },
+    {
+        id: 15,
+        category: "Governança de TI (COBIT 2019)",
+        question: "Qual modelo de referência para medição de capacidade de processos o COBIT 2019 adota?",
+        options: [
+            { text: "CMMI (Capability Maturity Model Integration) atualizado, com níveis de 0 a 5.", isCorrect: true, rationale: "O COBIT 2019 alinhou seu modelo de capacidade com os conceitos do CMMI (níveis 0 a 5)." },
+            { text: "ISO/IEC 20000 exclusivamente.", isCorrect: false, rationale: "A ISO 20000 é um padrão para gerenciamento de serviços, não a base de capacidade de processos do COBIT." },
+            { text: "PMBOK 7ª Edição.", isCorrect: false, rationale: "PMBOK é voltado para gerenciamento de projetos." },
+            { text: "Scrum Maturity Index.", isCorrect: false, rationale: "Scrum é uma estrutura para desenvolvimento ágil." }
+        ],
+        hint: "Usa a escala de Níveis de Capacidade de 0 a 5 originada deste famoso modelo de maturidade."
+    },
+    {
+        id: 16,
+        category: "Governança de TI (COBIT 2019)",
+        question: "No modelo de Capacidade de Processos do COBIT 2019, o que indica o 'Nível 0'?",
+        options: [
+            { text: "Incompleto - O processo não foi implementado ou não atinge seu objetivo básico.", isCorrect: true, rationale: "No nível 0 (Incomplete), há ausência completa ou falha em atingir os propósitos do processo." },
+            { text: "Executado - O processo atinge seu propósito através da aplicação de um conjunto básico de atividades.", isCorrect: false, rationale: "Isso descreve o Nível 1 (Performed)." },
+            { text: "Gerenciado - O processo é planejado, monitorado e ajustado.", isCorrect: false, rationale: "Isso descreve o Nível 2 (Managed)." },
+            { text: "Otimizado - O processo foca na melhoria contínua.", isCorrect: false, rationale: "Isso descreve o Nível 5 (Optimizing)." }
+        ],
+        hint: "É o nível inicial onde nada funciona ou nada foi implementado."
+    },
+    {
+        id: 17,
+        category: "Governança de TI (COBIT 2019)",
+        question: "No modelo de Capacidade de Processos do COBIT 2019, o que caracteriza o 'Nível 3'?",
+        options: [
+            { text: "Definido - O processo está bem documentado, padronizado e utiliza um processo definido na organização.", isCorrect: true, rationale: "O Nível 3 (Defined) exige padronização e documentação do processo em nível organizacional." },
+            { text: "Executado de forma totalmente informal sem qualquer registro.", isCorrect: false, rationale: "Atividades informais sem padrão situam-se no Nível 1." },
+            { text: "Inexistente.", isCorrect: false, rationale: "Processo inexistente corresponde ao Nível 0." },
+            { text: "Totalmente automatizado por robôs sem intervenção humana.", isCorrect: false, rationale: "Automação pode ocorrer, mas o Nível 3 foca na padronização corporativa." }
+        ],
+        hint: "Procure a palavra-chave 'Definido' e padronizado para toda a organização."
+    },
+    {
+        id: 18,
+        category: "Governança de TI (COBIT 2019)",
+        question: "Qual entidade internacional é a responsável pelo desenvolvimento e manutenção do COBIT 2019?",
+        options: [
+            { text: "ISACA (Information Systems Audit and Control Association).", isCorrect: true, rationale: "A ISACA é a criadora e detentora dos direitos da marca e frameworks do COBIT." },
+            { text: "AXELOS.", isCorrect: false, rationale: "AXELOS é responsável pela gestão do framework ITIL." },
+            { text: "PMI (Project Management Institute).", isCorrect: false, rationale: "PMI é focado em gerenciamento de projetos (PMBOK)." },
+            { text: "ISO (International Organization for Standardization).", isCorrect: false, rationale: "A ISO publica normas internacionais como ISO 27001 e ISO 20000." }
+        ],
+        hint: "É a principal associação global para auditores e gestores de governança de TI."
+    },
+    {
+        id: 19,
+        category: "Governança de TI (COBIT 2019)",
+        question: "Qual o foco da 'Cascata de Objetivos' (Goals Cascade) no COBIT 2019?",
+        options: [
+            { text: "Traduzir as necessidades dos stakeholders em metas corporativas, que por sua vez são traduzidas em metas de alinhamento e objetivos de governança/gerenciamento.", isCorrect: true, rationale: "A Cascata de Objetivos garante o alinhamento estratégico, conectando necessidades das partes interessadas à operacionalização da TI." },
+            { text: "Determinar a sequência exata de instalação de servidores em um rack de TI.", isCorrect: false, rationale: "Trata-se de uma tarefa técnica e operacional de infraestrutura." },
+            { text: "Criar um organograma com a salarial dos diretores corporativos.", isCorrect: false, rationale: "A cascata lida com metas e estratégia, não com salários ou RH direto." },
+            { text: "Calcular a velocidade de download da rede da empresa.", isCorrect: false, rationale: "Esta é uma métrica puramente operacional e pontual de redes." }
+        ],
+        hint: "Ela desdobra as necessidades dos stakeholders até os objetivos específicos de TI."
+    },
+    {
+        id: 20,
+        category: "Governança de TI (COBIT 2019)",
+        question: "Na Cascata de Objetivos do COBIT 2019, os Objetivos de TI do COBIT 5 foram renomeados para qual termo?",
+        options: [
+            { text: "Objetivos de Alinhamento (Alignment Goals).", isCorrect: true, rationale: "No COBIT 2019, a nomenclatura evoluiu de 'IT-related Goals' para 'Alignment Goals' (Objetivos de Alinhamento)." },
+            { text: "Objetivos Operacionais de Software.", isCorrect: false, rationale: "Este termo não existe na estrutura conceitual oficial do COBIT." },
+            { text: "Requisitos de Hardware.", isCorrect: false, rationale: "Hardware é apenas um recurso técnico, não uma meta estratégica." },
+            { text: "Metas Orçamentárias de TI.", isCorrect: false, rationale: "Alinhamento vai muito além do aspecto puramente financeiro do orçamento." }
+        ],
+        hint: "Refere-se ao alinhamento entre as metas de negócio e as metas de TI."
+    },
+    {
+        id: 21,
+        category: "Governança de TI (COBIT 2019)",
+        question: "O que significa dizer que o COBIT 2019 é 'Aberto e Flexível'?",
+        options: [
+            { text: "Permite a adição de novos conteúdos e a capacidade de abordar novos problemas de forma flexível sem alterar a estrutura fundamental.", isCorrect: true, rationale: "É um dos princípios da Estrutura de Governança, garantindo longevidade e adaptabilidade ao framework." },
+            { text: "Que o seu código de programação pode ser alterado e vendido comercialmente.", isCorrect: false, rationale: "COBIT é um guia de governança com direitos autorais da ISACA, não um software open-source." },
+            { text: "Que qualquer funcionário pode alterar as regras de segurança sem autorização.", isCorrect: false, rationale: "Flexibilidade na estrutura não significa falta de controle ou anarquia operacional." },
+            { text: "Que a empresa não precisa cumprir leis e regulamentações do seu país.", isCorrect: false, rationale: "Conformidade legal é um dos pilares essenciais cobertos pelo COBIT." }
+        ],
+        hint: "Trata-se da capacidade do framework de evoluir e incluir novos tópicos sem quebrar sua base."
+    },
+    {
+        id: 22,
+        category: "Governança de TI (COBIT 2019)",
+        question: "Qual o papel do Fator de Concepção 'Perfil de Risco' (Risk Profile) na customização da governança?",
+        options: [
+            { text: "Identificar os tipos e níveis de risco que a organização enfrenta para priorizar os objetivos de governança adequados.", isCorrect: true, rationale: "Empresas com alto risco de cibersegurança exigirão foco reforçado em objetivos de controle específicos." },
+            { text: "Eliminar 100% de todos os riscos operacionais da empresa automaticamente.", isCorrect: false, rationale: "Nenhum sistema de governança elimina riscos por completo; seu papel é gerenciá-los dentro de limites aceitáveis." },
+            { text: "Obrigá-la a contratar seguro de vida para todos os técnicos de TI.", isCorrect: false, rationale: "O perfil de risco do COBIT refere-se aos riscos de TI e de negócio, não a seguros pessoais." },
+            { text: "Definir os preços dos produtos que a empresa vende no mercado.", isCorrect: false, rationale: "Precificação de produtos é decisão comercial do negócio." }
+        ],
+        hint: "Ajuda a direcionar atenção e recursos aos objetivos de governança que tratam as maiores ameaças da empresa."
+    },
+    {
+        id: 23,
+        category: "Governança de TI (COBIT 2019)",
+        question: "No COBIT 2019, o que são as 'Áreas de Foco' (Focus Areas)?",
+        options: [
+            { text: "Tópicos ou domínios de governança específicos que podem ser combinados com o COBIT (ex: PMEs, Cibersegurança, DevOps, Nuvem).", isCorrect: true, rationale: "Áreas de Foco descrevem tópicos de governança específicos que atendem temas emergentes ou setores particulares." },
+            { text: "Salas físicas onde ficam localizados os servidores de produção.", isCorrect: false, rationale: "Áreas de foco são temas conceituais de governança, não locais físicos." },
+            { text: "Métricas exclusivas para medir a produtividade de programadores.", isCorrect: false, rationale: "Trata-se de agrupamentos temáticos de governança, não de cronômetros de trabalho." },
+            { text: "Setores da empresa que não precisam seguir regras de compliance.", isCorrect: false, rationale: "Todas as áreas relevantes de uma organização devem ser integradas à governança." }
+        ],
+        hint: "Exemplos incluem Cibersegurança, DevOps, Nuvem ou PMEs."
+    },
+    {
+        id: 24,
+        category: "Governança de TI (COBIT 2019)",
+        question: "Como o COBIT 2019 se relaciona com outros frameworks e normas (como ITIL, ISO/IEC 27001 e PMBOK)?",
+        options: [
+            { text: "O COBIT 2019 atua como um framework integrador (guarda-chuva), alinhado e mapeado com outros padrões internacionais.", isCorrect: true, rationale: "O COBIT 2019 não substitui outros padrões, mas os conecta sob uma estrutura de governança unificada." },
+            { text: "O COBIT 2019 proíbe o uso simultâneo de qualquer outro framework na empresa.", isCorrect: false, rationale: "Pelo contrário, um dos seus princípios é ser alinhado com os principais padrões do mercado." },
+            { text: "O COBIT 2019 é uma cópia idêntica da norma ISO 27001 com outro nome.", isCorrect: false, rationale: "Possuem escopos e focos diferentes, embora o COBIT faça referências cruzadas à ISO." },
+            { text: "O COBIT 2019 serve apenas para gerenciar projetos, concorrendo diretamente com o PMBOK.", isCorrect: false, rationale: "O escopo do COBIT é a governança corporativa de TI como um todo, muito mais amplo que a gestão de projetos." }
+        ],
+        hint: "Ele funciona como um 'guarda-chuva' que se conecta e integra com as demais normas do mercado."
+    },
+    {
+        id: 25,
+        category: "Governança de TI (COBIT 2019)",
+        question: "No contexto do COBIT 2019, qual o significado de 'Prover Valor às Partes Interessadas' (Stakeholder Value)?",
+        options: [
+            { text: "Equilibrar a realização de benefícios, a otimização de riscos e a otimização do uso de recursos.", isCorrect: true, rationale: "A criação de valor exige o equilíbrio constante deste triângulo: Benefícios vs. Riscos vs. Recursos." },
+            { text: "Garantir o maior lucro financeiro possível, mesmo com alto risco de falência da TI.", isCorrect: false, rationale: "Gerar valor exige controle equilibrado do risco e dos recursos necessários." },
+            { text: "Fornecer equipamentos de última geração para todos os colaboradores sem controle de custos.", isCorrect: false, rationale: "Isso violaria a otimização de recursos e custos." },
+            { text: "Priorizar unicamente as necessidades da equipe técnica interna.", isCorrect: false, rationale: "As partes interessadas (stakeholders) incluem acionistas, clientes, reguladores e gestores do negócio." }
+        ],
+        hint: "Lembre-se do triângulo fundamental: Benefícios, Riscos e Recursos."
+    },
+    {
+        id: 26,
+        category: "Governança de TI (COBIT 2019)",
+        question: "Qual publicação oficial do COBIT 2019 auxilia a organização a planejar e implementar uma solução de governança passo a passo?",
+        options: [
+            { text: "Guia de Implementação do COBIT 2019 (COBIT 2019 Implementation Guide).", isCorrect: true, rationale: "Este guia fornece uma abordagem prática em 7 fases para implementar a governança de TI." },
+            { text: "Manual de Instalação do Linux.", isCorrect: false, rationale: "Não se relaciona com o framework conceitual de governança da ISACA." },
+            { text: "Dicionário de Termos em Inglês Técnico.", isCorrect: false, rationale: "Existe um glossário no framework, mas a implementação tem um guia próprio de 7 fases." },
+            { text: "Código de Conduta Ética da Contabilidade.", isCorrect: false, rationale: "Embora a ética seja um componente, a implementação do framework possui um guia dedicado." }
+        ],
+        hint: "É a publicação focada no roteiro/ciclo de vida de implementação em 7 fases."
+    },
+    {
+        id: 27,
+        category: "Governança de TI (COBIT 2019)",
+        question: "Quantas fases compõem o Ciclo de Vida de Implementação no Guia de Implementação do COBIT 2019?",
+        options: [
+            { text: "7 fases.", isCorrect: true, rationale: "O modelo de implementação do COBIT descreve 7 fases (da identificação dos direcionadores até a consolidação dos ganhos)." },
+            { text: "3 fases.", isCorrect: false, rationale: "Três é o número de princípios da estrutura de governança." },
+            { text: "12 fases.", isCorrect: false, rationale: "Sete fases estruturadas compõem o ciclo contínuo de implementação." },
+            { text: "5 fases.", isCorrect: false, rationale: "Cinco é a quantidade de domínios dos objetivos de governança/gerenciamento." }
+        ],
+        hint: "O mesmo número de Princípios Orientadores da ITIL v4 e de Componentes do COBIT."
+    },
+    {
+        id: 28,
+        category: "Governança de TI (COBIT 2019)",
+        question: "O que o princípio 'Sistema de Governança Dinâmico' (Dynamic Governance System) estabelece?",
+        options: [
+            { text: "Sempre que um fator de concepção muda (ex: alteração de estratégia ou tecnologia), o sistema de governança deve ser reavaliado e adaptado.", isCorrect: true, rationale: "A governança não é estática; ela reage dinamicamente às mudanças no ambiente interno e externo da empresa." },
+            { text: "Que a governança deve mudar de regras todos os dias à meia-noite.", isCorrect: false, rationale: "Ser dinâmico significa ser adaptável a mudanças contextuais, não imprevisível ou instável." },
+            { text: "Que os diretores devem ser trocados a cada 6 meses obrigatoriamente.", isCorrect: false, rationale: "Dinâmico refere-se à capacidade de ajuste da governança, e não à rotatividade de pessoas." },
+            { text: "Que a TI deve utilizar apenas metodologias ágeis de desenvolvimento de software.", isCorrect: false, rationale: "Metodologias de desenvolvimento são escolhas operacionais dentro do escopo de TI." }
+        ],
+        hint: "Significa que o sistema de governança reage e se adapta quando os fatores do ambiente mudam."
+    },
+    {
+        id: 29,
+        category: "Governança de TI (COBIT 2019)",
+        question: "Qual das alternativas representa um objetivo do domínio APO (Alinhar, Planejar e Organizar)?",
+        options: [
+            { text: "APO12 - Gerenciar Riscos de TI.", isCorrect: true, rationale: "O APO12 foca na identificação, avaliação e mitigação contínua de riscos relacionados à tecnologia." },
+            { text: "EDM01 - Garantir a Definição e Manutenção da Estrutura de Governança.", isCorrect: false, rationale: "Este é um objetivo pertencente ao domínio EDM (Governança)." },
+            { text: "DSS01 - Gerenciar Operações.", isCorrect: false, rationale: "Este é um objetivo do domínio DSS (Entregar, Servir e Apoiar)." },
+            { text: "MEA01 - Gerenciar o Monitoramento de Desempenho e Conformidade.", isCorrect: false, rationale: "Este é um objetivo pertencente ao domínio MEA." }
+        ],
+        hint: "Procure o processo que lida com o mapeamento e gestão dos Riscos no planejamento."
+    },
+    {
+        id: 30,
+        category: "Governança de TI (COBIT 2019)",
+        question: "Qual é a declaração correta sobre a responsabilidade primária sobre o Domínio EDM no COBIT 2019?",
+        options: [
+            { text: "Pertence ao Conselho de Administração (Board of Directors) e à Alta Direção da empresa.", isCorrect: true, rationale: "Governança (EDM) é responsabilidade do órgão diretivo máximo que responde aos acionistas/sociedade." },
+            { text: "Exclusiva do analista de suporte técnico de primeiro nível.", isCorrect: false, rationale: "O suporte técnico cuida de incidentes operacionais (domínio DSS)." },
+            { text: "Exclusiva dos auditores externos independentes.", isCorrect: false, rationale: "Auditores avaliam o cumprimento das regras, mas a responsabilidade pela governança é da administração da empresa." },
+            { text: "Exclusiva dos fornecedores terceirizados de software.", isCorrect: false, rationale: "A governança da organização não pode ser delegada integralmente a fornecedores de TI." }
+        ],
+        hint: "A governança fica no nível estratégico mais alto da empresa (Board/Conselho)."
+    }
+];
+      
+
+        // State Management
+        let currentQuestionIdx = 0;
+        let userAnswers = new Array(questionsData.length).fill(null);
+        let bookmarked = new Array(questionsData.length).fill(false);
+        let quizMode = 'study'; // 'study' or 'exam'
+        let isSubmitted = false;
+
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', () => {
+            renderGrid();
+            loadQuestion(0);
+        });
+
+        // Set Mode
+        function setMode(mode) {
+            if (isSubmitted) return;
+            quizMode = mode;
+            
+            const btnStudy = document.getElementById('btnModeStudy');
+            const btnExam = document.getElementById('btnModeExam');
+
+            if (mode === 'study') {
+                btnStudy.className = "px-3 py-1.5 rounded-md transition-all bg-white text-brand-600 shadow-sm";
+                btnExam.className = "px-3 py-1.5 rounded-md transition-all text-slate-600 hover:text-slate-900";
+            } else {
+                btnExam.className = "px-3 py-1.5 rounded-md transition-all bg-white text-brand-600 shadow-sm";
+                btnStudy.className = "px-3 py-1.5 rounded-md transition-all text-slate-600 hover:text-slate-900";
+            }
+
+            // Re-render current question view
+            loadQuestion(currentQuestionIdx);
+        }
+
+        // Render Side Navigation Grid
+        function renderGrid() {
+            const gridContainer = document.getElementById('questionGrid');
+            gridContainer.innerHTML = '';
+
+            questionsData.forEach((q, idx) => {
+                const btn = document.createElement('button');
+                btn.id = `gridBtn-${idx}`;
+                btn.onclick = () => jumpToQuestion(idx);
+                btn.className = getGridBtnClass(idx);
+                btn.innerText = idx + 1;
+                gridContainer.appendChild(btn);
+            });
+
+            updateProgress();
+        }
+
+        function getGridBtnClass(idx) {
+            let base = "w-8 h-8 rounded-lg font-bold text-xs flex items-center justify-center transition-all ";
+            
+            if (idx === currentQuestionIdx) {
+                base += "ring-2 ring-brand-600 ring-offset-2 ";
+            }
+
+            if (bookmarked[idx]) {
+                base += "bg-amber-400 text-amber-950 font-extrabold ";
+            } else if (userAnswers[idx] !== null) {
+                if (isSubmitted || quizMode === 'study') {
+                    const isCorrect = questionsData[idx].options[userAnswers[idx]].isCorrect;
+                    base += isCorrect ? "bg-emerald-500 text-white " : "bg-rose-500 text-white ";
+                } else {
+                    base += "bg-brand-600 text-white ";
+                }
+            } else {
+                base += "bg-slate-100 text-slate-600 hover:bg-slate-200 ";
+            }
+
+            return base;
+        }
+
+        // Update Progress Bar & Score
+        function updateProgress() {
+            const answeredCount = userAnswers.filter(a => a !== null).length;
+            const percent = Math.round((answeredCount / questionsData.length) * 100);
+            
+            document.getElementById('progressBar').style.width = `${percent}%`;
+            document.getElementById('progressPercent').innerText = `${percent}% concluído`;
+
+            // Calculate score
+            let correctCount = 0;
+            userAnswers.forEach((ans, i) => {
+                if (ans !== null && questionsData[i].options[ans].isCorrect) {
+                    correctCount++;
+                }
+            });
+
+            document.getElementById('scoreDisplay').innerText = `${correctCount} / ${questionsData.length}`;
+        }
+
+        // Load Question Data
+        function loadQuestion(idx) {
+            currentQuestionIdx = idx;
+            const q = questionsData[idx];
+
+            // Update Header Info
+            document.getElementById('questionCategory').innerText = q.category;
+            document.getElementById('questionNumberBadge').innerText = `Questão ${idx + 1} de ${questionsData.length}`;
+            document.getElementById('questionTitle').innerText = q.question;
+
+            // Update Bookmark Button
+            const btnBookmark = document.getElementById('btnBookmark');
+            if (bookmarked[idx]) {
+                btnBookmark.className = "text-amber-500 font-medium text-sm transition flex items-center gap-1.5";
+                btnBookmark.innerHTML = `<i class="fa-solid fa-bookmark"></i> <span class="hidden sm:inline">Marcada</span>`;
+            } else {
+                btnBookmark.className = "text-slate-400 hover:text-amber-500 text-sm font-medium transition flex items-center gap-1.5";
+                btnBookmark.innerHTML = `<i class="fa-regular fa-bookmark"></i> <span class="hidden sm:inline">Revisar</span>`;
+            }
+
+            // Render Options
+            const optionsContainer = document.getElementById('optionsContainer');
+            optionsContainer.innerHTML = '';
+
+            const selectedOpt = userAnswers[idx];
+            const showFeedback = isSubmitted || (quizMode === 'study' && selectedOpt !== null);
+
+            q.options.forEach((opt, optIdx) => {
+                const optBtn = document.createElement('button');
+                optBtn.className = getOptionClass(idx, optIdx, selectedOpt, showFeedback);
+                optBtn.onclick = () => selectOption(optIdx);
+                if (showFeedback || isSubmitted) {
+                    // Disable changing if already answered in study mode or if quiz is finished
+                    if (quizMode === 'study' || isSubmitted) {
+                        optBtn.disabled = true;
+                    }
+                }
+
+                const letter = String.fromCharCode(65 + optIdx); // A, B, C, D
+
+                let iconHtml = '';
+                if (showFeedback) {
+                    if (opt.isCorrect) {
+                        iconHtml = `<i class="fa-solid fa-circle-check text-emerald-600 text-lg ml-auto"></i>`;
+                    } else if (selectedOpt === optIdx) {
+                        iconHtml = `<i class="fa-solid fa-circle-xmark text-rose-600 text-lg ml-auto"></i>`;
+                    }
+                }
+
+                optBtn.innerHTML = `
+                    <div class="flex items-start gap-3 text-left w-full">
+                        <span class="w-6 h-6 rounded-full border border-current flex items-center justify-center font-bold text-xs flex-shrink-0 mt-0.5">
+                            ${letter}
+                        </span>
+                        <span class="text-sm font-medium leading-relaxed flex-1">${opt.text}</span>
+                        ${iconHtml}
+                    </div>
+                `;
+
+                optionsContainer.appendChild(optBtn);
+            });
+
+            // Handle Explanation Box
+            const explanationBox = document.getElementById('explanationBox');
+            const explanationHeader = document.getElementById('explanationHeader');
+            const explanationText = document.getElementById('explanationText');
+
+            if (showFeedback && selectedOpt !== null) {
+                explanationBox.classList.remove('hidden');
+                const chosenOptObj = q.options[selectedOpt];
+                const correctOptObj = q.options.find(o => o.isCorrect);
+
+                if (chosenOptObj.isCorrect) {
+                    explanationHeader.className = "flex items-center gap-2 font-bold mb-1 text-emerald-700";
+                    explanationHeader.innerHTML = `<i class="fa-solid fa-circle-check"></i> Correto!`;
+                    explanationText.innerText = chosenOptObj.rationale;
+                } else {
+                    explanationHeader.className = "flex items-center gap-2 font-bold mb-1 text-rose-700";
+                    explanationHeader.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> Incorreto.`;
+                    explanationText.innerText = `${chosenOptObj.rationale} (Gabarito: ${correctOptObj.text})`;
+                }
+            } else {
+                explanationBox.classList.add('hidden');
+            }
+
+            // Navigation Buttons State
+            document.getElementById('btnPrev').disabled = (idx === 0);
+            
+            const btnNext = document.getElementById('btnNext');
+            if (idx === questionsData.length - 1) {
+                btnNext.innerHTML = `Finalizar <i class="fa-solid fa-flag-checkered ml-1"></i>`;
+            } else {
+                btnNext.innerHTML = `Próxima <i class="fa-solid fa-chevron-right ml-1"></i>`;
+            }
+
+            renderGrid();
+        }
+
+        function getOptionClass(qIdx, optIdx, selectedOpt, showFeedback) {
+            let base = "w-full p-4 rounded-xl border text-left transition-all flex items-center ";
+
+            if (showFeedback) {
+                const isCorrect = questionsData[qIdx].options[optIdx].isCorrect;
+                if (isCorrect) {
+                    return base + "bg-emerald-50 border-emerald-300 text-emerald-950 font-medium ";
+                } else if (selectedOpt === optIdx) {
+                    return base + "bg-rose-50 border-rose-300 text-rose-950 ";
+                } else {
+                    return base + "bg-slate-50 border-slate-200 text-slate-400 opacity-60 ";
+                }
+            } else {
+                if (selectedOpt === optIdx) {
+                    return base + "bg-brand-50 border-brand-500 text-brand-900 shadow-sm ";
+                } else {
+                    return base + "bg-white border-slate-200 text-slate-700 hover:border-brand-300 hover:bg-slate-50 ";
+                }
+            }
+        }
+
+        // Action Handlers
+        function selectOption(optIdx) {
+            if (isSubmitted) return;
+            userAnswers[currentQuestionIdx] = optIdx;
+            loadQuestion(currentQuestionIdx);
+        }
+
+        function toggleBookmark() {
+            bookmarked[currentQuestionIdx] = !bookmarked[currentQuestionIdx];
+            loadQuestion(currentQuestionIdx);
+        }
+
+        function jumpToQuestion(idx) {
+            loadQuestion(idx);
+        }
+
+        function navigateQuestion(direction) {
+            const nextIdx = currentQuestionIdx + direction;
+            if (nextIdx >= 0 && nextIdx < questionsData.length) {
+                loadQuestion(nextIdx);
+            } else if (nextIdx >= questionsData.length) {
+                finishQuiz();
+            }
+        }
+
+        // Finish Quiz & Show Results
+        function finishQuiz() {
+            const unanswered = userAnswers.filter(a => a === null).length;
+            if (unanswered > 0 && !isSubmitted) {
+                const confirmSubmit = confirm(`Você ainda tem ${unanswered} questão(ões) não respondida(s). Deseja realmente finalizar?`);
+                if (!confirmSubmit) return;
+            }
+
+            isSubmitted = true;
+            document.getElementById('quizCard').classList.add('hidden');
+            document.getElementById('resultsCard').classList.remove('hidden');
+
+            // Calculate final statistics
+            let correctCount = 0;
+            userAnswers.forEach((ans, i) => {
+                if (ans !== null && questionsData[i].options[ans].isCorrect) {
+                    correctCount++;
+                }
+            });
+
+            const percent = Math.round((correctCount / questionsData.length) * 100);
+
+            document.getElementById('finalScore').innerText = `${correctCount} / ${questionsData.length}`;
+            document.getElementById('finalPercent').innerText = `${percent}%`;
+
+            let feedbackText = "Insuficiente";
+            let feedbackColor = "text-rose-600";
+            if (percent >= 85) {
+                feedbackText = "Excelente!";
+                feedbackColor = "text-emerald-600";
+            } else if (percent >= 70) {
+                feedbackText = "Muito Bom!";
+                feedbackColor = "text-brand-600";
+            } else if (percent >= 50) {
+                feedbackText = "Regular";
+                feedbackColor = "text-amber-600";
+            }
+
+            const feedbackElem = document.getElementById('finalFeedback');
+            feedbackElem.innerText = feedbackText;
+            feedbackElem.className = `text-sm font-bold mt-1 block ${feedbackColor}`;
+
+            renderGrid();
+        }
+
+        function restartQuiz() {
+            userAnswers = new Array(questionsData.length).fill(null);
+            bookmarked = new Array(questionsData.length).fill(false);
+            isSubmitted = false;
+            currentQuestionIdx = 0;
+
+            document.getElementById('resultsCard').classList.add('hidden');
+            document.getElementById('quizCard').classList.remove('hidden');
+
+            renderGrid();
+            loadQuestion(0);
+        }
+
+        function reviewQuiz() {
+            document.getElementById('resultsCard').classList.add('hidden');
+            document.getElementById('quizCard').classList.remove('hidden');
+            loadQuestion(0);
+        }
+    </script>
+</body>
+</html>
