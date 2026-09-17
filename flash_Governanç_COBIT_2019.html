@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcards Interativos: ITIL v4 - Gerenciamento de Serviços</title>
+    <style>
+
+        :root {
+    --bg-color: #F5F5F5;
+    --card-bg: #FFFFFF;
+    --card-border: #B0A87A;
+
+    --primary-color: #171717;
+    --accent-color: #FFBB1C;
+
+    --text-color: #171717;
+    --text-muted: #B0A87A;
+
+    --card-back-bg: #FFFDF5;
+
+    --shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+    --border-radius: 20px;
+}
+       
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px 15px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            margin-top: 10px;
+        }
+
+        header h1 {
+
+            font-size: 2.3rem;
+            color: var(--accent-color);
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        .tracker {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            background: rgba(56, 189, 248, 0.1);
+            padding: 6px 18px;
+            border-radius: 20px;
+            border: 1px solid rgba(56, 189, 248, 0.2);
+        }
+
+        /* Flashcard Container */
+        .scene {
+            width: 100%;
+            max-width: 680px;
+            height: 400px;
+            perspective: 1200px;
+            margin-bottom: 25px;
+            cursor: pointer;
+        }
+
+        .card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+            transform-style: preserve-3d;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+
+        .card.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: var(--border-radius);
+            background: var(--card-bg);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 32px;
+            border: 1px solid var(--card-border);
+            overflow-y: auto;
+        }
+
+        .card-face-front {
+             background: linear-gradient(145deg, #FFFFFF, #F5F5F5);
+        }
+
+        .card-face-back {
+
+              background: linear-gradient(145deg, #FFFDF5, #FFFFFF);
+            transform: rotateY(180deg);
+            border-left: 6px solid var(--accent-color);
+            
+        }
+
+        .card-category {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .card-content {
+            font-size: 1.35rem; 
+            line-height: 1.6;
+            color: var(--text-color);
+            font-weight: 500;
+            text-align: center;
+            margin: auto 0;
+        }
+
+        .card-face-back .card-content {
+            color: var(--accent-color);     
+            font-size: 1.05rem; 
+            text-align: left;
+        }
+
+        .card-face-back .card-content b {
+              color: var(--accent-color);
+        }
+
+        .card-hint {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-align: center;
+            font-style: italic;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            border: 1px solid var(--card-border);
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            user-select: none;
+        }
+
+        button:hover {
+            background-color: var(--accent-color);
+            color: #ffffff;
+            border-color: var(--accent-color);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(2, 132, 199, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        /* Scrollbar custom styles for back card overflow */
+        .card-face::-webkit-scrollbar {
+            width: 6px;
+        }
+        .card-face::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+        .card-face::-webkit-scrollbar-thumb {
+            background: var(--card-border);
+            border-radius: 10px;
+        }
+
+        @media (max-width: 640px) {
+            .scene {
+                height: 440px;
+            }
+            header h1 {
+                font-size: 1.6rem;
+            }
+            .card-content {
+                font-size: 1.15rem;
+            }
+            .card-face-back .card-content {
+                font-size: 0.95rem;
+            }
+            button {
+                padding: 10px 18px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Flashcards Interativos</h1>
+        <p>Gerenciamento de Serviços de TI — ITIL v4</p>
+    </header>
+
+    <div class="tracker" id="card-tracker">Card 1 de 30</div>
+
+    <div class="scene" onclick="flipCard()">
+        <div class="card" id="flashcard">
+            <div class="card-face card-face-front">
+                <div class="card-category" id="card-category">Categoria</div>
+                <div class="card-content" id="card-front">Carregando pergunta...</div>
+                <div class="card-hint">💡 Clique no card para ver a resposta</div>
+            </div>
+            <div class="card-face card-face-back">
+                <div class="card-category">Resposta Explicada</div>
+                <div class="card-content" id="card-back">Carregando resposta...</div>
+                <div class="card-hint">💡 Clique para virar novamente</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button onclick="prevCard()">Anterior</button>
+        <button onclick="flipCard()">Virar Card</button>
+        <button onclick="nextCard()">Próximo</button>
+    </div>
+
+    <script>
+        const cardsData = [
+            {
+                category: "Conceitos Chave - ITIL v4",
+                front: "O que é um **Serviço** segundo o ITIL v4?",
+                back: "Um meio de permitir a **co-criação de valor**, facilitando os **resultados** que os clientes desejam alcançar, sem que o cliente precise gerenciar **custos e riscos** específicos."
+            },
+            {
+                category: "Conceitos Chave - ITIL v4",
+                front: "O que é **Valor** e como ele é criado no ITIL v4?",
+                back: "<b>Valor</b> é o benefício percebido, utilidade e importância de algo. No ITIL v4, o valor é **co-criado** através de uma parceria ativa entre o provedor do serviço, os consumidores e outros stakeholders."
+            },
+            {
+                category: "Conceitos Chave - ITIL v4",
+                front: "Diferencie **Saída (Output)** de **Resultado (Outcome)**.",
+                back: "• <b>Saída (Output):</b> Um entregável tangível ou intangível de uma atividade (ex: uma nova aplicação instalada).<br>• <b>Resultado (Outcome):</b> O resultado para um stakeholder alcançado por meio das saídas (ex: aumento de vendas online habilitado pela aplicação)."
+            },
+            {
+                category: "Conceitos Chave - ITIL v4",
+                front: "O que significam **Utilidade (Utility)** e **Garantia (Warranty)**?",
+                back: "• <b>Utilidade:</b> A funcionalidade oferecida por um produto/serviço para atender a uma necessidade específica ('O que o serviço faz' / *Fit for purpose*).<br>• <b>Garantia:</b> A certeza de que o serviço atenderá aos requisitos de disponibilidade, capacidade, continuidade e segurança ('Como o serviço é entregue' / *Fit for use*)."
+            },
+            {
+                category: "Conceitos Chave - ITIL v4",
+                front: "Quem são os diferentes papéis do **Consumidor do Serviço**?",
+                back: "1. <b>Cliente (Customer):</b> Define os requisitos do serviço e assume a responsabilidade pelo consumo.<br>2. <b>Usuário (User):</b> Pessoa que utiliza os serviços no dia a dia.<br>3. <b>Sponsor (Patrocinador):</b> Autoriza o orçamento para o consumo do serviço."
+            },
+            {
+                category: "4 Dimensões da Gestão de Serviços",
+                front: "Quais são as **4 Dimensões da Gestão de Serviços** no ITIL v4?",
+                back: "1. <b>Organizações e Pessoas</b><br>2. <b>Informação e Tecnologia</b><br>3. <b>Parceiros e Fornecedores</b><br>4. <b>Fluxos de Valor e Processos</b><br><br><i>Elas devem ser balanceadas de forma holística para criar valor eficientemente.</i>"
+            },
+            {
+                category: "4 Dimensões da Gestão de Serviços",
+                front: "O que engloba a dimensão **Organizações e Pessoas**?",
+                back: "Engloba a cultura organizacional, estruturas formais, papéis e responsabilidades, competências e recursos humanos necessários para a entrega do serviço."
+            },
+            {
+                category: "4 Dimensões da Gestão de Serviços",
+                front: "O que abrange a dimensão **Fluxos de Valor e Processos**?",
+                back: "Define as atividades, fluxos de trabalho, controles e procedimentos necessários para transformar entradas em saídas de valor, garantindo eficiência e integração."
+            },
+            {
+                category: "4 Dimensões - Fatores Externos",
+                front: "Quais fatores externos influenciam as 4 dimensões (Modelo PESTLE)?",
+                back: "Fatores **P**olíticos, **E**conômicos, **S**ocioculturais, **T**ecnológicos, **L**egais (*Legal*) e **E**cológicos (*Environmental*)."
+            },
+            {
+                category: "Sistema de Valor de Serviço (SVS)",
+                front: "O que é o **Sistema de Valor de Serviço (SVS)** da ITIL v4?",
+                back: "Representa como todos os componentes e atividades da organização trabalham juntos como um sistema para facilitar a criação de valor. Converte **Oportunidade/Demanda** em **Valor**."
+            },
+            {
+                category: "Sistema de Valor de Serviço (SVS)",
+                front: "Quais são os 5 componentes do **SVS**?",
+                back: "1. <b>Princípios Orientadores</b> (Guiding Principles)<br>2. <b>Governança</b><br>3. <b>Cadeia de Valor do Serviço</b> (SVC)<br>4. <b>Práticas</b> (Practices)<br>5. <b>Melhoria Contínua</b>"
+            },
+            {
+                category: "Princípios Orientadores",
+                front: "Quantos e quais são os **Princípios Orientadores** da ITIL v4?",
+                back: "São **7 princípios**:<br>1. Foco no valor<br>2. Começar de onde você está<br>3. Progredir iterativamente com feedback<br>4. Colaborar e promover visibilidade<br>5. Pensar e trabalhar holisticamente<br>6. Manter de forma simples e prática<br>7. Otimizar e automatizar"
+            },
+            {
+                category: "Princípios Orientadores",
+                front: "O que defende o princípio **'Começar de onde você está'**?",
+                back: "Avisar contra começar do zero sem analisar o que já existe. Deve-se avaliar o estado atual para aproveitar processos, ferramentas e conhecimentos válidos existentes."
+            },
+            {
+                category: "Princípios Orientadores",
+                front: "O que prega o princípio **'Progredir iterativamente com feedback'**?",
+                back: "Dividir iniciativas em partes menores e gerenciáveis (iterações). Utilizar loops de feedback antes, durante e após cada iteração para ajustar o rumo."
+            },
+            {
+                category: "Cadeia de Valor do Serviço (SVC)",
+                front: "O que é a **Cadeia de Valor do Serviço (Service Value Chain - SVC)**?",
+                back: "É o elemento central do SVS. Um modelo operacional que delineia as atividades chave necessárias para responder à demanda e facilitar a realização de valor através da criação e gestão de serviços."
+            },
+            {
+                category: "Cadeia de Valor do Serviço (SVC)",
+                front: "Quais são as 6 atividades da **Cadeia de Valor do Serviço (SVC)**?",
+                back: "1. <b>Planejar (Plan)</b><br>2. <b>Melhorar (Improve)</b><br>3. <b>Engajar (Engage)</b><br>4. <b>Desenho e Transição (Design & Transition)</b><br>5. <b>Obter/Construir (Obtain/Build)</b><br>6. <b>Entregar e Suportar (Deliver & Support)</b>"
+            },
+            {
+                category: "Cadeia de Valor do Serviço (SVC)",
+                front: "Qual é o objetivo da atividade **Engajar (Engage)** na SVC?",
+                back: "Proporcionar uma boa compreensão das necessidades dos stakeholders, transparência e bom relacionamento contínuo com todos os envolvidos."
+            },
+            {
+                category: "Práticas do ITIL v4",
+                front: "Como estão divididas as 34 **Práticas** no ITIL v4?",
+                back: "• <b>Práticas Gerais de Gestão:</b> 14 práticas<br>• <b>Práticas de Gestão de Serviços:</b> 17 práticas<br>• <b>Práticas de Gestão Técnica:</b> 3 práticas"
+            },
+            {
+                category: "Práticas - Gestão de Serviços",
+                front: "Qual é a finalidade do **Gerenciamento de Incidentes**?",
+                back: "Minimizar o impacto negativo na operação dos negócios, restaurando a operação normal do serviço o mais rápido possível."
+            },
+            {
+                category: "Práticas - Gestão de Serviços",
+                front: "O que é um **Incidente** segundo o ITIL v4?",
+                back: "Uma interrupção não planejada de um serviço ou a redução da qualidade de um serviço de TI."
+            },
+            {
+                category: "Práticas - Gestão de Serviços",
+                front: "Qual é a diferença entre **Incidente** e **Problema**?",
+                back: "• <b>Incidente:</b> Foco na restauração rápida do serviço (sintoma).<br>• <b>Problema:</b> Foco em identificar a causa raiz desconhecida de um ou mais incidentes para evitar reincidências."
+            },
+            {
+                category: "Práticas - Gestão de Serviços",
+                front: "Quais são as 3 fases do **Gerenciamento de Problemas**?",
+                back: "1. <b>Identificação de Problemas:</b> Detecção via análise de incidentes.<br>2. <b>Controle de Problemas:</b> Análise de causa raiz e contornar (*Workaround*).<br>3. <b>Controle de Erros:</b> Gestão de erros conhecidos (*Known Errors*)."
+            },
+            {
+                category: "Práticas - Gestão de Serviços",
+                front: "O que é um **Contorno (Workaround)** no Gerenciamento de Problemas?",
+                back: "Uma solução temporária que reduz ou elimina o impacto de um incidente ou problema para o qual uma resolução definitiva ainda não está disponível."
+            },
+            {
+                category: "Práticas - Gestão de Serviços",
+                front: "Qual é o papel da **Central de Serviços (Service Desk)**?",
+                back: "Servir como o **ponto único de contato (SPOC)** entre o provedor de serviço e os usuários para relatar incidentes, dúvidas e requisições de serviço."
+            },
+            {
+                category: "Práticas - Gestão de Serviços",
+                front: "O que é o **Gerenciamento de Requisições de Serviço**?",
+                back: "Prática para dar suporte à qualidade acordada do serviço, lidando com todas as solicitações pré-aprovadas e iniciadas pelo usuário (ex: trocar senha, solicitar um novo monitor)."
+            },
+            {
+                category: "Práticas - Gestão de Serviços",
+                front: "O que é **Habilitação de Mudança (Change Enablement)**?",
+                back: "Prática para maximizar o número de mudanças bem-sucedidas de produtos/serviços, garantindo que os riscos sejam avaliados, autorizando mudanças e gerenciando o calendário de mudanças."
+            },
+            {
+                category: "Práticas - Gestão de Serviços",
+                front: "Quais são os 3 tipos de mudanças tratadas pela Habilitação de Mudança?",
+                back: "1. <b>Padrão (Standard):</b> De baixo risco, pré-autorizada e rotineira.<br>2. <b>Normal:</b> Precisa de avaliação, agendamento e autorização formal.<br>3. <b>Emergencial:</b> Deve ser implementada o mais rápido possível para resolver/prevenir incidentes graves."
+            },
+            {
+                category: "Práticas - Gestão de Serviços",
+                front: "O que é o **Gerenciamento de Nível de Serviço (SLA)**?",
+                back: "Prática para definir metas claras baseadas no negócio para os níveis de serviço e garantir que a entrega dos serviços seja monitorada e gerenciada em relação a essas metas."
+            },
+            {
+                category: "Práticas Gerais",
+                front: "O que é o modelo de **Melhoria Contínua** no ITIL v4?",
+                back: "Um guia estruturado para executar melhorias composto por 7 passos:<br>1. Qual é a visão?<br>2. Onde estamos agora?<br>3. Onde queremos chegar?<br>4. Como chegamost lá?<br>5. Agir (Tomar medidas)<br>6. Chegamos lá?<br>7. Como mantemos o impulso?"
+            },
+            {
+                category: "Práticas Gerais",
+                front: "O que é a **Gestão de Ativos de TI (IT Asset Management - ITAM)**?",
+                back: "Prática responsável por planejar e gerenciar todo o ciclo de vida dos ativos de TI (hardware, software, nuvem) para maximizar o valor, controlar custos e gerenciar riscos."
+            }
+        ];
+
+        let currentIndex = 0;
+        const cardElement = document.getElementById('flashcard');
+        const categoryElement = document.getElementById('card-category');
+        const frontElement = document.getElementById('card-front');
+        const backElement = document.getElementById('card-back');
+        const trackerElement = document.getElementById('card-tracker');
+
+        // Helper function to render Markdown bold **text** to <b>text</b>
+        function parseFormatting(str) {
+            return str.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+        }
+
+        function updateCard() {
+            cardElement.classList.remove('is-flipped');
+            setTimeout(() => {
+                const currentData = cardsData[currentIndex];
+                categoryElement.innerText = currentData.category;
+                frontElement.innerHTML = parseFormatting(currentData.front);
+                backElement.innerHTML = parseFormatting(currentData.back);
+                trackerElement.innerText = `Card ${currentIndex + 1} de ${cardsData.length}`;
+            }, 150);
+        }
+
+        function flipCard() {
+            cardElement.classList.toggle('is-flipped');
+        }
+
+        function nextCard() {
+            currentIndex = (currentIndex + 1) % cardsData.length;
+            updateCard();
+        }
+
+        function prevCard() {
+            currentIndex = (currentIndex - 1 + cardsData.length) % cardsData.length;
+            updateCard();
+        }
+
+        // Initialize App
+        updateCard();
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') nextCard();
+            if (e.key === 'ArrowLeft') prevCard();
+            if (e.key === ' ' || e.key === 'Enter') {
+                e.preventDefault();
+                flipCard();
+            }
+        });
+    </script>
+</body>
+</html>
