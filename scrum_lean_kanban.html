@@ -1,0 +1,581 @@
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Interativo: Articulação do Texto e Coesão</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            500: '#2563eb',
+                            600: '#1d4ed8',
+                            700: '#1e40af',
+                            800: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Aumenta a base de todas as fontes do site */
+    html {
+        font-size: 19px; /* O padrão é 16px. Aumente para 18px ou 20px */
+    }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col justify-between">
+
+    <!-- Navbar -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="bg-brand-600 text-white p-2.5 rounded-xl shadow-sm">
+                    <i class="fa-solid fa-[#fa-book-open] text-xl"></i>
+                    <i class="fa-solid fa-pen-nib text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold text-slate-900 leading-tight">Quiz de Língua Portuguesa</h1>
+                    <p class="text-xs text-slate-500">Articulação do Texto: Pronomes, Referenciação e Nexos</p>
+                </div>
+            </div>
+
+            <!-- Mode Selector & Stats -->
+            <div class="flex items-center gap-4">
+                <div class="hidden sm:flex bg-slate-100 p-1 rounded-lg text-xs font-semibold">
+                    <button id="btnModeStudy" onclick="setMode('study')" class="px-3 py-1.5 rounded-md transition-all bg-white text-brand-600 shadow-sm">
+                        <i class="fa-solid fa-[#fa-graduation-cap] mr-1"></i> Modo Estudo
+                    </button>
+                    <button id="btnModeExam" onclick="setMode('exam')" class="px-3 py-1.5 rounded-md transition-all text-slate-600 hover:text-slate-900">
+                        <i class="fa-solid fa-stopwatch mr-1"></i> Modo Simulado
+                    </button>
+                </div>
+
+                <div class="flex items-center gap-2 bg-brand-50 text-brand-700 px-3 py-1.5 rounded-lg border border-brand-100 text-sm font-semibold">
+                    <i class="fa-solid fa-trophy text-brand-500"></i>
+                    <span id="scoreDisplay">0 / 20</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-6xl mx-auto px-4 py-6 flex-1 w-full grid grid-cols-1 lg:grid-cols-4 gap-6">
+
+        <!-- Sidebar Navigation Grid (Desktop) -->
+        <aside class="lg:col-span-1 order-2 lg:order-1 bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col h-fit">
+            <div class="flex justify-between items-center mb-3">
+                <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wider">Navegador</h2>
+                <span id="progressPercent" class="text-xs font-semibold text-brand-600">0% concluído</span>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden mb-4">
+                <div id="progressBar" class="bg-brand-600 h-full w-0 transition-all duration-300"></div>
+            </div>
+
+            <!-- Question Grid Buttons -->
+            <div id="questionGrid" class="grid grid-cols-5 gap-2 mb-4">
+                <!-- Javascript will insert 20 question buttons here -->
+            </div>
+
+            <!-- Legend -->
+            <div class="text-xs text-slate-500 border-t border-slate-100 pt-3 space-y-1.5">
+                <div class="flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full bg-slate-200 inline-block"></span>
+                    <span>Não respondida</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full bg-brand-600 inline-block"></span>
+                    <span>Respondida</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full bg-amber-400 inline-block"></span>
+                    <span>Marcada p/ revisão</span>
+                </div>
+            </div>
+
+            <button onclick="finishQuiz()" class="mt-5 w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm rounded-lg transition shadow">
+                <i class="fa-solid fa-flag-checkered mr-2"></i> Finalizar Quiz
+            </button>
+        </aside>
+
+        <!-- Question Section -->
+        <section class="lg:col-span-3 order-1 lg:order-2 flex flex-col justify-between">
+            
+            <!-- Quiz Screen -->
+            <div id="quizCard" class="bg-white p-6 sm:p-8 rounded-xl border border-slate-200 shadow-sm mb-4 min-h-[420px] flex flex-col justify-between">
+                <div>
+                    <!-- Header Question Info -->
+                    <div class="flex justify-between items-start mb-4 pb-3 border-b border-slate-100">
+                        <div class="flex items-center gap-2">
+                            <span id="questionCategory" class="px-2.5 py-1 bg-brand-50 text-brand-700 text-xs font-semibold rounded-md border border-brand-100">
+                                Categoria
+                            </span>
+                            <span id="questionNumberBadge" class="text-xs font-semibold text-slate-400">
+                                Questão 1 de 20
+                            </span>
+                        </div>
+                        <button id="btnBookmark" onclick="toggleBookmark()" class="text-slate-400 hover:text-amber-500 text-sm font-medium transition flex items-center gap-1.5">
+                            <i class="fa-regular fa-bookmark"></i>
+                            <span class="hidden sm:inline">Revisar</span>
+                        </button>
+                    </div>
+
+                    <!-- Question Text -->
+                    <div class="mb-6">
+                        <h3 id="questionTitle" class="text-base sm:text-lg font-semibold text-slate-900 leading-relaxed">
+                            Carregando questão...
+                        </h3>
+                    </div>
+
+                    <!-- Answer Options -->
+                    <div id="optionsContainer" class="space-y-3">
+                        <!-- Dynamic options generated by JS -->
+                    </div>
+
+                    <!-- Explanation/Rationale Box (Study Mode) -->
+                    <div id="explanationBox" class="hidden mt-6 p-4 rounded-xl bg-slate-50 border border-slate-200 text-sm">
+                        <div class="flex items-center gap-2 font-bold mb-1 text-slate-800" id="explanationHeader">
+                            <i class="fa-solid fa-circle-info"></i> Justificativa Gramatical
+                        </div>
+                        <p id="explanationText" class="text-slate-600 leading-relaxed"></p>
+                    </div>
+                </div>
+
+                <!-- Footer Navigation Buttons -->
+                <div class="flex justify-between items-center mt-8 pt-4 border-t border-slate-100">
+                    <button id="btnPrev" onclick="navigateQuestion(-1)" class="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 font-medium text-sm transition disabled:opacity-40 disabled:cursor-not-allowed">
+                        <i class="fa-solid fa-chevron-left mr-1"></i> Anterior
+                    </button>
+                    <button id="btnNext" onclick="navigateQuestion(1)" class="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg font-medium text-sm transition shadow-sm">
+                        Próxima <i class="fa-solid fa-chevron-right ml-1"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Screen (Hidden initially) -->
+            <div id="resultsCard" class="hidden bg-white p-6 sm:p-8 rounded-xl border border-slate-200 shadow-sm text-center">
+                <div class="w-20 h-20 mx-auto mb-4 rounded-full flex items-center justify-center bg-brand-50 text-brand-600 text-3xl">
+                    <i class="fa-solid fa-award"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-slate-900 mb-1">Resultado do Quiz</h2>
+                <p class="text-sm text-slate-500 mb-6">Confira seu desempenho em Articulação e Coesão Textual</p>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-lg mx-auto mb-8">
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                        <span class="block text-xs font-semibold text-slate-400 uppercase">Pontuação</span>
+                        <span id="finalScore" class="text-2xl font-extrabold text-slate-800">0 / 20</span>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                        <span class="block text-xs font-semibold text-slate-400 uppercase">Aproveitamento</span>
+                        <span id="finalPercent" class="text-2xl font-extrabold text-brand-600">0%</span>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                        <span class="block text-xs font-semibold text-slate-400 uppercase">Desempenho</span>
+                        <span id="finalFeedback" class="text-sm font-bold text-slate-700 mt-1 block">Satisfatório</span>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap justify-center gap-3">
+                    <button onclick="restartQuiz()" class="px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-medium text-sm rounded-lg transition shadow">
+                        <i class="fa-solid fa-rotate-right mr-2"></i> Refazer Quiz
+                    </button>
+                    <button onclick="reviewQuiz()" class="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-sm rounded-lg transition">
+                        <i class="fa-solid fa-magnifying-glass mr-2"></i> Revisar Respostas
+                    </button>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-4 mt-8">
+        <div class="max-w-6xl mx-auto px-4 text-center text-xs text-slate-400">
+            Quiz Pedagógico de Coesão Textual &bull; Prática de Sintaxe, Semântica e Conectivos do Português.
+        </div>
+    </footer>
+
+    <!-- JavaScript Quiz Logic -->
+    <script>
+        // Database of 20 Portuguese Questions
+       const questionsData = [
+{
+        id: 33,
+        category: "Tipos de Abordagem e Metodologias",
+        question: "Qual abordagem de gerenciamento de projetos é caracterizada pelo planejamento detalhado na fase inicial e entregas sequenciais ao longo do ciclo de vida?",
+        options: [
+            { text: "Abordagem Tradicional (Preditiva).", isCorrect: true, rationale: "Projetos preditivos definem escopo e cronograma rigidamente no início e entregam o produto final em fases sequenciais." },
+            { text: "Abordagem Ágil.", isCorrect: false, rationale: "O modelo ágil trabalha com planejamento iterativo e entregas incrementais." },
+            { text: "Abordagem Híbrida.", isCorrect: false, rationale: "A abordagem híbrida mescla características preditivas e adaptativas." },
+            { text: "Método Kanban.", isCorrect: false, rationale: "O Kanban é um método adaptativo focado na gestão visual do fluxo de trabalho." }
+        ],
+        hint: "Pense no modelo em cascata (Waterfall), onde as fases acontecem em sequência pré-determinada."
+    },
+    {
+        id: 34,
+        category: "Tipos de Abordagem e Metodologias",
+        question: "No framework Scrum, quem é o responsável por gerenciar o Product Backlog e maximizar o valor do produto?",
+        options: [
+            { text: "Product Owner.", isCorrect: true, rationale: "O Product Owner é a voz dos stakeholders/clientes e prioriza os itens no Product Backlog para maximizar o valor entregue." },
+            { text: "Scrum Master.", isCorrect: false, rationale: "O Scrum Master garante a aplicação do framework e remove impedimentos." },
+            { text: "Developers.", isCorrect: false, rationale: "Os desenvolvedores criam o incremento a cada Sprint." },
+            { text: "Gerente de Projeto.", isCorrect: false, rationale: "O papel de Gerente de Projeto tradicional não existe formalmente no Scrum." }
+        ],
+        hint: "Identifique a pessoa que define a visão do produto e representa as necessidades dos clientes/stakeholders."
+    },
+    {
+        id: 35,
+        category: "Tipos de Abordagem e Metodologias",
+        question: "No Método Kanban, a prática de limitar o WIP (Work in Progress) visa principalmente:",
+        options: [
+            { text: "Evitar gargalos e a sobrecarga de trabalho na equipe.", isCorrect: true, rationale: "Limitar o trabalho em andamento (WIP) força o encerramento de tarefas antes do início de novas, otimizando o fluxo." },
+            { text: "Aumentar o número de reuniões diárias.", isCorrect: false, rationale: "O Kanban busca eficiência no fluxo e não o aumento da frequência de reuniões." },
+            { text: "Garantir a documentação extensa antes de iniciar a execução.", isCorrect: false, rationale: "Documentação extensa é uma prática característica da abordagem tradicional." },
+            { text: "Eliminar a necessidade do quadro visual.", isCorrect: false, rationale: "O quadro visual é um pilar fundamental do método Kanban." }
+        ],
+        hint: "Lembre-se do foco do Kanban em focar no término das tarefas iniciadas para melhorar a vazão."
+    },
+    {
+        id: 36,
+        category: "Tipos de Abordagem e Metodologias",
+        question: "Qual o objetivo central do pensamento Lean na gestão de processos e projetos?",
+        options: [
+            { text: "Eliminar desperdícios e maximizar o valor gerado.", isCorrect: true, rationale: "A filosofia Lean foca no fluxo contínuo, eliminação de desperdícios (muda) e melhoria contínua (Kaizen)." },
+            { text: "Aumentar o estoque de produtos finais para demandas futuras.", isCorrect: false, rationale: "O acúmulo de estoque é considerado um dos principais desperdícios no Lean." },
+            { text: "Garantir o uso obrigatório do modelo em cascata.", isCorrect: false, rationale: "O Lean pode ser integrado a variadas formas de gestão adaptativa." },
+            { text: "Definir papéis rígidos como Product Owner e Scrum Master.", isCorrect: false, rationale: "Estes papéis pertencem ao framework Scrum, não à metodologia Lean." }
+        ],
+        hint: "Pense na palavra 'enxuto' (tradução de Lean) e em eliminar o que não agrega valor."
+    },
+    {
+        id: 37,
+        category: "Tipos de Abordagem e Metodologias",
+        question: "Uma equipe utiliza planejamento preditivo de escopo/orçamento, mas executa o desenvolvimento em Sprints do Scrum. Essa abordagem é:",
+        options: [
+            { text: "Híbrida.", isCorrect: true, rationale: "A combinação de técnicas preditivas com práticas adaptativas caracteriza uma gestão híbrida." },
+            { text: "Exclusivamente Tradicional.", isCorrect: false, rationale: "A presença de Sprints do Scrum afasta a exclusividade da abordagem preditiva." },
+            { text: "Ágil pura.", isCorrect: false, rationale: "Em uma abordagem puramente ágil, o escopo inicial não é fixado rigorosamente." },
+            { text: "Kanban puro.", isCorrect: false, rationale: "O ciclo por Sprints pertence ao Scrum, não sendo característico do Kanban solo." }
+        ],
+        hint: "Note a coexistência de dois modelos distintos (tradicional + ágil) em um mesmo projeto."
+    },
+    {
+        id: 38,
+        category: "Tipos de Abordagem e Metodologias",
+        question: "Segundo o Guia Scrum, a duração máxima de uma Sprint deve ser de:",
+        options: [
+            { text: "Até 1 mês.", isCorrect: true, rationale: "O Guia Scrum estabelece que a Sprint é um evento timeboxed de um mês ou menos para manter a previsibilidade." },
+            { text: "No mínimo 2 meses.", isCorrect: false, rationale: "Sprints com mais de um mês aumentam a complexidade e o risco do projeto." },
+            { text: "Exatamente 15 dias.", isCorrect: false, rationale: "Embora 2 semanas seja comum no mercado, a regra do Guia Scrum é 'um mês ou menos'." },
+            { text: "Sem tempo limite definido.", isCorrect: false, rationale: "Toda Sprint é um evento com tempo fixado (timeboxed)." }
+        ],
+        hint: "O Guia Scrum especifica uma limitação temporal máxima para manter o ciclo curto."
+    },
+    {
+        id: 39,
+        category: "Tipos de Abordagem e Metodologias",
+        question: "No Scrum, a reunião de até 15 minutos realizada para inspecionar o progresso em direção à Meta da Sprint é a:",
+        options: [
+            { text: "Daily Scrum.", isCorrect: true, rationale: "A Daily Scrum é uma reunião diária de 15 minutos para os desenvolvedores sincronizarem as atividades." },
+            { text: "Sprint Review.", isCorrect: false, rationale: "A Sprint Review inspeciona o incremento criado no final da Sprint junto aos stakeholders." },
+            { text: "Sprint Retrospective.", isCorrect: false, rationale: "A Retrospectiva foca na melhoria de processos, pessoas e ferramentas do time." },
+            { text: "Sprint Planning.", isCorrect: false, rationale: "O Planejamento da Sprint define o trabalho a ser realizado na Sprint atual." }
+        ],
+        hint: "Trata-se do alinhamento frequente realizado no início de cada dia de trabalho."
+    },
+    {
+        id: 40,
+        category: "Tipos de Abordagem e Metodologias",
+        question: "Qual pilar do empirismo no Scrum se refere a tornar o processo e o estado do trabalho visíveis a todos?",
+        options: [
+            { text: "Transparência.", isCorrect: true, rationale: "Os três pilares do empirismo são Transparência, Inspeção e Adaptação." },
+            { text: "Planejamento Rígido.", isCorrect: false, rationale: "Planejamento rígido contrapõe-se à natureza empírica do Scrum." },
+            { text: "Documentação Detalhada.", isCorrect: false, rationale: "Não é um pilar oficial do empirismo dentro do Guia Scrum." },
+            { text: "Hierarquia Formal.", isCorrect: false, rationale: "O Scrum baseia-se em times auto-gerenciáveis, e não em hierarquias." }
+        ],
+        hint: "Lembre-se da necessidade de que o estado do trabalho seja compreensível e visível."
+    },
+    {
+        id: 41,
+        category: "Tipos de Abordagem e Metodologias",
+        question: "No Kanban, o tempo decorrido desde o pedido do cliente até a entrega final do item é chamado de:",
+        options: [
+            { text: "Lead Time.", isCorrect: true, rationale: "Lead Time mede o ciclo completo, da solicitação inicial à entrega ao cliente." },
+            { text: "Cycle Time.", isCorrect: false, rationale: "Cycle Time mede apenas o tempo de trabalho ativo na execução da tarefa." },
+            { text: "Sprint Time.", isCorrect: false, rationale: "Sprint é o período de trabalho do Scrum, não uma métrica do Kanban." },
+            { text: "Setup Time.", isCorrect: false, rationale: "Setup Time é o tempo de preparação em processos industriais." }
+        ],
+        hint: "Métrica que considera a experiência total do cliente, do início ao fim."
+    },
+    {
+        id: 42,
+        category: "Tipos de Abordagem e Metodologias",
+        question: "Dentre as opções abaixo, qual é um artefato do Scrum com seu respectivo compromisso segundo o Guia Scrum?",
+        options: [
+            { text: "Product Backlog / Meta do Produto (Product Goal).", isCorrect: true, rationale: "O compromisso associado ao Product Backlog é a Meta do Produto." },
+            { text: "Sprint Backlog / Definição de Concluído (Definition of Done).", isCorrect: false, rationale: "A Definição de Concluído é o compromisso do Incremento." },
+            { text: "Incremento / Meta da Sprint (Sprint Goal).", isCorrect: false, rationale: "A Meta da Sprint é o compromisso do Sprint Backlog." },
+            { text: "Product Backlog / Visão do Negócio.", isCorrect: false, rationale: "Visão do Negócio não é o compromisso formal do Product Backlog no Guia Scrum." }
+        ],
+        hint: "Associe a lista geral de requisitos à meta de longo prazo do produto."
+    },
+    {
+        id: 43,
+        category: "Tipos de Abordagem e Metodologias",
+        question: "Qual a função do Scrum Master perante a equipe Scrum?",
+        options: [
+            { text: "Líder que serve à equipe e ajuda a remover impedimentos.", isCorrect: true, rationale: "O Scrum Master promove as práticas do Scrum, apoia a equipe como um líder servidor e remove bloqueios." },
+            { text: "Gerente responsável por atribuir tarefas individualmente aos desenvolvedores.", isCorrect: false, rationale: "No Scrum, a equipe de desenvolvimento é auto-gerenciável." },
+            { text: "Representante comercial encarregado da venda do produto.", isCorrect: false, rationale: "O alinhamento do valor de negócio cabe ao Product Owner." },
+            { text: "Auditor externo focado na aprovação do orçamento.", isCorrect: false, rationale: "Não é função do Scrum Master atuar como auditor financeiro." }
+        ],
+        hint: "Foque na liderança facilitadora e no suporte ao time."
+    },
+    {
+        id: 44,
+        category: "Tipos de Abordagem e Metodologias",
+        question: "No contexto do Lean, o conceito de 'Kaizen' representa:",
+        options: [
+            { text: "Melhoria contínua evolutiva em todos os processos.", isCorrect: true, rationale: "Kaizen é a prática de buscar constantemente pequenas melhorias em processos e produtos." },
+            { text: "O evento de cancelamento imediato do projeto.", isCorrect: false, rationale: "Kaizen refere-se a aprimoramento e progresso, não a cancelamento." },
+            { text: "A produção máxima independentemente da demanda.", isCorrect: false, rationale: "O Lean visa a produção puxada, evitando o excesso de produção." },
+            { text: "Um software de gestão visual de tarefas.", isCorrect: false, rationale: "Kaizen é uma filosofia de melhoria, não um software." }
+        ],
+        hint: "Palavra de origem japonesa que significa mudar para melhor de forma contínua."
+    },
+    {
+        id: 45,
+        category: "Tipos de Abordagem e Metodologias",
+        question: "O que caracteriza um sistema de produção 'puxado' no Lean/Kanban?",
+        options: [
+            { text: "O trabalho é iniciado apenas conforme a demanda ou capacidade disponível.", isCorrect: true, rationale: "No sistema puxado, novas tarefas só entram no fluxo quando há solicitação da etapa seguinte ou capacidade ociosa." },
+            { text: "A liderança impõe a execução do maior número possível de tarefas.", isCorrect: false, rationale: "Atribuir tarefas compulsoriamente caracteriza um sistema 'empurrado'." },
+            { text: "Os produtos são fabricados antes da existência do pedido.", isCorrect: false, rationale: "Estocar sem demanda prévia é um desperdício no Lean." },
+            { text: "O uso exclusivo de cronogramas estáticos sem ajustes.", isCorrect: false, rationale: "Sistemas puxados adaptam-se dinamicamente ao fluxo real do trabalho." }
+        ],
+        hint: "Pense no conceito de só fabricar ou mover algo quando a etapa seguinte 'pede'."
+    },
+    {
+        id: 46,
+        category: "Tipos de Abordagem e Metodologias",
+        question: "No Scrum, o evento onde a equipe inspeciona o próprio trabalho, relacionamentos e ferramentas para planejar melhorias de processo é a:",
+        options: [
+            { text: "Sprint Retrospective.", isCorrect: true, rationale: "A Retrospectiva da Sprint foca na melhoria contínua da própria equipe e de suas formas de trabalho." },
+            { text: "Sprint Review.", isCorrect: false, rationale: "A Review analisa o incremento do produto com os clientes e partes interessadas." },
+            { text: "Daily Scrum.", isCorrect: false, rationale: "A Daily alinha as tarefas diárias do time em direção à Meta da Sprint." },
+            { text: "Sprint Planning.", isCorrect: false, rationale: "A Planning planeja as entregas do ciclo que se inicia." }
+        ],
+        hint: "Evento de autoinspeção do time com foco na evolução contínua da equipe."
+    },
+    {
+        id: 47,
+        category: "Tipos de Abordagem e Metodologias",
+        question: "Qual a diferença central entre abordagens Tradicionais (Preditivas) e Ágeis (Adaptativas) no gerenciamento de projetos?",
+        options: [
+            { text: "Nas tradicionais, o escopo é fixado inicialmente; nas ágeis, o escopo é adaptativo ao longo do projeto.", isCorrect: true, rationale: "Projetos tradicionais fixam escopo no início e estimam tempo/custo. Projetos ágeis fixam tempo/recursos e adaptam o escopo." },
+            { text: "Projetos ágeis não realizam nenhum planejamento.", isCorrect: false, rationale: "Projetos ágeis planejam constantemente em ciclos curtos." },
+            { text: "Projetos tradicionais não possuem restrições de custo.", isCorrect: false, rationale: "Projetos tradicionais gerenciam rigorosamente o custo." },
+            { text: "Abordagens ágeis proíbem qualquer participação do cliente.", isCorrect: false, rationale: "O engajamento do cliente é contínuo e essencial nas abordagens ágeis." }
+        ],
+        hint: "Considere a flexibilidade em relação ao escopo inicial e o momento de definição."
+    },
+    {
+        id: 48,
+        category: "Tipos de Abordagem e Metodologias",
+        question: "Qual das opções a seguir NÃO faz parte dos eventos formais do Framework Scrum?",
+        options: [
+            { text: "Reunião de Alocação de Recursos.", isCorrect: true, rationale: "Não existe este evento formal no Scrum; os eventos são Sprint Planning, Daily, Review, Retrospective e a própria Sprint." },
+            { text: "Sprint Planning.", isCorrect: false, rationale: "É o evento inicial do ciclo da Sprint." },
+            { text: "Sprint Review.", isCorrect: false, rationale: "É o evento de inspeção do incremento final." },
+            { text: "Sprint Retrospective.", isCorrect: false, rationale: "É o evento de inspeção e melhoria contínua do time." }
+        ],
+        hint: "Identifique a opção que não integra os 5 eventos oficiais descritos no Guia Scrum."
+    },
+    {
+        id: 49,
+        category: "Tipos de Abordagem e Metodologias",
+        question: "No Kanban, o 'Cycle Time' representa:",
+        options: [
+            { text: "O tempo em que uma tarefa fica ativamente sendo trabalhada, do início até a conclusão.", isCorrect: true, rationale: "Cycle Time mede a duração desde o início do desenvolvimento até o término." },
+            { text: "O tempo total entre o pedido do cliente e a entrega.", isCorrect: false, rationale: "O tempo total da solicitação à entrega é denominado Lead Time." },
+            { text: "A duração padrão de uma reunião de retrospectiva.", isCorrect: false, rationale: "A duração de reuniões é timebox, não Cycle Time." },
+            { text: "O intervalo de tempo fixado para o encerramento do projeto.", isCorrect: false, rationale: "Representa a medição de itens de trabalho individuais no fluxo." }
+        ],
+        hint: "Foque na etapa onde o trabalho está sendo 'mão na massa' no quadro."
+    },
+    {
+        id: 50,
+        category: "Tipos de Abordagem e Metodologias",
+        question: "Em relação aos papéis no Scrum, a responsabilidade por estimar o esforço das tarefas do Sprint Backlog cabe aos:",
+        options: [
+            { text: "Developers.", isCorrect: true, rationale: "Os desenvolvedores que realizarão o trabalho são os responsáveis pelas estimativas." },
+            { text: "Product Owner.", isCorrect: false, rationale: "O Product Owner prioriza os itens do backlog, mas não impõe as estimativas de esforço." },
+            { text: "Scrum Master.", isCorrect: false, rationale: "O Scrum Master facilita o processo, mas não estima as tarefas técnicas." },
+            { text: "Gerente de Portfólio.", isCorrect: false, rationale: "Gerentes externos não estimam o trabalho das Sprints no Scrum." }
+        ],
+        hint: "A estimativa é feita por quem realmente executará a entrega."
+    },
+    {
+        id: 51,
+        category: "Tipos de Abordagem e Metodologias",
+        question: "Qual conceito Lean refere-se aos desperdícios gerados nos processos?",
+        options: [
+            { text: "Muda.", isCorrect: true, rationale: "Na terminologia Lean, 'Muda' refere-se às atividades que consomem recursos sem agregar valor (desperdício)." },
+            { text: "Kanban.", isCorrect: false, rationale: "Kanban representa a ferramenta/método de sinalização visual do fluxo." },
+            { text: "Sprint.", isCorrect: false, rationale: "Sprint é o ciclo de trabalho do framework Scrum." },
+            { text: "Poka-Yoke.", isCorrect: false, rationale: "Poka-Yoke refere-se a mecanismos à prova de erros." }
+        ],
+        hint: "Termo japonês do Lean diretamente associado ao conceito de desperdício."
+    },
+    {
+        id: 52,
+        category: "Tipos de Abordagem e Metodologias",
+        question: "O compromisso oficial vinculado ao artefato 'Incremento' no Guia Scrum é a:",
+        options: [
+            { text: "Definição de Concluído (Definition of Done).", isCorrect: true, rationale: "A Definição de Concluído garante que o incremento atenda aos padrões de qualidade requeridos." },
+            { text: "Meta da Sprint (Sprint Goal).", isCorrect: false, rationale: "A Meta da Sprint é o compromisso do Sprint Backlog." },
+            { text: "Meta do Produto (Product Goal).", isCorrect: false, rationale: "A Meta do Produto é o compromisso do Product Backlog." },
+            { text: "Visão do Escopo.", isCorrect: false, rationale: "Não constitui um compromisso formal do Guia Scrum." }
+        ],
+        hint: "Critério de qualidade obrigatório para que uma tarefa seja considerada um incremento válido."
+    },
+    {
+        id: 53,
+        category: "Tipos de Abordagem e Metodologias",
+        question: "O que acontece com os itens do Sprint Backlog que não foram concluídos ao final de uma Sprint?",
+        options: [
+            { text: "Retornam ao Product Backlog para reavaliação e repriorização.", isCorrect: true, rationale: "Itens não concluídos reingressam ao Product Backlog e o Product Owner decide seu destino futuro." },
+            { text: "São considerados automaticamente prontos e entregues.", isCorrect: false, rationale: "Apenas itens que atendem à Definição de Concluído podem ser integrados ao Incremento." },
+            { text: "A equipe é obrigada a realizar horas extras até concluí-los.", isCorrect: false, rationale: "O Scrum valoriza o ritmo sustentável e não força horas extras." },
+            { text: "A Sprint é estendida até a finalização de todos os itens.", isCorrect: false, rationale: "A duração da Sprint é fixa (timeboxed) e não pode ser estendida." }
+        ],
+        hint: "A Sprint encerra no tempo determinado; o que sobrou deve voltar para o repositório principal de pendências."
+    },
+    {
+        id: 54,
+        category: "Tipos de Abordagem e Metodologias",
+        question: "Qual das seguintes alternativas descreve uma característica da abordagem preditiva de gerenciamento de projetos?",
+        options: [
+            { text: "Forte alinhamento a planos detalhados e medição em relação à linha de base (baseline).", isCorrect: true, rationale: "Projetos preditivos acompanham variações em relação ao plano orçamentário e cronograma originais." },
+            { text: "Entregas funcionais a cada duas semanas obrigatoriamente.", isCorrect: false, rationale: "Entregas curtas e frequentes pertencem ao desenvolvimento ágil." },
+            { text: "Inexistência de controle formal de mudanças.", isCorrect: false, rationale: "A abordagem preditiva conta com controle formal e rigoroso de mudanças." },
+            { text: "Ausência de estimativas de custos.", isCorrect: false, rationale: "O orçamento é estimado rigorosamente no início de projetos preditivos." }
+        ],
+        hint: "Pense na importância dada ao planejamento inicial e ao cumprimento estrito do que foi desenhado."
+    },
+    {
+        id: 55,
+        category: "Tipos de Abordagem e Metodologias",
+        question: "No Scrum, quando o Product Backlog pode ser atualizado e refinado?",
+        options: [
+            { text: "Continuamente, ao longo de todo o projeto.", isCorrect: true, rationale: "O refinamento do Product Backlog é uma atividade contínua de adição de detalhes, estimativas e ordem." },
+            { text: "Exclusivamente no primeiro dia do projeto.", isCorrect: false, rationale: "O backlog é vivo e emergente, evoluindo conforme novos aprendizados surgem." },
+            { text: "Apenas durante a Retrospectiva da Sprint.", isCorrect: false, rationale: "A Retrospectiva foca em processos, e não no refinamento de itens de produto." },
+            { text: "Apenas pelo Scrum Master nas reuniões diárias.", isCorrect: false, rationale: "O Product Owner é o responsável principal pelo gerenciamento do backlog." }
+        ],
+        hint: "Considere a natureza viva e emergente dos requisitos em ambientes ágeis."
+    },
+    {
+        id: 56,
+        category: "Tipos de Abordagem e Metodologias",
+        question: "O termo 'Throughput' no Método Kanban representa:",
+        options: [
+            { text: "A quantidade de itens concluídos entregues em um determinado período.", isCorrect: true, rationale: "Throughput (vazão) mede a produtividade do sistema com base na taxa de itens entregues por unidade de tempo." },
+            { text: "O limite máximo de cartões em uma coluna.", isCorrect: false, rationale: "O limite de cartões em uma coluna representa o limite do WIP." },
+            { text: "O tempo de espera na fila inicial do quadro.", isCorrect: false, rationale: "Tempo na fila é parte do Lead Time." },
+            { text: "A estimativa em pontos de função de uma tarefa.", isCorrect: false, rationale: "Throughput é uma medição real baseada em quantidade de entregas finalizadas." }
+        ],
+        hint: "Refere-se à taxa de vazão ou quantidade de saídas concluídas do sistema."
+    },
+    {
+        id: 57,
+        category: "Tipos de Abordagem e Metodologias",
+        question: "Em uma equipe Scrum, caso surja um impedimento técnico que bloqueie os desenvolvedores, quem deve atuar diretamente na sua remoção?",
+        options: [
+            { text: "Scrum Master.", isCorrect: true, rationale: "É responsabilidade primária do Scrum Master atuar na remoção de impedimentos que travam a equipe." },
+            { text: "Product Owner.", isCorrect: false, rationale: "O PO atua na clarificação do negócio e priorização dos itens do backlog." },
+            { text: "Patrocinador (Sponsor).", isCorrect: false, rationale: "Impedimentos operacionais do dia a dia do time são tratados pelo Scrum Master." },
+            { text: "Cliente final.", isCorrect: false, rationale: "O cliente final não intervém nas dificuldades técnicas de execução do time." }
+        ],
+        hint: "Papel focado em facilitar o trabalho e desbloquear o progresso do time."
+    },
+    {
+        id: 58,
+        category: "Tipos de Abordagem e Metodologias",
+        question: "Qual das opções apresenta um dos 7 Princípios Orientadores do Lean aplicados ao desenvolvimento?",
+        options: [
+            { text: "Eliminar desperdícios.", isCorrect: true, rationale: "Eliminar desperdícios é um dos princípios essenciais da filosofia Lean." },
+            { text: "Documentar exaustivamente antes de programar.", isCorrect: false, rationale: "Documentação em excesso sem gerar valor prático é considerada desperdício no Lean." },
+            { text: "Impor trabalho de forma empurrada.", isCorrect: false, rationale: "O Lean defende o uso de sistemas puxados e não empurrados." },
+            { text: "Fixar a arquitetura sem permitir mudanças.", isCorrect: false, rationale: "O Lean incentiva o adiar de decisões para o momento de maior certeza (Decidir no último momento responsável)." }
+        ],
+        hint: "Lembre-se do foco central na eficiência de fluxos enxutos."
+    },
+    {
+        id: 59,
+        category: "Tipos de Abordagem e Metodologias",
+        question: "Como o Scrum trata o gerenciamento da equipe em termos de supervisão e atribuição de tarefas?",
+        options: [
+            { text: "A equipe é auto-gerenciável e decide internamente quem faz o quê e como faz.", isCorrect: true, rationale: "O Guia Scrum define que os times Scrum são auto-gerenciáveis, decidindo internamente sobre a distribuição do trabalho." },
+            { text: "O Product Owner atribui as tarefas diárias a cada desenvolvedor.", isCorrect: false, rationale: "O PO prioriza o backlog, mas não atribui tarefas individualmente." },
+            { text: "O Scrum Master atua como chefe direto atribuindo o trabalho.", isCorrect: false, rationale: "O Scrum Master não possui autoridade de liderança de comando e controle." },
+            { text: "Um gerente de projetos externo define o plano de trabalho diário.", isCorrect: false, rationale: "Não há atribuição externa de tarefas no modelo Scrum." }
+        ],
+        hint: "Pense na autonomia da equipe para organizar seu próprio trabalho."
+    },
+    {
+        id: 60,
+        category: "Tipos de Abordagem e Metodologias",
+        question: "Durante a Sprint Review no Scrum, o foco principal do evento é:",
+        options: [
+            { text: "Inspecionar o incremento finalizado e adaptar o Product Backlog com as partes interessadas.", isCorrect: true, rationale: "A Sprint Review demonstra o resultado do trabalho para os stakeholders e obtém feedback para adaptar o backlog." },
+            { text: "Avaliar o desempenho individual e aplicar sanções aos membros do time.", isCorrect: false, rationale: "O Scrum não utiliza eventos para sanções ou julgamentos individuais." },
+            { text: "Definir a arquitetura técnica que será usada no próximo ano.", isCorrect: false, rationale: "A Review foca no produto utilizável construído na Sprint recém-encerrada." },
+            { text: "Realizar o planejamento detalhado das tarefas diárias da próxima semana.", isCorrect: false, rationale: "O planejamento de tarefas diárias é tratado no evento de Daily Scrum." }
+        ],
+        hint: "É a demonstração do incremento produzido para coletar feedback e alinhar o futuro do produto."
+    },
+    {
+        id: 61,
+        category: "Tipos de Abordagem e Metodologias",
+        question: "No Método Kanban, a visualização do fluxo de trabalho é obtida por meio de:",
+        options: [
+            { text: "Quadros com colunas representando as etapas e cartões representando os itens.", isCorrect: true, rationale: "A gestão visual no Kanban utiliza quadros divididos em colunas de status e cartões que se movem da esquerda para a direita." },
+            { text: "Gráficos de Gantt com dependências estáticas de longo prazo.", isCorrect: false, rationale: "O gráfico de Gantt é uma ferramenta típica do gerenciamento de projetos tradicional." },
+            { text: "Relatórios formais em texto entregues mensalmente à diretoria.", isCorrect: false, rationale: "Relatórios estáticos em texto contrapõem-se ao conceito de gestão visual em tempo real." },
+            { text: "Matrizes de riscos com probabilidade e impacto.", isCorrect: false, rationale: "A matriz de riscos mede incertezas, não o fluxo contínuo do trabalho." }
+        ],
+        hint: "Mecanismo composto por colunas de estados e cartões de tarefas."
+    },
+    {
+        id: 62,
+        category: "Tipos de Abordagem e Metodologias",
+        question: "O que significa dizer que a Sprint no Scrum é 'Timeboxed'?",
+        options: [
+            { text: "Que possui uma duração fixa que não pode ser encurtada ou prorrogada.", isCorrect: true, rationale: "Eventos timeboxed possuem tempo limite fixado rigorosamente para garantir disciplina e previsibilidade." },
+            { text: "Que o seu custo é mantido sob sigilo durante a execução.", isCorrect: false, rationale: "Timebox refere-se ao tempo limite, e não ao orçamento confidencial." },
+            { text: "Que o escopo das tarefas é imutável em qualquer hipótese.", isCorrect: false, rationale: "Escopos em Sprints podem ser renegociados entre PO e Developers conforme novos aprendizados surgem." },
+            { text: "Que o produto deve ser empacotado em uma caixa física.", isCorrect: false, rationale: "A expressão refere-se estritamente à limitação de tempo." }
+        ],
+        hint: "Relacione 'box' de tempo com a ideia de um recipiente com tamanho fixo para a duração."
+    }
+]
