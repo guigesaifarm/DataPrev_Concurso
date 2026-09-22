@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcards Interativos: SAST e DAST (Análise Estática e Dinâmica)</title>
+    <style>
+        :root {
+            /* Paleta de Cores Inspirada na Seleção do México (Verde, Branco e Vermelho Guinda) */
+            --bg-color: #F4F7F5;
+            --card-bg: #FFFFFF;
+            --card-border: #D1E2D7;
+
+            --primary-color: #006847;   /* Verde Escuro da Seleção Mexicana */
+            --accent-red: #A3142F;      /* Vermelho Guinda Tradicional */
+            --accent-gold: #C29B38;     /* Detalhe Dourado/Areia */
+
+            --text-color: #1A2E22;
+            --text-muted: #526B5C;
+
+            --shadow: 0 12px 30px rgba(0, 104, 71, 0.1);
+            --border-radius: 20px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px 15px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            margin-top: 10px;
+        }
+
+        header h1 {
+            font-size: 2.2rem;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .tracker {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            background: rgba(0, 104, 71, 0.1);
+            padding: 6px 18px;
+            border-radius: 20px;
+            border: 1px solid rgba(0, 104, 71, 0.3);
+        }
+
+        /* Flashcard Container */
+        .scene {
+            width: 100%;
+            max-width: 680px;
+            height: 400px;
+            perspective: 1200px;
+            margin-bottom: 25px;
+            cursor: pointer;
+        }
+
+        .card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+            transform-style: preserve-3d;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+
+        .card.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: var(--border-radius);
+            background: var(--card-bg);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 32px;
+            border: 1px solid var(--card-border);
+            overflow-y: auto;
+        }
+
+        .card-face-front {
+            background: linear-gradient(145deg, #FFFFFF, #F8FBF9);
+            border-top: 5px solid var(--primary-color);
+        }
+
+        .card-face-back {
+            background: linear-gradient(145deg, #FDF4F5, #FFFFFF);
+            transform: rotateY(180deg);
+            border-top: 5px solid var(--accent-red);
+        }
+
+        .card-category {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .card-face-back .card-category {
+            color: var(--accent-red);
+        }
+
+        .card-content {
+            font-size: 1.35rem; 
+            line-height: 1.6;
+            color: var(--text-color);
+            font-weight: 500;
+            text-align: center;
+            margin: auto 0;
+        }
+
+        .card-face-back .card-content {
+            color: var(--text-color);     
+            font-size: 1.05rem; 
+            text-align: left;
+        }
+
+        .card-face-back .card-content b {
+            color: var(--primary-color);
+            background: rgba(0, 104, 71, 0.12);
+            padding: 2px 5px;
+            border-radius: 4px;
+        }
+
+        .card-hint {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-align: center;
+            font-style: italic;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            background-color: var(--card-bg);
+            color: var(--primary-color);
+            border: 1px solid var(--card-border);
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0, 104, 71, 0.08);
+            user-select: none;
+        }
+
+        button:hover {
+            background-color: var(--primary-color);
+            color: #FFFFFF;
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 104, 71, 0.25);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        /* Scrollbar custom styles */
+        .card-face::-webkit-scrollbar {
+            width: 6px;
+        }
+        .card-face::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.03);
+            border-radius: 10px;
+        }
+        .card-face::-webkit-scrollbar-thumb {
+            background: var(--card-border);
+            border-radius: 10px;
+        }
+
+        @media (max-width: 640px) {
+            .scene {
+                height: 440px;
+            }
+            header h1 {
+                font-size: 1.6rem;
+            }
+            .card-content {
+                font-size: 1.15rem;
+            }
+            .card-face-back .card-content {
+                font-size: 0.95rem;
+            }
+            button {
+                padding: 10px 18px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Flashcards Interativos</h1>
+        <p>Segurança de Software • SAST (Estática) & DAST (Dinâmica)</p>
+    </header>
+
+    <div class="tracker" id="card-tracker">Card 1 de 40</div>
+
+    <div class="scene" onclick="flipCard()">
+        <div class="card" id="flashcard">
+            <div class="card-face card-face-front">
+                <div class="card-category" id="card-category">Categoria</div>
+                <div class="card-content" id="card-front">Carregando pergunta...</div>
+                <div class="card-hint">💡 Clique no card para ver a resposta</div>
+            </div>
+            <div class="card-face card-face-back">
+                <div class="card-category">Resposta Explicada</div>
+                <div class="card-content" id="card-back">Carregando resposta...</div>
+                <div class="card-hint">💡 Clique para virar novamente</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button onclick="prevCard()">Anterior</button>
+        <button onclick="flipCard()">Virar Card</button>
+        <button onclick="nextCard()">Próximo</button>
+    </div>
+
+    <script>
+    const cardsData = [
+        // --- 1. ANÁLISE ESTÁTICA DE CÓDIGO - SAST (20 CARDS) ---
+        {
+            category: "Conceito SAST",
+            front: "O que significa a sigla **SAST**?",
+            back: "Significa **Static Application Security Testing** (Teste de Segurança de Aplicativos Estático), focado em analisar o código-fonte sem executá-lo."
+        },
+        {
+            category: "Abordagem SAST",
+            front: "Qual é o princípio fundamental de funcionamento do **SAST**?",
+            back: "Examina o código-fonte, bytecode ou binários procurando por **padrões de vulnerabilidade conhecidos, fluxos de dados inseguros e falhas sintáticas**."
+        },
+        {
+            category: "White-Box Testing",
+            front: "O SAST é considerado um teste de **White-Box (Caixa Branca)** ou **Black-Box (Caixa Preta)**?",
+            back: "É um teste de **Caixa Branca**, pois a ferramenta tem acesso total à estrutura interna, lógica e ao código-fonte do software."
+        },
+        {
+            category: "Momento no Ciclo",
+            front: "Em qual fase do **DevSecOps / SDLC** o SAST deve ser executado idealmente?",
+            back: "O mais cedo possível (*Shift-Left*), logo após a escrita do código pelos desenvolvedores ou durante o **commit/pull request**."
+        },
+        {
+            category: "Vantagens SAST",
+            front: "Qual é a principal vantagem de utilizar **SAST** no desenvolvimento?",
+            back: "Permite **encontrar e corrigir vulnerabilidades baratas** ainda na fase de desenvolvimento, antes que cheguem a ambientes de homologação ou produção."
+        },
+        {
+            category: "Falsos Positivos",
+            front: "O que são **falsos positivos** comuns em ferramentas SAST?",
+            back: "Alertas onde a ferramenta aponta um erro de segurança que **não é explorável no contexto real** da aplicação, exigindo triagem humana."
+        },
+        {
+            category: "Desafios do SAST",
+            front: "Por que as ferramentas SAST podem gerar alto índice de falsos positivos ou falsos negativos?",
+            back: "Porque realizam análise estática pura baseada em regras, muitas vezes **sem compreender totalmente a lógica de negócio** ou o fluxo completo de execução."
+        },
+        {
+            category: "Exemplos de Falhas",
+            front: "Quais tipos de vulnerabilidades o **SAST** é excelente em detectar?",
+            back: "• Injeção de SQL (*SQL Injection* básica)<br>• Uso de criptografia fraca<br>• Hardcoding de senhas/chaves de API no código<br>• Estouro de buffer."
+        },
+        {
+            category: "Dependências",
+            front: "O SAST analisa apenas o código customizado desenvolvido pela equipe?",
+            back: "Não necessariamente; ferramentas modernas de SAST também escaneiam **bibliotecas de terceiros e dependências** em busca de CVEs conhecidas."
+        },
+        {
+            category: "Execução do Código",
+            front: "O código precisa estar compilado ou rodando para que o **SAST** funcione?",
+            back: "**Não.** O SAST opera estaticamente sobre arquivos de texto de código, árvores sintáticas abstratas (AST) ou código intermediário."
+        },
+        {
+            category: "Feedback ao Desenvolvedor",
+            front: "Como o SAST ajuda na educação em segurança dos desenvolvedores?",
+            back: "Apontando a linha exata do código onde a falha ocorreu e sugerindo **boas práticas de correção** diretamente no ambiente de trabalho deles."
+        },
+        {
+            category: "Integração CI/CD",
+            front: "O que acontece se uma ferramenta SAST detectar uma vulnerabilidade crítica durante o pipeline de CI/CD?",
+            back: "O pipeline pode ser **automaticamente bloqueado**, impedindo que o código vulnerável seja integrado ao repositório principal."
+        },
+        {
+            category: "Ferramentas SAST",
+            front: "Cite exemplos de ferramentas de **Análise Estática (SAST)** populares no mercado.",
+            back: "• SonarQube / SonarCloud<br>• Checkmarx<br>• Veracode<br>• GitHub Advanced Security (CodeQL)."
+        },
+        {
+            category: "Escalabilidade",
+            front: "Como o SAST se comporta em relação à escalabilidade de grandes projetos?",
+            back: "Pode ser automatizado facilmente para escanear **milhões de linhas de código em minutos**, embora grandes monólitos possam exigir tempo de processamento."
+        },
+        {
+            category: "Limitações SAST",
+            front: "O que o **SAST** geralmente **não consegue detectar** com eficácia?",
+            back: "Problemas de configuração de ambiente de infraestrutura, falhas de autenticação em tempo de execução ou erros lógicos complexos de fluxo de sessão."
+        },
+        {
+            category: "Taint Analysis",
+            front: "O que é a técnica de **Taint Analysis** usada em motores SAST?",
+            back: "Um método que rastreia como **dados inseridos por usuários mal-intencionados** propagam-se pelo código até chegarem a locais sensíveis sem validação."
+        },
+        {
+            category: "Regras Customizadas",
+            front: "É possível criar regras customizadas em ferramentas SAST?",
+            back: "Sim, equipes de segurança podem escrever assinaturas personalizadas para detectar **padrões de bugs específicos ou falhas internas** da empresa."
+        },
+        {
+            category: "Custo de Correção",
+            front: "Como o SAST impacta o custo de correção de bugs de segurança?",
+            back: "Reduz drasticamente o custo, pois corrigir uma falha na fase de código custa **muito menos** do que corrigi-la após o deploy em produção."
+        },
+        {
+            category: "Análise de Binários",
+            front: "O SAST funciona apenas se o código-fonte estiver disponível?",
+            back: "Algumas ferramentas avançadas conseguem analisar o **bytecode compilado ou binários** (como arquivos .class ou .exe), técnica conhecida como descompilação estática."
+        },
+        {
+            category: "Visão Geral SAST",
+            front: "Em suma, qual é o principal objetivo de implementar **SAST**?",
+            back: "Garantir a **higiene do código-fonte**, encontrando brechas estruturais antes que a aplicação seja construída e empacotada."
+        },
+
+        // --- 2. ANÁLISE DINÂMICA DE CÓDIGO - DAST (20 CARDS) ---
+        {
+            category: "Conceito DAST",
+            front: "O que significa a sigla **DAST**?",
+            back: "Significa **Dynamic Application Security Testing** (Teste de Segurança de Aplicativos Dinâmico), focado em testar a aplicação em execução."
+        },
+        {
+            category: "Abordagem DAST",
+            front: "Como o **DAST** interage com o aplicativo durante os testes?",
+            back: "Ele atua de fora para dentro, simulando um **atacante externo** que envia requisições HTTP maliciosas e analisa as respostas do sistema."
+        },
+        {
+            category: "Black-Box Testing",
+            front: "O DAST é considerado um teste de **Black-Box (Caixa Preta)**?",
+            back: "Sim, pois ele **não precisa conhecer o código-fonte** da aplicação; interage estritamente com as interfaces expostas (APIs, páginas web, portas)."
+        },
+        {
+            category: "Momento no Ciclo",
+            front: "Em qual ambiente o **DAST** costuma ser executado com maior eficácia?",
+            back: "Em ambientes de **Staging, Homologação ou Pré-Produção**, onde a aplicação está rodando em um servidor real com infraestrutura similar à final."
+        },
+        {
+            category: "Vantagens DAST",
+            front: "Qual é a principal vantagem de utilizar o **DAST**?",
+            back: "Consegue detectar **vulnerabilidades reais em tempo de execução** que dependem do ambiente, como erros de configuração de servidores, CORS ou falhas de sessão."
+        },
+        {
+            category: "Exemplos de Falhas",
+            front: "Quais tipos de vulnerabilidades o **DAST** é excelente em identificar?",
+            back: "• Injeção de SQL avançada e XSS refletido/armazenado<br>• Falhas de autenticação e controle de sessão<br>• Configurações incorretas de SSL/TLS e cabeçalhos HTTP."
+        },
+        {
+            category: "Independência de Linguagem",
+            front: "Por que o DAST é agnóstico em relação à linguagem de programação?",
+            back: "Porque ele testa o aplicativo **através de protocolos de rede padrão (HTTP/HTTPS)**, sem importar se foi feito em Java, Python, Node.js ou PHP."
+        },
+        {
+            category: "Desafios do DAST",
+            front: "Qual é uma grande limitação do **DAST** em aplicações modernas complexas?",
+            back: "Dificuldade em mapear automaticamente **interfaces altamente dinâmicas (Single Page Applications - SPAs)** ou rotas protegidas sem autenticação avançada."
+        },
+        {
+            category: "Falsos Negativos / Cobertura",
+            front: "Por que o DAST pode sofrer com baixa cobertura de teste?",
+            back: "Porque se o scanner automático **não encontrar um link ou botão específico**, ele jamais enviará cargas maliciosas para aquela rota oculta."
+        },
+        {
+            category: "Impacto em Produção",
+            front: "O DAST pode ser executado diretamente em ambientes de produção?",
+            back: "Com cautela extrema sim (ex: testes não intrusivos), mas há risco de **sobrecarregar o servidor** ou corromper dados de teste se o scanner disparar rotas de exclusão."
+        },
+        {
+            category: "Ferramentas DAST",
+            front: "Cite exemplos de ferramentas e scanners de **Análise Dinâmica (DAST)** populares.",
+            back: "• OWASP ZAP (Zed Attack Proxy)<br>• Burp Suite Professional<br>• Acunetix<br>• Netsparker."
+        },
+        {
+            category: "Autenticação em DAST",
+            front: "Como as ferramentas DAST lidam com áreas de sistemas que exigem login (usuário e senha)?",
+            back: "Exigem a **configuração prévia de scripts de autenticação** ou tokens de sessão para que o scanner consiga navegar pelas telas protegidas."
+        },
+        {
+            category: "Feedback Tarde no Ciclo",
+            front: "Por que o DAST costuma apontar falhas mais tarde no ciclo de desenvolvimento comparado ao SAST?",
+            back: "Porque a aplicação precisa estar **totalmente construída e implantada** para que o escaneamento dinâmico possa começar."
+        },
+        {
+            category: "Correção de Vulnerabilidades",
+            front: "Como é o processo de correção de uma falha apontada por um DAST?",
+            back: "O desenvolvedor recebe um relatório de requisição HTTP maliciosa, reproduz o ataque no ambiente local e **corrige o código ou o servidor** afetado."
+        },
+        {
+            category: "Análise de Infraestrutura",
+            front: "O DAST avalia apenas a lógica do software?",
+            back: "Não, ele avalia todo o ecossistema exposto, incluindo **configurações de certificados digitais, portas abertas e cabeçalhos de segurança**."
+        },
+        {
+            category: "Fuzzing",
+            front: "O que é a técnica de **Fuzzing** frequentemente empregada em testes dinâmicos?",
+            back: "O envio automatizado de **dados aleatórios, inválidos ou extremos** para os campos de entrada do aplicativo para testar sua estabilidade e resistência a crashes."
+        },
+        {
+            category: "Custo de Correção DAST",
+            front: "O custo para corrigir uma falha encontrada via DAST é maior ou menor que o SAST?",
+            back: "Geralmente **mais alto**, pois o sistema já está pronto, integrado e possivelmente próximo do lançamento ou já em produção."
+        },
+        {
+            category: "API Testing",
+            front: "Como o DAST moderno atua na segurança de APIs (REST/GraphQL)?",
+            back: "Importando arquivos de especificação (como **Swagger/OpenAPI**) para testar automaticamente cada endpoint com payloads maliciosos."
+        },
+        {
+            category: "Integração CI/CD DAST",
+            front: "É possível automatizar o DAST em pipelines de CI/CD?",
+            back: "Sim, através de versões *headless* de scanners (como o ZAP em Docker) ativadas após o deploy automático em ambientes de teste."
+        },
+        {
+            category: "Sinergia SAST + DAST",
+            front: "Por que as empresas maduras em segurança utilizam **tanto SAST quanto DAST** em conjunto?",
+            back: "Porque se complementam: o **SAST protege o código na raiz** (Shift-Left), enquanto o **DAST valida o sistema inteiro em execução** no mundo real."
+        }
+    ];
+
+    let currentIndex = 0;
+    const cardElement = document.getElementById('flashcard');
+    const categoryElement = document.getElementById('card-category');
+    const frontElement = document.getElementById('card-front');
+    const backElement = document.getElementById('card-back');
+    const trackerElement = document.getElementById('card-tracker');
+
+    function parseFormatting(str) {
+        return str.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+    }
+
+    function updateCard() {
+        cardElement.classList.remove('is-flipped');
+        setTimeout(() => {
+            const currentData = cardsData[currentIndex];
+            categoryElement.innerText = currentData.category;
+            frontElement.innerHTML = parseFormatting(currentData.front);
+            backElement.innerHTML = parseFormatting(currentData.back);
+            trackerElement.innerText = `Card ${currentIndex + 1} de ${cardsData.length}`;
+        }, 150);
+    }
+
+    function flipCard() {
+        cardElement.classList.toggle('is-flipped');
+    }
+
+    function nextCard() {
+        currentIndex = (currentIndex + 1) % cardsData.length;
+        updateCard();
+    }
+
+    function prevCard() {
+        currentIndex = (currentIndex - 1 + cardsData.length) % cardsData.length;
+        updateCard();
+    }
+
+    // Initialize App
+    updateCard();
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight') nextCard();
+        if (e.key === 'ArrowLeft') prevCard();
+        if (e.key === ' ' || e.key === 'Enter') {
+            e.preventDefault();
+            flipCard();
+        }
+    });
+    </script>
+</body>
+</html>
