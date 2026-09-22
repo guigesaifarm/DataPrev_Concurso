@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcards Interativos: Data Warehouse, ETL & OLAP</title>
+    <style>
+        :root {
+            /* Paleta de Cores Inspirada na Seleção da Rússia (Vermelho, Azul Profundo, Branco e Dourado) */
+            --bg-color: #F4F6F9;
+            --card-bg: #FFFFFF;
+            --card-border: #D1D8E0;
+
+            --primary-color: #D52B1E;   /* Vermelho Tradicional da Rússia */
+            --accent-blue: #0039A6;     /* Azul Profundo Bandeira Russa */
+            --accent-gold: #C5A059;     /* Dourado de Destaque */
+
+            --text-color: #111827;
+            --text-muted: #4B5563;
+
+            --shadow: 0 12px 30px rgba(213, 43, 30, 0.1);
+            --border-radius: 20px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px 15px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            margin-top: 10px;
+        }
+
+        header h1 {
+            font-size: 2.2rem;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .tracker {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+            margin-bottom: 20px;
+            background: rgba(0, 57, 166, 0.08);
+            padding: 6px 18px;
+            border-radius: 20px;
+            border: 1px solid rgba(0, 57, 166, 0.25);
+        }
+
+        /* Flashcard Container */
+        .scene {
+            width: 100%;
+            max-width: 680px;
+            height: 400px;
+            perspective: 1200px;
+            margin-bottom: 25px;
+            cursor: pointer;
+        }
+
+        .card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+            transform-style: preserve-3d;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+
+        .card.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: var(--border-radius);
+            background: var(--card-bg);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 32px;
+            border: 1px solid var(--card-border);
+            overflow-y: auto;
+        }
+
+        .card-face-front {
+            background: linear-gradient(145deg, #FFFFFF, #FAFBFD);
+            border-top: 5px solid var(--primary-color);
+        }
+
+        .card-face-back {
+            background: linear-gradient(145deg, #F0F4FC, #FFFFFF);
+            transform: rotateY(180deg);
+            border-top: 5px solid var(--accent-blue);
+        }
+
+        .card-category {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .card-face-back .card-category {
+            color: var(--accent-blue);
+        }
+
+        .card-content {
+            font-size: 1.35rem; 
+            line-height: 1.6;
+            color: var(--text-color);
+            font-weight: 500;
+            text-align: center;
+            margin: auto 0;
+        }
+
+        .card-face-back .card-content {
+            color: var(--text-color);     
+            font-size: 1.05rem; 
+            text-align: left;
+        }
+
+        .card-face-back .card-content b {
+            color: var(--accent-blue);
+            background: rgba(0, 57, 166, 0.1);
+            padding: 2px 5px;
+            border-radius: 4px;
+        }
+
+        .card-hint {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-align: center;
+            font-style: italic;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            background-color: var(--card-bg);
+            color: var(--primary-color);
+            border: 1px solid var(--card-border);
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(213, 43, 30, 0.08);
+            user-select: none;
+        }
+
+        button:hover {
+            background-color: var(--primary-color);
+            color: #FFFFFF;
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(213, 43, 30, 0.25);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        /* Scrollbar custom styles */
+        .card-face::-webkit-scrollbar {
+            width: 6px;
+        }
+        .card-face::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.03);
+            border-radius: 10px;
+        }
+        .card-face::-webkit-scrollbar-thumb {
+            background: var(--card-border);
+            border-radius: 10px;
+        }
+
+        @media (max-width: 640px) {
+            .scene {
+                height: 440px;
+            }
+            header h1 {
+                font-size: 1.6rem;
+            }
+            .card-content {
+                font-size: 1.15rem;
+            }
+            .card-face-back .card-content {
+                font-size: 0.95rem;
+            }
+            button {
+                padding: 10px 18px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Flashcards Interativos</h1>
+        <p>Data Warehouse, ETL & Processamento OLAP</p>
+    </header>
+
+    <div class="tracker" id="card-tracker">Card 1 de 40</div>
+
+    <div class="scene" onclick="flipCard()">
+        <div class="card" id="flashcard">
+            <div class="card-face card-face-front">
+                <div class="card-category" id="card-category">Categoria</div>
+                <div class="card-content" id="card-front">Carregando pergunta...</div>
+                <div class="card-hint">💡 Clique no card para ver a resposta</div>
+            </div>
+            <div class="card-face card-face-back">
+                <div class="card-category">Resposta Explicada</div>
+                <div class="card-content" id="card-back">Carregando resposta...</div>
+                <div class="card-hint">💡 Clique para virar novamente</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button onclick="prevCard()">Anterior</button>
+        <button onclick="flipCard()">Virar Card</button>
+        <button onclick="nextCard()">Próximo</button>
+    </div>
+
+    <script>
+    const cardsData = [
+        // --- 1. DATA WAREHOUSE: CONCEITOS E ARQUITETURA (13 CARDS) ---
+        {
+            category: "Conceito de DWH",
+            front: "O que é um **Data Warehouse (DWH)** em arquitetura de dados?",
+            back: "É um repositório de dados centralizado, integrado, orientado por assunto, não volátil e histórico, projetado especificamente para **suportar tomadas de decisão**."
+        },
+        {
+            category: "Características Inmon",
+            front: "Quais são as 4 características fundamentais de um Data Warehouse segundo Bill Inmon?",
+            back: "1. Orientado por assunto<br>2. Integrado<br>3. Não volátil (somente leitura)<br>4. Histórico (variável no tempo)."
+        },
+        {
+            category: "OLTP vs DWH",
+            front: "Qual é a principal diferença de propósito entre sistemas **OLTP** (transacionais) e **DWH** (analíticos)?",
+            back: "• **OLTP:** Otimizado para inserções e atualizações rápidas do dia a dia (ex: vendas em caixa).<br>• **DWH:** Otimizado para consultas complexas de grande volume e histórico."
+        },
+        {
+            category: "Arquitetura Inmon",
+            front: "Em que consiste a abordagem de Bill Inmon (Top-Down) para Data Warehouses?",
+            back: "Primeiro cria-se o **Data Warehouse corporativo centralizado** (normalizado em 3ª forma normal) e, a partir dele, criam-se os Data Marts departamentais."
+        },
+        {
+            category: "Arquitetura Kimball",
+            front: "Em que consiste a abordagem de Ralph Kimball (Bottom-Up) para Data Warehouses?",
+            back: "Foco na **modelagem dimensional**. Constrói-se a solução iterativamente através de Data Marts integrados por meio de 'dimensões conformadas'."
+        },
+        {
+            category: "Dimensões Conformadas",
+            front: "O que são **Dimensões Conformadas** na arquitetura Kimball?",
+            back: "Dimensões (como Tempo ou Cliente) que são idênticas e compartilhadas entre múltiplos Data Marts, garantindo **consistência analítica** na empresa."
+        },
+        {
+            category: "Staging Area",
+            front: "Qual é a função da **Area de Staging (*Staging Area*)** na arquitetura de um DWH?",
+            back: "Uma área de armazenamento temporário onde os dados brutos extraídos das fontes são limpos, transformados e preparados antes de irem para o DWH."
+        },
+        {
+            category: "Não Volatilidade",
+            front: "O que significa dizer que os dados em um Data Warehouse são **não voláteis**?",
+            back: "Significa que os dados **não sofrem operações de atualização (UPDATE) ou exclusão (DELETE)** frequentes; novos dados são apenas adicionados (INSERT)."
+        },
+        {
+            category: "Granularidade",
+            front: "O que é **granularidade** no contexto de um Data Warehouse?",
+            back: "O nível de detalhe representado nos dados armazenados. Maior granularidade significa dados mais detalhados (ex: por item de venda versus por dia)."
+        },
+        {
+            category: "Slowly Changing Dimensions",
+            front: "O que são **SCDs (*Slowly Changing Dimensions*)**?",
+            back: "Técnicas para gerenciar alterações em atributos de tabelas dimensionais ao longo do tempo (ex: mudança de endereço de um cliente)."
+        },
+        {
+            category: "SCD Tipo 1",
+            front: "Como funciona a **SCD Tipo 1** (Sobrescrita)?",
+            back: "O dado antigo é **substituído pelo novo valor**. Não mantém histórico de alterações passadas."
+        },
+        {
+            category: "SCD Tipo 2",
+            front: "Como funciona a **SCD Tipo 2** (Adição de Nova Linha)?",
+            back: "Um novo registro é criado na dimensão com novas datas de vigência, permitindo **preservar totalmente o histórico** das mudanças."
+        },
+        {
+            category: "Data Lake vs DWH",
+            front: "Qual é a principal diferença estrutural entre um **Data Lake** e um **Data Warehouse**?",
+            back: "• **Data Lake:** Armazena dados brutos de qualquer formato (estruturados ou não) (*Schema-on-Read*).<br>• **DWH:** Armazena dados estruturados e limpos (*Schema-on-Write*)."
+        },
+
+        // --- 2. PROCESSO ETL: EXTRAÇÃO, TRANSFORMAÇÃO E CARGA (14 CARDS) ---
+        {
+            category: "Conceito ETL",
+            front: "O que significa a sigla **ETL** no contexto de engenharia e modelagem de dados?",
+            back: "Significa **Extract, Transform, Load** (Extração, Transformação e Carga), processo responsável por mover dados das fontes para o Data Warehouse."
+        },
+        {
+            category: "Fase de Extração",
+            front: "O que ocorre na primeira fase do ETL (**Extração**)?",
+            back: "Os dados são coletados de diversas fontes heterogêneas (ERPs, arquivos, APIs) e trazidos para o ambiente de staging."
+        },
+        {
+            category: "Extração Incremental",
+            front: "Qual é a diferença entre **Extração Full (Completa)** e **Incremental**?",
+            back: "• **Full:** Extrai todos os dados da fonte a cada execução.<br>• **Incremental:** Extrai apenas os dados novos ou modificados desde a última carga."
+        },
+        {
+            category: "Fase de Transformação",
+            front: "Quais tipos de operações ocorrem na fase de **Transformação** do ETL?",
+            back: "Limpeza de dados, tratamento de nulos, padronização de formatos de data/moeda, remoção de duplicatas e unificação (*joins*)."
+        },
+        {
+            category: "Enriquecimento de Dados",
+            front: "O que é o **enriquecimento de dados** durante o processo de transformação?",
+            back: "Adicionar informações complementares aos dados brutos, como geolocalização por IP, validação de CPFs ou cruzamento com dados cadastrais externos."
+        },
+        {
+            category: "Fase de Carga",
+            front: "O que ocorre na fase final de **Carga (Load)** do ETL?",
+            back: "Os dados já transformados e modelados são escritos definitivamente nas tabelas de Fatos e Dimensões do Data Warehouse."
+        },
+        {
+            category: "Carga Append vs Overwrite",
+            front: "Qual a diferença entre estratégias de carga do tipo **Append** e **Overwrite**?",
+            back: "• **Append:** Adiciona novas linhas sem apagar as existentes.<br>• **Overwrite:** Substitui todo o conteúdo da tabela de destino a cada execução."
+        },
+        {
+            category: "Diferença ETL vs ELT",
+            front: "O que diferencia a arquitetura **ETL** tradicional da moderna **ELT**?",
+            back: "No **ETL**, a transformação ocorre em servidores intermediários antes de gravar; no **ELT**, os dados brutos são carregados primeiro no DWH e transformados usando o poder de processamento nativo dele."
+        },
+        {
+            category: "Vantagens do ELT",
+            front: "Por que o modelo **ELT** ganhou enorme popularidade com o advento da nuvem?",
+            back: "Porque aproveita a alta escalabilidade e velocidade de processamento de DWHs em nuvem modernos (como Snowflake e BigQuery)."
+        },
+        {
+            category: "Tratamento de Erros",
+            front: "Como o pipeline de ETL deve lidar com **dados corrompidos ou inválidos**?",
+            back: "Deve isolar os registros problemáticos em tabelas de rejeição (*dead-letter queues*) sem interromper a execução total da carga."
+        },
+        {
+            category: "Orquestração de ETL",
+            front: "Para que servem ferramentas de **orquestração de ETL** (como Apache Airflow ou Prefect)?",
+            back: "Para gerenciar dependências de tarefas, agendar execuções, monitorar falhas e disparar alertas automáticos nos pipelines."
+        },
+        {
+            category: "Data Quality",
+            front: "Qual é a relação entre processos de ETL e **Qualidade de Dados**?",
+            back: "O ETL atua como o principal filtro de qualidade, aplicando regras de negócio para barrar inconsistências antes que cheguem aos usuários finais."
+        },
+        {
+            category: "Idempotência",
+            front: "O que significa um pipeline de ETL ser **idempotente**?",
+            back: "Significa que executá-lo múltiplas vezes com os mesmos dados de entrada produz **exatamente o mesmo resultado final**, sem duplicar registros."
+        },
+        {
+            category: "Linhagem de Dados",
+            front: "O que é a **linhagem (*lineage*)** em pipelines de dados?",
+            back: "O mapeamento visual e documentado do caminho percorrido pelo dado desde a origem, passando pelas regras de ETL, até o relatório final."
+        },
+
+        // --- 3. PROCESSAMENTO OLAP E APLICAÇÕES (13 CARDS) ---
+        {
+            category: "Conceito OLAP",
+            front: "O que significa a sigla **OLAP** e qual sua finalidade?",
+            back: "Significa **Online Analytical Processing** (Processamento Analítico em Tempo Real), tecnologia que permite consultas multidimensionais rápidas em grandes massas de dados."
+        },
+        {
+            category: "Cubos OLAP",
+            front: "O que é um **Cubo OLAP**?",
+            back: "Uma estrutura de dados multidimensional que organiza fatos por múltiplas dimensões, permitindo respostas instantâneas a agregações complexas."
+        },
+        {
+            category: "Operação Drill-Down",
+            front: "O que significa a operação OLAP de **Drill-Down**?",
+            back: "Navegar de uma visão resumida para uma visão **mais detalhada** (ex: visualizar vendas anuais e detalhá-las por mês ou dia)."
+        },
+        {
+            category: "Operação Roll-Up",
+            front: "O que significa a operação OLAP de **Roll-Up (ou Drill-Up)**?",
+            back: "O oposto do drill-down: agregar dados de um nível detalhado para um nível **mais sumário/geral** (ex: somar vendas de cidades para obter o total do país)."
+        },
+        {
+            category: "Operação Slice",
+            front: "O que é a operação OLAP de **Slice (Fatia)**?",
+            back: "Fixar uma dimensão de um cubo para observar uma **fatia bidimensional específica** (ex: ver apenas as vendas do ano de 2025)."
+        },
+        {
+            category: "Operação Dice",
+            front: "O que é a operação OLAP de **Dice (Dado / Cubo Menor)**?",
+            back: "Selecionar **subconjuntos de múltiplas dimensões** para criar um cubo menor (ex: filtrar apenas produtos eletrônicos nas regiões Sul e Sudeste em 2025)."
+        },
+        {
+            category: "Operação Pivot",
+            front: "O que é a operação OLAP de **Pivot / Rotate (Rotação)**?",
+            back: "Mudar a orientação dimensional da visualização, trocando linhas por colunas para facilitar a análise sob outra perspectiva."
+        },
+        {
+            category: "MOLAP vs ROLAP",
+            front: "Qual a diferença entre **MOLAP** (Multidimensional) e **ROLAP** (Relational)?",
+            back: "• **MOLAP:** Armazena dados em estruturas de arquivos proprietárias pré-calculadas (altíssima velocidade).<br>• **ROLAP:** Executa consultas OLAP diretamente sobre tabelas relacionais do DWH."
+        },
+        {
+            category: "HOLAP",
+            front: "O que é **HOLAP (Hybrid OLAP)**?",
+            back: "Uma abordagem híbrida que combina o melhor dos dois mundos: armazena dados detalhados em tabelas relacionais e agregações em cubos multidimensionais."
+        },
+        {
+            category: "Aplicações de BI",
+            front: "Como o processamento OLAP sustenta as ferramentas modernas de **Business Intelligence**?",
+            back: "Permitindo que dashboards interativos calculem somas, médias e filtros instantaneamente enquanto o usuário clica nos gráficos."
+        },
+        {
+            category: "Desempenho e Pré-agregação",
+            front: "Por que a **pré-agregação** é crucial em sistemas OLAP?",
+            back: "Porque calcula somas e totais antecipadamente, evitando que o sistema precise varrer bilhões de linhas brutas a cada clique do usuário."
+        },
+        {
+            category: "Data marts analíticos",
+            front: "Qual é a relação entre cubos OLAP e **Data Marts dimensionais**?",
+            back: "Muitas vezes, o próprio esquema estrela de um Data Mart serve de base lógica para a construção de cubos ou visões OLAP."
+        },
+        {
+            category: "Valor Estratégico",
+            front: "Qual é o principal impacto de uma arquitetura DWH + ETL + OLAP bem estruturada?",
+            back: "Transformar dados dispersos em um **ativo corporativo confiável**, garantindo agilidade e precisão nas decisões estratégicas."
+        }
+    ];
+
+    let currentIndex = 0;
+    const cardElement = document.getElementById('flashcard');
+    const categoryElement = document.getElementById('card-category');
+    const frontElement = document.getElementById('card-front');
+    const backElement = document.getElementById('card-back');
+    const trackerElement = document.getElementById('card-tracker');
+
+    function parseFormatting(str) {
+        return str.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+    }
+
+    function updateCard() {
+        cardElement.classList.remove('is-flipped');
+        setTimeout(() => {
+            const currentData = cardsData[currentIndex];
+            categoryElement.innerText = currentData.category;
+            frontElement.innerHTML = parseFormatting(currentData.front);
+            backElement.innerHTML = parseFormatting(currentData.back);
+            trackerElement.innerText = `Card ${currentIndex + 1} de ${cardsData.length}`;
+        }, 150);
+    }
+
+    function flipCard() {
+        cardElement.classList.toggle('is-flipped');
+    }
+
+    function nextCard() {
+        currentIndex = (currentIndex + 1) % cardsData.length;
+        updateCard();
+    }
+
+    function prevCard() {
+        currentIndex = (currentIndex - 1 + cardsData.length) % cardsData.length;
+        updateCard();
+    }
+
+    // Initialize App
+    updateCard();
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight') nextCard();
+        if (e.key === 'ArrowLeft') prevCard();
+        if (e.key === ' ' || e.key === 'Enter') {
+            e.preventDefault();
+            flipCard();
+        }
+    });
+    </script>
+</body>
+</html>
