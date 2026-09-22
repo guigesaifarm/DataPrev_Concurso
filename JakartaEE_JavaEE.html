@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcards Interativos: Java EE vs Jakarta EE</title>
+    <style>
+        :root {
+            --bg-color: #F5F5F5;
+            --card-bg: #FFFFFF;
+            --card-border: #B0A87A;
+
+            --primary-color: #171717;
+            --accent-color: #FFBB1C;
+
+            --text-color: #171717;
+            --text-muted: #B0A87A;
+
+            --card-back-bg: #FFFDF5;
+
+            --shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+            --border-radius: 20px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px 15px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            margin-top: 10px;
+        }
+
+        header h1 {
+            font-size: 2.3rem;
+            color: var(--accent-color);
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        .tracker {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            background: rgba(255, 187, 28, 0.15);
+            padding: 6px 18px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 187, 28, 0.3);
+        }
+
+        /* Flashcard Container */
+        .scene {
+            width: 100%;
+            max-width: 680px;
+            height: 400px;
+            perspective: 1200px;
+            margin-bottom: 25px;
+            cursor: pointer;
+        }
+
+        .card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+            transform-style: preserve-3d;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+
+        .card.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: var(--border-radius);
+            background: var(--card-bg);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 32px;
+            border: 1px solid var(--card-border);
+            overflow-y: auto;
+        }
+
+        .card-face-front {
+             background: linear-gradient(145deg, #FFFFFF, #F5F5F5);
+        }
+
+        .card-face-back {
+            background: linear-gradient(145deg, #FFFDF5, #FFFFFF);
+            transform: rotateY(180deg);
+            border-left: 6px solid var(--accent-color);
+        }
+
+        .card-category {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .card-content {
+            font-size: 1.35rem; 
+            line-height: 1.6;
+            color: var(--text-color);
+            font-weight: 500;
+            text-align: center;
+            margin: auto 0;
+        }
+
+        .card-face-back .card-content {
+            color: var(--primary-color);     
+            font-size: 1.05rem; 
+            text-align: left;
+        }
+
+        .card-face-back .card-content b {
+            color: var(--primary-color);
+            background: rgba(255, 187, 28, 0.3);
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+
+        .card-hint {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-align: center;
+            font-style: italic;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            border: 1px solid var(--card-border);
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            user-select: none;
+        }
+
+        button:hover {
+            background-color: var(--accent-color);
+            color: #171717;
+            border-color: var(--accent-color);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(255, 187, 28, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        /* Scrollbar custom styles */
+        .card-face::-webkit-scrollbar {
+            width: 6px;
+        }
+        .card-face::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 10px;
+        }
+        .card-face::-webkit-scrollbar-thumb {
+            background: var(--card-border);
+            border-radius: 10px;
+        }
+
+        @media (max-width: 640px) {
+            .scene {
+                height: 440px;
+            }
+            header h1 {
+                font-size: 1.6rem;
+            }
+            .card-content {
+                font-size: 1.15rem;
+            }
+            .card-face-back .card-content {
+                font-size: 0.95rem;
+            }
+            button {
+                padding: 10px 18px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Flashcards Interativos</h1>
+        <p>Evolução, Transição e Especificações: Java EE 6 vs Jakarta EE</p>
+    </header>
+
+    <div class="tracker" id="card-tracker">Card 1 de 40</div>
+
+    <div class="scene" onclick="flipCard()">
+        <div class="card" id="flashcard">
+            <div class="card-face card-face-front">
+                <div class="card-category" id="card-category">Categoria</div>
+                <div class="card-content" id="card-front">Carregando pergunta...</div>
+                <div class="card-hint">💡 Clique no card para ver a resposta</div>
+            </div>
+            <div class="card-face card-face-back">
+                <div class="card-category">Resposta Explicada</div>
+                <div class="card-content" id="card-back">Carregando resposta...</div>
+                <div class="card-hint">💡 Clique para virar novamente</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button onclick="prevCard()">Anterior</button>
+        <button onclick="flipCard()">Virar Card</button>
+        <button onclick="nextCard()">Próximo</button>
+    </div>
+
+    <script>
+    const cardsData = [
+        // --- EVOLUÇÃO E GOVERNANÇA ---
+        {
+            category: "Governança & História",
+            front: "O que provocou a transição de **Java EE** para **Jakarta EE**?",
+            back: "A Oracle doou o gerenciamento e o código-fonte do Java EE para a **Eclipse Foundation** em 2017 para incentivar um modelo de desenvolvimento verdadeiramente open-source e com inovação mais ágil."
+        },
+        {
+            category: "Governança & Licenciamento",
+            front: "Por que o namespace mudou de **javax.*** para **jakarta.*** no Jakarta EE 9?",
+            back: "A Oracle manteve a marca registrada dos direitos de uso da palavra 'Java'. Por isso, a Eclipse Foundation não podia usar o pacote <code>javax.*</code> para novas atualizações, exigindo a renomeação para <code>jakarta.*</code>."
+        },
+        {
+            category: "Visão Geral",
+            front: "Qual foi o principal avanço trazido pelo **Java EE 6** em relação às versões anteriores?",
+            back: "O Java EE 6 introduziu a simplificação dramática através de **Anotações**, eliminação de XMLs repetitivos, a introdução do **Web Profile** e o lançamento de especificações chave como **CDI 1.0** e **Bean Validation 1.0**."
+        },
+        {
+            category: "Versões & Histórico",
+            front: "O que foi o **Jakarta EE 8** e qual sua relação com o Java EE 8?",
+            back: "O Jakarta EE 8 foi a primeira versão sob a Eclipse Foundation. Ele manteve **100% de compatibilidade em código** e o mesmo namespace (<code>javax.*</code>) do Java EE 8 para garantir migração sem impacto inicial."
+        },
+        {
+            category: "Versões & Histórico",
+            front: "Qual o marco fundamental do **Jakarta EE 9**?",
+            back: "Foi a transição oficial do namespace: todas as APIs migraram de <code>javax.*</code> para <code>jakarta.*</code> (a chamada 'Big Bang Migration'), abrindo caminho para novas melhorias e recursos no ecossistema."
+        },
+
+        // --- APIS WEB: SERVLETS & REST ---
+        {
+            category: "Web & Servlets",
+            front: "Como a criação de **Servlets** mudou do Java EE 6 para as versões modernas do Jakarta EE?",
+            back: "O Java EE 6 introduziu a anotação <code>@WebServlet</code>, eliminando o <code>web.xml</code>.<br><br>No Jakarta EE 9+, a alteração principal foi trocar o pacote de <code>javax.servlet.http.*</code> para <code>jakarta.servlet.http.*</code>."
+        },
+        {
+            category: "APIs RESTful",
+            front: "O que é o **JAX-RS** no Java EE 6 e como ele evoluiu no Jakarta EE?",
+            back: "É a API para criar Web Services RESTful (anotações como <code>@Path</code>, <code>@GET</code>).<br><br>No Jakarta EE, a especificação passou a se chamar formalmente **Jakarta RESTful Web Services**."
+        },
+        {
+            category: "Arquitetura Web",
+            front: "O que é o **Web Profile** introduzido no Java EE 6?",
+            back: "Um subconjunto leve da especificação voltado para aplicações web modernas (Servlet, JSF, JPA, CDI, EJB Lite), reduzindo o consumo de memória e dispensando um servidor Java EE 'Full'."
+        },
+        {
+            category: "Web Interfaces",
+            front: "O que aconteceu com o **JSF (JavaServer Faces)** na evolução para o Jakarta EE?",
+            back: "O JSF padronizou a tecnologia **Facelets** (.xhtml) como padrão (aposentando JSPs). No Jakarta EE, ele foi renomeado para **Jakarta Faces** e removeu suporte legado a Managed Beans clássicos em prol do CDI."
+        },
+
+        // --- CDI & INJEÇÃO DE DEPENDÊNCIA ---
+        {
+            category: "Injeção de Dependências",
+            front: "O que é o **CDI** (Contexts and Dependency Injection) e qual seu impacto desde o Java EE 6?",
+            back: "Introduzido no Java EE 6 (JSR 299), o CDI unificou a camada Web e EJB com injeção de dependências tipada e gerenciamento de escopos (<code>@RequestScoped</code>, <code>@SessionScoped</code>)."
+        },
+        {
+            category: "Injeção de Dependências",
+            front: "Qual a diferença entre usar **@ManagedBean** (JSF) e **@Named** (CDI)?",
+            back: "No Java EE 6, <code>@ManagedBean</code> era o bean nativo do JSF.<br><br>A boa prática consolidada (e obrigatória no Jakarta EE moderno) é usar <code>@Named</code> do **CDI**, descontinuando os Managed Beans legados do JSF."
+        },
+        {
+            category: "Evolução do CDI",
+            front: "O que mudou no arquivo **beans.xml** a partir do Jakarta EE 10?",
+            back: "No Java EE 6, o <code>beans.xml</code> era obrigatório.<br><br>No Jakarta EE 10 (CDI 4.0), o comportamento padrão de `bean-discovery-mode` mudou para <b>'annotated'</b> (ou exigido explicitamente), otimizando a inicialização."
+        },
+
+        // --- PERSISTÊNCIA & JPA ---
+        {
+            category: "Persistência (JPA)",
+            front: "O que mudou no **JPA 2.0** (Java EE 6) e no **Jakarta Persistence**?",
+            back: "O JPA 2.0 (Java EE 6) trouxe a **Criteria API**, suporte a <code>ElementCollection</code> e validação automática via Bean Validation.<br><br>No Jakarta EE, mudou o pacote base de <code>javax.persistence.*</code> para <code>jakarta.persistence.*</code>."
+        },
+        {
+            category: "Persistência (JPA)",
+            front: "Como o arquivo **persistence.xml** mudou do Java EE 6 para o Jakarta EE?",
+            back: "Alteram-se os schemas/namespaces XML no topo do arquivo. Onde se declarava o namespace da Sun/Oracle (<code>http://java.sun.com/xml/ns/persistence</code>), agora utilizam-se os schemas da Eclipse Foundation (<code>https://jakarta.ee/xml/ns/persistence</code>)."
+        },
+        {
+            category: "Validação de Dados",
+            front: "O que é o **Bean Validation** e como ele interage com a camada de persistência?",
+            back: "Introduzido no Java EE 6 (JSR 303), permite validar dados da entidade usando anotações como <code>@NotNull</code> e <code>@Size</code>, sendo executado automaticamente antes do JPA salvar os dados no banco."
+        },
+
+        // --- EJBs & TRANSAÇÕES ---
+        {
+            category: "Componentes Empresariais",
+            front: "O que são **EJBs Lite** introduzidos no Java EE 6?",
+            back: "Um subconjunto dos Enterprise JavaBeans projetado para rodar no Web Profile. Suporta Session Beans (Stateless, Stateful, Singleton) e transações declarativas, mas exclui JMS e interfaces remotas."
+        },
+        {
+            category: "Componentes Empresariais",
+            front: "Qual a diferença entre um EJB **@Stateless** e **@Singleton**?",
+            back: "<b>@Stateless:</b> A aplicação mantém um pool de instâncias intercambiáveis.<br><br><b>@Singleton:</b> Existe apenas uma única instância compartilhada por toda a aplicação (introduzido no Java EE 6)."
+        },
+        {
+            category: "Transações",
+            front: "Como funciona o gerenciamento de transações com **JTA**?",
+            back: "Permite controle transacional declarativo via anotação (ex: <code>@Transactional</code>). O container abre, realiza o commit ou o rollback das operações no banco de forma transparente."
+        },
+        {
+            category: "Evolução de EJB",
+            front: "Qual a tendência atual referente aos **EJBs** no Jakarta EE?",
+            back: "Muitas funcionalidades do EJB (como transações, assincronismo e escopos) foram absorvidas pelo **CDI** e pelo **Jakarta Transactions**. EJBs ainda existem, mas novos projetos priorizam CDI."
+        },
+
+        // --- MENSAGERIA & SERVIÇOS ---
+        {
+            category: "Mensageria",
+            front: "O que é o **JMS** e qual sua nomenclatura no Jakarta EE?",
+            back: "É a especificação para comunicação assíncrona orientada a mensagens (Queue/Topic). No Jakarta EE, chama-se **Jakarta Messaging** (pacote <code>jakarta.jms.*</code>)."
+        },
+        {
+            category: "Web Services Legados",
+            front: "O que aconteceu com o **JAX-WS** (Web Services SOAP) na transição Java EE para Jakarta EE?",
+            back: "O suporte nativo a SOAP via JAX-WS foi desacoplado do Core do Jakarta EE (removido dos perfis principais) para incentivar o uso do **Jakarta RESTful Web Services** e simplificar o runtime."
+        },
+        {
+            category: "JSON Processing",
+            front: "Como o processamento nativo de **JSON** evoluiu entre Java EE 6 e Jakarta EE?",
+            back: "O Java EE 6 dependia de bibliotecas externas (como Jackson). O suporte nativo só surgiu no Java EE 7/8 (JSON-P e JSON-B) e foi totalmente consolidado no Jakarta EE (<b>Jakarta JSON Processing / Binding</b>)."
+        },
+
+        // --- SEGURANÇA & ESPECIFICAÇÕES ---
+        {
+            category: "Segurança",
+            front: "Como evoluiu a **Segurança** do Java EE 6 para o Jakarta EE?",
+            back: "No Java EE 6, a segurança dependia muito de configurações no servidor/<code>web.xml</code>. O Jakarta EE unificou a autenticação com a API **Jakarta Security** (autenticação programática, tokens, annotations)."
+        },
+        {
+            category: "Especificações Descontinuadas",
+            front: "Quais tecnologias do Java EE 6 foram **descontinuadas/removidas** no Jakarta EE moderno?",
+            back: "Módulos obsoletos como **JAX-RPC**, **EJB Entity Beans** (2.x), **JSP Management** e gerenciadores legados foram removidos para deixar a plataforma leve e limpa."
+        },
+
+        // --- PERFIS & RUNTIMES ---
+        {
+            category: "Perfis da Plataforma",
+            front: "Quais são os principais **Perfis (Profiles)** no Jakarta EE moderno?",
+            back: "1. <b>Full Profile:</b> Plataforma completa (inclui JMS, Batch, etc.).<br>2. <b>Web Profile:</b> Voltado para aplicações web.<br>3. <b>Core Profile:</b> Criado no Jakarta EE 10 para microsserviços e runtimes leves."
+        },
+
+        // --- MIGRAÇÃO & FERRAMENTAS ---
+        {
+            category: "Migração de Código",
+            front: "O que é o **Eclipse Transformer** e qual sua utilidade na migração para o Jakarta EE?",
+            back: "É uma ferramenta que reescreve automaticamente os bytecode e arquivos JAR/WAR trocando referências de pacotes <code>javax.*</code> para <code>jakarta.*</code> sem precisar alterar o código-fonte manualmente."
+        },
+        {
+            category: "Migração de Código",
+            front: "O que o desenvolvedor precisa alterar no código ao migrar do Java EE para o Jakarta EE 9+?",
+            back: "1. Alterar as importações de código de <code>javax.*</code> para <code>jakarta.*</code>.<br>2. Atualizar as declarações de Namespaces/Schemas nos arquivos XML (web.xml, persistence.xml).<br>3. Atualizar as dependências Maven/Gradle."
+        },
+
+        // --- COMPARATIVOS E CONCEITOS AVANÇADOS ---
+        {
+            category: "Anotações x XML",
+            front: "Qual a postura quanto à configuração em **XML** no Java EE 6 vs Jakarta EE?",
+            back: "O Java EE 6 adotou 'Convenção sobre Configuração', tornando os arquivos XML opcionais na maioria dos casos. O Jakarta EE mantém essa filosofia, priorizando **Anotações** e **Injeção CDI**."
+        },
+        {
+            category: "Servidores de Aplicação",
+            front: "Quais servidores populares suportavam Java EE 6 e como se chamam na era Jakarta EE?",
+            back: "<b>GlassFish:</b> Mantido pela Eclipse Foundation.<br><b>JBoss AS:</b> Evoluiu para <b>WildFly</b>.<br><b>Sun JSAS/WebLogic:</b> Oracle WebLogic.<br><b>Payara:</b> Derivado moderno e mantido do GlassFish."
+        },
+        {
+            category: "MicroProfile",
+            front: "O que é o **Eclipse MicroProfile** e como ele se relaciona com o Jakarta EE?",
+            back: "É uma iniciativa paralela da Eclipse Foundation para criar especificações focadas em **Microsserviços** (OpenAPI, Health, Metrics, Config) reutilizando APIs do Jakarta EE (como REST e CDI)."
+        },
+        {
+            category: "Concorrência",
+            front: "Como o gerenciamento de **Threads** mudou do Java EE 6 para as especificações atuais?",
+            back: "No Java EE 6, criar threads manuais via <code>new Thread()</code> era proibido pelo container. O Java EE 7+ introduziu o **Concurrency Utilities**, mantido e expandido no Jakarta EE para assincronismo seguro."
+        },
+        {
+            category: "Injeção de Dependências",
+            front: "Qual a diferença de escopo entre **@RequestScoped** e **@ApplicationScoped** no CDI?",
+            back: "<b>@RequestScoped:</b> A instância vive durante uma única requisição HTTP.<br><br><b>@ApplicationScoped:</b> A instância é única e compartilhada durante todo o tempo em que a aplicação estiver rodando."
+        },
+
+        // --- ESPECIFICAÇÕES ADICIONAIS ---
+        {
+            category: "Tratamento de Exceções REST",
+            front: "Como exceções são mapeadas para respostas HTTP no Jakarta REST (JAX-RS)?",
+            back: "Através da interface <code>ExceptionMapper&lt;T&gt;</code>, que intercepta exceções não tratadas e as converte em respostas HTTP personalizadas (ex: código 404, 500) com payload estruturado."
+        },
+        {
+            category: "Mapeamento Objeto-Relacional",
+            front: "O que faz a anotação **@Version** na JPA?",
+            back: "Habilita o **Lock Otimista (Optimistic Locking)**. O JPA verifica o número da versão da linha antes de atualizar no banco de dados para evitar sobrescritas concorrentes indevidas."
+        },
+        {
+            category: "Anotações CDI",
+            front: "Para que serve a anotação **@PostConstruct**?",
+            back: "Executa um método de inicialização imediatamente após a classe ser instanciada e todas as injeções de dependências (<code>@Inject</code>) terem sido satisfeitas pelo container."
+        },
+        {
+            category: "Injeção CDI",
+            front: "Para que serve a anotação **@Produces** no CDI?",
+            back: "Permite transformar o retorno de um método ou atributo em um Bean gerenciado pelo CDI, útil para disponibilizar objetos de terceiros ou recursos customizados para injeção."
+        },
+        {
+            category: "Performance JPA",
+            front: "Qual a diferença entre carregamento **LAZY** e **EAGER** na JPA?",
+            back: "<b>LAZY:</b> Os dados dos relacionamentos só são buscados no banco quando forem explicitamente acessados.<br><br><b>EAGER:</b> Os dados dos relacionamentos são carregados imediatamente junto com a entidade principal."
+        },
+        {
+            category: "Validação de Dados",
+            front: "É possível criar anotações de validação customizadas com **Bean Validation**?",
+            back: "<b>Sim!</b> É possível criar anotações personalizadas vinculadas a uma implementação da interface <code>ConstraintValidator&lt;A, T&gt;</code> para validar regras de negócio complexas."
+        },
+        {
+            category: "Web & Sockets",
+            front: "Como o suporte a comunicação bidirecional em tempo real é tratado no Jakarta EE?",
+            back: "Através da especificação **Jakarta WebSocket**, que permite abrir conexões dinâmicas e persistentes entre cliente e servidor com baixíssima latência."
+        },
+        {
+            category: "Arquitetura & Futuro",
+            front: "Qual é o foco principal do **Jakarta EE 10+** no ecossistema Enterprise?",
+            back: "Foco em **Nativo para Nuvem (Cloud Native)**, alinhamento com versões recentes do Java SE (Java 17/21), suporte a compilação AOT/GraalVM e simplificação de microsserviços via **Core Profile**."
+        }
+    ];
+
+    let currentIndex = 0;
+    const cardElement = document.getElementById('flashcard');
+    const categoryElement = document.getElementById('card-category');
+    const frontElement = document.getElementById('card-front');
+    const backElement = document.getElementById('card-back');
+    const trackerElement = document.getElementById('card-tracker');
+
+    // Helper function to render Markdown bold **text** to <b>text</b>
+    function parseFormatting(str) {
+        return str.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+    }
+
+    function updateCard() {
+        cardElement.classList.remove('is-flipped');
+        setTimeout(() => {
+            const currentData = cardsData[currentIndex];
+            categoryElement.innerText = currentData.category;
+            frontElement.innerHTML = parseFormatting(currentData.front);
+            backElement.innerHTML = parseFormatting(currentData.back);
+            trackerElement.innerText = `Card ${currentIndex + 1} de ${cardsData.length}`;
+        }, 150);
+    }
+
+    function flipCard() {
+        cardElement.classList.toggle('is-flipped');
+    }
+
+    function nextCard() {
+        currentIndex = (currentIndex + 1) % cardsData.length;
+        updateCard();
+    }
+
+    function prevCard() {
+        currentIndex = (currentIndex - 1 + cardsData.length) % cardsData.length;
+        updateCard();
+    }
+
+    // Initialize App
+    updateCard();
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight') nextCard();
+        if (e.key === 'ArrowLeft') prevCard();
+        if (e.key === ' ' || e.key === 'Enter') {
+            e.preventDefault();
+            flipCard();
+        }
+    });
+    </script>
+</body>
+</html>
