@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcards Interativos: SGBD & Bancos de Dados em Memória</title>
+    <style>
+        :root {
+            /* Paleta de Cores Inspirada na Seleção Brasileira */
+            --bg-color: #F0F4F1;
+            --card-bg: #FFFFFF;
+            --card-border: #C2D6C5;
+
+            --primary-color: #002776;   /* Azul Brasil */
+            --accent-color: #FFDF00;    /* Amarelo Ouro */
+            --accent-green: #009B3A;    /* Verde Bandeira */
+
+            --text-color: #1A2E22;
+            --text-muted: #557A64;
+
+            --shadow: 0 12px 30px rgba(0, 39, 118, 0.1);
+            --border-radius: 20px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px 15px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            margin-top: 10px;
+        }
+
+        header h1 {
+            font-size: 2.2rem;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .tracker {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            background: rgba(255, 223, 0, 0.35);
+            padding: 6px 18px;
+            border-radius: 20px;
+            border: 1px solid rgba(0, 155, 58, 0.3);
+        }
+
+        /* Flashcard Container */
+        .scene {
+            width: 100%;
+            max-width: 680px;
+            height: 400px;
+            perspective: 1200px;
+            margin-bottom: 25px;
+            cursor: pointer;
+        }
+
+        .card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+            transform-style: preserve-3d;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+
+        .card.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: var(--border-radius);
+            background: var(--card-bg);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 32px;
+            border: 1px solid var(--card-border);
+            overflow-y: auto;
+        }
+
+        .card-face-front {
+            background: linear-gradient(145deg, #FFFFFF, #F8FCF9);
+            border-top: 5px solid var(--accent-green);
+        }
+
+        .card-face-back {
+            background: linear-gradient(145deg, #FFFDF0, #FFFFFF);
+            transform: rotateY(180deg);
+            border-top: 5px solid var(--primary-color);
+        }
+
+        .card-category {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 700;
+            color: var(--accent-green);
+        }
+
+        .card-face-back .card-category {
+            color: var(--primary-color);
+        }
+
+        .card-content {
+            font-size: 1.35rem; 
+            line-height: 1.6;
+            color: var(--text-color);
+            font-weight: 500;
+            text-align: center;
+            margin: auto 0;
+        }
+
+        .card-face-back .card-content {
+            color: var(--text-color);     
+            font-size: 1.05rem; 
+            text-align: left;
+        }
+
+        .card-face-back .card-content b {
+            color: var(--primary-color);
+            background: rgba(255, 223, 0, 0.4);
+            padding: 2px 5px;
+            border-radius: 4px;
+        }
+
+        .card-hint {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-align: center;
+            font-style: italic;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            background-color: var(--card-bg);
+            color: var(--primary-color);
+            border: 1px solid var(--card-border);
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0, 39, 118, 0.08);
+            user-select: none;
+        }
+
+        button:hover {
+            background-color: var(--accent-green);
+            color: #FFFFFF;
+            border-color: var(--accent-green);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 155, 58, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        /* Scrollbar custom styles */
+        .card-face::-webkit-scrollbar {
+            width: 6px;
+        }
+        .card-face::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.03);
+            border-radius: 10px;
+        }
+        .card-face::-webkit-scrollbar-thumb {
+            background: var(--card-border);
+            border-radius: 10px;
+        }
+
+        @media (max-width: 640px) {
+            .scene {
+                height: 440px;
+            }
+            header h1 {
+                font-size: 1.6rem;
+            }
+            .card-content {
+                font-size: 1.15rem;
+            }
+            .card-face-back .card-content {
+                font-size: 0.95rem;
+            }
+            button {
+                padding: 10px 18px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Flashcards Interativos</h1>
+        <p>SGBD & Bancos de Dados em Memória</p>
+    </header>
+
+    <div class="tracker" id="card-tracker">Card 1 de 40</div>
+
+    <div class="scene" onclick="flipCard()">
+        <div class="card" id="flashcard">
+            <div class="card-face card-face-front">
+                <div class="card-category" id="card-category">Categoria</div>
+                <div class="card-content" id="card-front">Carregando pergunta...</div>
+                <div class="card-hint">💡 Clique no card para ver a resposta</div>
+            </div>
+            <div class="card-face card-face-back">
+                <div class="card-category">Resposta Explicada</div>
+                <div class="card-content" id="card-back">Carregando resposta...</div>
+                <div class="card-hint">💡 Clique para virar novamente</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button onclick="prevCard()">Anterior</button>
+        <button onclick="flipCard()">Virar Card</button>
+        <button onclick="nextCard()">Próximo</button>
+    </div>
+
+    <script>
+    const cardsData = [
+        // --- 1. SGBD (SISTEMA DE GERENCIAMENTO DE BANCO DE DADOS) - 20 CARDS ---
+        {
+            category: "SGBD (Conceito Geral)",
+            front: "O que significa a sigla **SGBD** e qual é a sua definição fundamental?",
+            back: "Significa **Sistema de Gerenciamento de Banco de Dados**. É um software que serve como interface entre o banco de dados e os usuários/aplicações, permitindo criar, proteger, consultar e manipular dados."
+        },
+        {
+            category: "SGBD (Arquitetura)",
+            front: "Quais são as **três camadas principais** da arquitetura padrão de um SGBD (ANSI/SPARC)?",
+            back: "1. **Externa (ou de Visão):** Como os usuários veem os dados.<br>2. **Conceitual:** A estrutura lógica global.<br>3. **Interna (ou Física):** Como os dados são fisicamente armazenados no hardware."
+        },
+        {
+            category: "SGBD (Segurança)",
+            front: "O que é **Controle de Conconcorrência** em um SGBD?",
+            back: "É o mecanismo que garante que **múltiplos usuários possam acessar e modificar dados simultaneamente** sem corrompê-los ou gerar inconsistências (geralmente gerenciado via *locks* ou controle multiversão)."
+        },
+        {
+            category: "SGBD (Transações)",
+            front: "O que significam as propriedades **ACID** garantidas por SGBDs relacionais?",
+            back: "• **A**tomicidade (tudo ou nada)<br>• **C**onsistência (regras válidas)<br>• **I**solamento (transações independentes)<br>• **D**urabilidade (dados salvos persistem após falhas)."
+        },
+        {
+            category: "SGBD (Recuperação)",
+            front: "Qual é a função do **Gerenciador de Recuperação (Recovery Manager)** em um SGBD?",
+            back: "Garantir a integridade do banco de dados após falhas de energia ou de hardware, utilizando mecanismos de **logs de transação** (*redo/undo*)."
+        },
+        {
+            category: "SGBD (Otimização)",
+            front: "O que faz o **Otimizador de Consultas** (*Query Optimizer*) em um SGBD?",
+            back: "Analisa uma instrução SQL declarativa e **determina a rota de execução física mais eficiente** (qual índice usar, ordem das tabelas) para retornar os dados rapidamente."
+        },
+        {
+            category: "SGBD (Tipos)",
+            front: "Qual é a principal diferença entre um SGBD **Relacional (RDBMS)** e um **Não Relacional (NoSQL)**?",
+            back: "• **RDBMS:** Baseado em tabelas estruturadas com esquemas rígidos e SQL.<br>• **NoSQL:** Flexível, suporta estruturas como documentos, grafos ou pares chave-valor sem esquema fixo."
+        },
+        {
+            category: "SGBD (Dicionário)",
+            front: "O que é o **Catálogo do Sistema** ou **Dicionário de Dados** em um SGBD?",
+            back: "É um repositório interno que armazena os **metadados** do banco (informações sobre tabelas, colunas, tipos de dados, permissões e restrições)."
+        },
+        {
+            category: "SGBD (Integridade)",
+            front: "Como o SGBD assegura a **Integridade Referencial**?",
+            back: "Através do uso de chaves estrangeiras (*foreign keys*), impedindo que sejam inseridos registros filhos órfãos ou apagados registros pais necessários."
+        },
+        {
+            category: "SGBD (Abstração)",
+            front: "O que é a **Abstração de Dados** proporcionada por um SGBD?",
+            back: "É a capacidade de **ocultar detalhes complexos de armazenamento físico**, permitindo que os desenvolvedores interajam com os dados de forma lógica e simplificada."
+        },
+        {
+            category: "SGBD (Modelagem)",
+            front: "Quais são as principais funções do subsistema de **Definição de Dados** de um SGBD?",
+            back: "Processar comandos DDL para criar, modificar e remover as estruturas lógicas e físicas que compõem o banco de dados."
+        },
+        {
+            category: "SGBD (Logs)",
+            front: "Qual a diferença entre os logs **UNDO** e **REDO** no gerenciamento de transações do SGBD?",
+            back: "• **UNDO:** Usado para reverter alterações de transações não confirmadas (rollback).<br>• **REDO:** Usado para reaplicar alterações de transações confirmadas após uma pane."
+        },
+        {
+            category: "SGBD (Usuários)",
+            front: "Quais são os principais papéis envolvidos na interação com um SGBD?",
+            back: "Administradores de Banco de Dados (DBA), Desenvolvedores de Aplicação, Usuários Finais e Projetistas de Banco de Dados."
+        },
+        {
+            category: "SGBD (Locks)",
+            front: "O que são **Deadlocks** (impasses) gerados pelo controle de concorrência de um SGBD?",
+            back: "É uma situação em que duas ou mais transações ficam bloqueadas indefinidamente, cada uma aguardando um recurso que a outra está segurando."
+        },
+        {
+            category: "SGBD (Escalonamento)",
+            front: "O que é o **Escalonamento (*Scheduling*)** de transações em um SGBD?",
+            back: "A ordem cronológica em que as operações de várias transações concorrentes são executadas pelo processador do banco."
+        },
+        {
+            category: "SGBD (Vantagens)",
+            front: "Cite duas grandes vantagens de utilizar um SGBD em vez de arquivos de texto tradicionais.",
+            back: "Eliminação de redundância de dados e garantia centralizada de segurança e controle de acesso."
+        },
+        {
+            category: "SGBD (Visões)",
+            front: "O que são **Visões (Views)** gerenciadas por um SGBD?",
+            back: "Tabelas virtuais baseadas no resultado de uma instrução SQL, úteis para simplificar consultas complexas e ocultar colunas sensíveis."
+        },
+        {
+            category: "SGBD (Armazenamento)",
+            front: "Como o SGBD gerencia o armazenamento de dados na camada física?",
+            back: "Através da alocação de **blocos ou páginas de disco**, gerenciando o buffer pool para carregar dados da memória secundária para a primária."
+        },
+        {
+            category: "SGBD (Stored Procedures)",
+            front: "O que são **Procedimentos Armazenados (*Stored Procedures*)** no SGBD?",
+            back: "Blocos de código SQL compilados e salvos diretamente no servidor de banco de dados, executados sob demanda."
+        },
+        {
+            category: "SGBD (Independência)",
+            front: "O que significa **Independência de Dados** em um SGBD?",
+            back: "A capacidade de alterar o esquema físico (ou conceitual) sem a necessidade de modificar as aplicações que acessam o banco."
+        },
+
+        // --- 2. BANCOS DE DADOS EM MEMÓRIA / IN-MEMORY - 20 CARDS ---
+        {
+            category: "In-Memory DB (Conceito)",
+            front: "O que é um **Banco de Dados em Memória (IMDB)**?",
+            back: "É um sistema de gerenciamento de banco de dados que depende primariamente da **memória principal (RAM)** para armazenamento de dados, em vez de discos rígidos tradicionais."
+        },
+        {
+            category: "In-Memory DB (Vantagens)",
+            front: "Qual é a **principal vantagem de desempenho** dos bancos de dados em memória?",
+            back: "Velocidade extrema de leitura e escrita, pois **elimina o tempo de latência de E/S (*I/O*) do disco mecânico ou SSD**."
+        },
+        {
+            category: "In-Memory DB (Arquitetura)",
+            front: "Por que os bancos de dados em memória reduzem drasticamente o uso de **índices complexos**?",
+            back: "Porque varrer a RAM inteira é ordens de magnitude mais rápido do que buscar em discos, tornando buscas sequenciais em memória muito eficientes."
+        },
+        {
+            category: "In-Memory DB (Persistência)",
+            front: "Se os dados ficam na RAM, o que acontece com as informações se houver uma **queda de energia repentina**?",
+            back: "A RAM é volátil. Por isso, IMDBs utilizam mecanismos de persistência assíncrona ou síncrona, como **snapshots em disco ou arquivos de log (AOF/RDB)**."
+        },
+        {
+            category: "In-Memory DB (Exemplos)",
+            front: "Cite dois exemplos famosos de tecnologias ou SGBDs focados em **In-Memory**.",
+            back: "• **Redis** (muito usado para cache e chave-valor)<br>• **SAP HANA** ou **Memcached**."
+        },
+        {
+            category: "In-Memory DB (Casos de Uso)",
+            front: "Para quais cenários de aplicação os bancos de dados em memória são altamente recomendados?",
+            back: "Sistemas de alta performance em tempo real: **carrinhos de compras de e-commerce, placares esportivos, detecção de fraudes financeiras e sistemas de cache**."
+        },
+        {
+            category: "In-Memory DB (Estruturas)",
+            front: "Como os dados costumam ser indexados ou organizados internamente em muitos bancos em memória?",
+            back: "Muitos usam estruturas otimizadas para cache como tabelas orientadas a colunas, árvores T (*T-Trees*) ou tabelas hash diretas."
+        },
+        {
+            category: "In-Memory DB (Desafios)",
+            front: "Qual é a **principal desvantagem ou restrição financeira** dos bancos de dados em memória?",
+            back: "O **custo elevado por gigabyte da RAM** comparado ao armazenamento em disco, tornando bases de dados gigantescas muito caras para manter 100% na memória."
+        },
+        {
+            category: "In-Memory DB (Escalabilidade)",
+            front: "O que é o armazenamento **Híbrido (Disco + Memória)** em SGBDs modernos?",
+            back: "Arquiteturas onde os dados quentes (*hot data*, mais acessados) ficam na RAM e os dados frios (*cold data*, históricos) ficam armazenados em discos/SSDs."
+        },
+        {
+            category: "In-Memory DB (Transações)",
+            front: "Como o controle de concorrência se comporta em ambientes de banco de dados em memória puros?",
+            back: "Geralmente é otimizado para evitar travamentos de locks tradicionais, utilizando controle de concorrência otimista ou arquiteturas sem bloqueio (*lock-free*)."
+        },
+        {
+            category: "In-Memory DB (Cache)",
+            front: "Qual é a diferença conceitual entre um **Cache em Memória** (ex: Redis) e um **SGBD Relacional Tradicional**?",
+            back: "O cache prioriza velocidade extrema com estruturas simples (chave-valor) e pode descartar dados antigos, enquanto o SGBD prioriza integridade relacional estrita."
+        },
+        {
+            category: "In-Memory DB (Recuperação)",
+            front: "O que é um arquivo de **Snapshot** (*Checkpointer*) em bancos em memória?",
+            back: "Uma cópia completa do estado atual da memória RAM salva periodicamente no disco para agilizar o tempo de inicialização (*recovery*) pós-falha."
+        },
+        {
+            category: "In-Memory DB (Latência)",
+            front: "Qual a ordem de grandeza da latência de acesso a dados em memória RAM comparada ao SSD?",
+            back: "A RAM opera na faixa de **nanossegundos**, enquanto SSDs operam na faixa de **microssegundos ou milissegundos**, gerando ganhos massivos de performance."
+        },
+        {
+            category: "In-Memory DB (OLTP vs OLAP)",
+            front: "Bancos de dados em memória são úteis apenas para transações (`OLTP`) ou também para análises de dados (`OLAP`)?",
+            back: "São altamente úteis para ambos. Em análises (`OLAP`), estruturas colunares em memória aceleram consultas complexas de Business Intelligence (BI)."
+        },
+        {
+            category: "In-Memory DB (Limitação Física)",
+            front: "O que limita o tamanho máximo de um banco de dados estritamente em memória em um único servidor?",
+            back: "A **capacidade física máxima de placas de RAM** suportada pela placa-mãe e arquitetura do servidor."
+        },
+        {
+            category: "In-Memory DB (Replicação)",
+            front: "Como a alta disponibilidade é garantida em bancos de dados em memória?",
+            back: "Através de **replicação em tempo real para nós secundários** na memória de servidores de backup geograficamente distribuídos."
+        },
+        {
+            category: "In-Memory DB (Lock-Free)",
+            front: "O que significa processamento **Lock-Free** em bancos de dados em memória?",
+            back: "Técnica de programação concorrente que evita travar threads inteiras ao atualizar dados, usando operações atômicas de hardware (como CAS - *Compare-And-Swap*)."
+        },
+        {
+            category: "In-Memory DB (Redis)",
+            front: "Por que o **Redis** é amplamente classificado como um armazenamento de estrutura de dados em memória?",
+            back: "Porque suporta estruturas ricas (strings, hashes, listas, conjuntos) mantidas inteiramente na RAM com opções flexíveis de persistência."
+        },
+        {
+            category: "In-Memory DB (Colunar)",
+            front: "O que é o armazenamento **Orientado a Colunas** frequentemente usado em motores in-memory analíticos?",
+            back: "Uma organização onde os dados de cada coluna são armazenados juntos na memória, permitindo varreduras ultrarrápidas em agregações matemáticas (ex: SUM, AVG)."
+        },
+        {
+            category: "In-Memory DB (Futuro)",
+            front: "Como tecnologias emergentes como **Non-Volatile Memory (NVM / PMEM)** afetam os bancos de dados em memória?",
+            back: "Eliminam a linha divisória entre RAM e disco, oferecendo persistência de dados com velocidades próximas às da memória principal."
+        }
+    ];
+
+    let currentIndex = 0;
+    const cardElement = document.getElementById('flashcard');
+    const categoryElement = document.getElementById('card-category');
+    const frontElement = document.getElementById('card-front');
+    const backElement = document.getElementById('card-back');
+    const trackerElement = document.getElementById('card-tracker');
+
+    function parseFormatting(str) {
+        return str.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+    }
+
+    function updateCard() {
+        cardElement.classList.remove('is-flipped');
+        setTimeout(() => {
+            const currentData = cardsData[currentIndex];
+            categoryElement.innerText = currentData.category;
+            frontElement.innerHTML = parseFormatting(currentData.front);
+            backElement.innerHTML = parseFormatting(currentData.back);
+            trackerElement.innerText = `Card ${currentIndex + 1} de ${cardsData.length}`;
+        }, 150);
+    }
+
+    function flipCard() {
+        cardElement.classList.toggle('is-flipped');
+    }
+
+    function nextCard() {
+        currentIndex = (currentIndex + 1) % cardsData.length;
+        updateCard();
+    }
+
+    function prevCard() {
+        currentIndex = (currentIndex - 1 + cardsData.length) % cardsData.length;
+        updateCard();
+    }
+
+    // Initialize App
+    updateCard();
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight') nextCard();
+        if (e.key === 'ArrowLeft') prevCard();
+        if (e.key === ' ' || e.key === 'Enter') {
+            e.preventDefault();
+            flipCard();
+        }
+    });
+    </script>
+</body>
+</html>
