@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcards Interativos: Dados Estruturados/Não Estruturados & Avaliação de Modelos</title>
+    <style>
+        :root {
+            /* Paleta de Cores Inspirada na Seleção dos EUA (Azul, Vermelho e Branco) */
+            --bg-color: #F3F6FA;
+            --card-bg: #FFFFFF;
+            --card-border: #D0DCE8;
+
+            --primary-color: #0C2340;   /* Azul Marinho dos EUA */
+            --accent-red: #BF0A30;      /* Vermelho Bandeira EUA */
+            --accent-blue: #1D70B8;     /* Azul Royal */
+
+            --text-color: #0C2340;
+            --text-muted: #546E7A;
+
+            --shadow: 0 12px 30px rgba(12, 35, 64, 0.1);
+            --border-radius: 20px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px 15px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            margin-top: 10px;
+        }
+
+        header h1 {
+            font-size: 2.2rem;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .tracker {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            background: rgba(29, 112, 184, 0.12);
+            padding: 6px 18px;
+            border-radius: 20px;
+            border: 1px solid rgba(29, 112, 184, 0.3);
+        }
+
+        /* Flashcard Container */
+        .scene {
+            width: 100%;
+            max-width: 680px;
+            height: 400px;
+            perspective: 1200px;
+            margin-bottom: 25px;
+            cursor: pointer;
+        }
+
+        .card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+            transform-style: preserve-3d;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+
+        .card.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: var(--border-radius);
+            background: var(--card-bg);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 32px;
+            border: 1px solid var(--card-border);
+            overflow-y: auto;
+        }
+
+        .card-face-front {
+            background: linear-gradient(145deg, #FFFFFF, #F8FAFC);
+            border-top: 5px solid var(--accent-blue);
+        }
+
+        .card-face-back {
+            background: linear-gradient(145deg, #FFF5F5, #FFFFFF);
+            transform: rotateY(180deg);
+            border-top: 5px solid var(--accent-red);
+        }
+
+        .card-category {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 700;
+            color: var(--accent-blue);
+        }
+
+        .card-face-back .card-category {
+            color: var(--accent-red);
+        }
+
+        .card-content {
+            font-size: 1.35rem; 
+            line-height: 1.6;
+            color: var(--text-color);
+            font-weight: 500;
+            text-align: center;
+            margin: auto 0;
+        }
+
+        .card-face-back .card-content {
+            color: var(--text-color);     
+            font-size: 1.05rem; 
+            text-align: left;
+        }
+
+        .card-face-back .card-content b {
+            color: var(--primary-color);
+            background: rgba(191, 10, 48, 0.12);
+            padding: 2px 5px;
+            border-radius: 4px;
+        }
+
+        .card-hint {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-align: center;
+            font-style: italic;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            background-color: var(--card-bg);
+            color: var(--primary-color);
+            border: 1px solid var(--card-border);
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(12, 35, 64, 0.08);
+            user-select: none;
+        }
+
+        button:hover {
+            background-color: var(--primary-color);
+            color: #FFFFFF;
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(12, 35, 64, 0.25);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        /* Scrollbar custom styles */
+        .card-face::-webkit-scrollbar {
+            width: 6px;
+        }
+        .card-face::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.03);
+            border-radius: 10px;
+        }
+        .card-face::-webkit-scrollbar-thumb {
+            background: var(--card-border);
+            border-radius: 10px;
+        }
+
+        @media (max-width: 640px) {
+            .scene {
+                height: 440px;
+            }
+            header h1 {
+                font-size: 1.6rem;
+            }
+            .card-content {
+                font-size: 1.15rem;
+            }
+            .card-face-back .card-content {
+                font-size: 0.95rem;
+            }
+            button {
+                padding: 10px 18px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Flashcards Interativos</h1>
+        <p>Dados Estruturados & Não Estruturados • Avaliação de Modelos</p>
+    </header>
+
+    <div class="tracker" id="card-tracker">Card 1 de 40</div>
+
+    <div class="scene" onclick="flipCard()">
+        <div class="card" id="flashcard">
+            <div class="card-face card-face-front">
+                <div class="card-category" id="card-category">Categoria</div>
+                <div class="card-content" id="card-front">Carregando pergunta...</div>
+                <div class="card-hint">💡 Clique no card para ver a resposta</div>
+            </div>
+            <div class="card-face card-face-back">
+                <div class="card-category">Resposta Explicada</div>
+                <div class="card-content" id="card-back">Carregando resposta...</div>
+                <div class="card-hint">💡 Clique para virar novamente</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button onclick="prevCard()">Anterior</button>
+        <button onclick="flipCard()">Virar Card</button>
+        <button onclick="nextCard()">Próximo</button>
+    </div>
+
+    <script>
+    const cardsData = [
+        // --- 1. DADOS ESTRUTURADOS E NÃO ESTRUTURADOS (20 CARDS) ---
+        {
+            category: "Dados Estruturados",
+            front: "O que caracteriza os **Dados Estruturados**?",
+            back: "São dados altamente organizados que seguem um **modelo de dados rígido e predefinido** (como tabelas relacionais com linhas e colunas), facilitando buscas via SQL."
+        },
+        {
+            category: "Dados Estruturados",
+            front: "Cite exemplos clássicos de **Dados Estruturados**.",
+            back: "• Bancos de dados relacionais (MySQL, PostgreSQL)<br>• Planilhas do Excel<br>• Tabelas com chaves primárias e estrangeiras."
+        },
+        {
+            category: "Dados Não Estruturados",
+            front: "O que caracteriza os **Dados Não Estruturados**?",
+            back: "Dados que **não possuem um formato predefinido ou modelo relacional**, tornando sua organização e análise direta mais complexas (ex: textos livres, mídias)."
+        },
+        {
+            category: "Dados Não Estruturados",
+            front: "Cite exemplos clássicos de **Dados Não Estruturados**.",
+            back: "• Arquivos de áudio e vídeo<br>• Imagens e fotografias<br>• E-mails, postagens em redes sociais e documentos de texto livre."
+        },
+        {
+            category: "Dados Semi-estruturados",
+            front: "O que são **Dados Semi-estruturados**?",
+            back: "Dados que não estão em tabelas relacionais, mas possuem **alguma organização interna ou tags/metadados** que facilitam a leitura (ex: JSON, XML, arquivos CSV)."
+        },
+        {
+            category: "Comparação de Armazenamento",
+            front: "Como o armazenamento de dados estruturados difere dos não estruturados?",
+            back: "• Estruturados utilizam **SGBDs relacionais** baseados em discos rígidos estruturados.<br>• Não estruturados exigem **Data Lakes, Object Storage ou NoSQL** (como MongoDB/Hadoop)."
+        },
+        {
+            category: "Análise de Dados",
+            front: "Por que a análise de **dados não estruturados** exige tecnologias avançadas?",
+            back: "Porque requer ferramentas de Inteligência Artificial, como **Processamento de Linguagem Natural (PLN) e Visão Computacional**, para extrair significado."
+        },
+        {
+            category: "Volume de Dados",
+            front: "Qual tipo de dado (estruturado ou não estruturado) compõe a maior fatia do volume gerado mundialmente hoje?",
+            back: "Os **dados não estruturados**, representando cerca de 80% a 90% de toda a informação digital criada no mundo (vídeos, áudios, posts, logs)."
+        },
+        {
+            category: "Schema-on-Read vs Write",
+            front: "Qual a diferença de esquema entre bancos para dados estruturados vs não estruturados?",
+            back: "• Estruturados usam **Schema-on-Write** (o esquema é definido antes de salvar).<br>• Não estruturados usam **Schema-on-Read** (o dado é gravado livremente e interpretado na leitura)."
+        },
+        {
+            category: "Integração",
+            front: "Como os **dados semi-estruturados (como JSON)** preenchem a lacuna entre estruturados e não estruturados?",
+            back: "Eles oferecem **flexibilidade de campos opcionais** enquanto mantêm marcadores legíveis por máquina, permitindo estruturar dados flexíveis."
+        },
+        {
+            category: "Processamento",
+            front: "O que é necessário fazer com dados não estruturados antes de utilizá-los em modelos analíticos tradicionais?",
+            back: "Passar por um processo de **transformação, vetorização ou extração de características** (*feature extraction*) para torná-los quantificáveis."
+        },
+        {
+            category: "Exemplos de Negócio",
+            front: "Dê um exemplo de como uma empresa utiliza **dados estruturados e não estruturados combinados**.",
+            back: "Uma empresa de e-commerce combina o **histórico de transações estruturado** (tabela de compras) com **avaliações em texto livre (não estruturado)** dos clientes."
+        },
+        {
+            category: "Metadados",
+            front: "Qual o papel dos metadados no gerenciamento de dados não estruturados?",
+            back: "Adicionar contexto essencial (data de criação, autor, tags de geolocalização) para permitir a **pesquisa e indexação** eficiente desses arquivos."
+        },
+        {
+            category: "Consultas SQL",
+            front: "É possível consultar dados não estruturados diretamente com comandos SQL tradicionais?",
+            back: "Não nativamente, exceto se o SGBD possuir extensões específicas para lidar com tipos complexos (como JSONB no PostgreSQL ou BLOBs indexados)."
+        },
+        {
+            category: "Data Lakes",
+            front: "Por que os **Data Lakes** revolucionaram o armazenamento de dados não estruturados?",
+            back: "Porque permitem armazenar **qualquer formato de dado em seu estado bruto original** a baixo custo, sem exigir modelagem prévia."
+        },
+        {
+            category: "Qualidade dos Dados",
+            front: "Qual tipo de dado costuma apresentar maiores desafios em termos de **limpeza e padronização**?",
+            back: "Os **dados não estruturados**, devido a erros gramaticais, ruídos em áudios, baixa resolução em imagens e ambiguidades na linguagem humana."
+        },
+        {
+            category: "Segurança e Governança",
+            front: "Quais são os riscos de governança associados a repositórios de dados não estruturados?",
+            back: "Maior facilidade de vazamento de informações sensíveis escondidas em documentos de texto ou imagens (como dados pessoais não mascarados)."
+        },
+        {
+            category: "Big Data",
+            front: "Como o conceito de **Big Data** se relaciona com dados estruturados e não estruturados?",
+            back: "O Big Data expandiu a capacidade de processamento justamente para lidar com o tsunami de **dados não estruturados e em tempo real** gerados na internet."
+        },
+        {
+            category: "Indexação",
+            front: "Como motores de busca (como Elasticsearch) indexam dados não estruturados (textos)?",
+            back: "Através de **indexação invertida**, transformando textos em tokens/palavras-chave mapeadas para as posições onde aparecem nos documentos."
+        },
+        {
+            category: "Resumo Conceitual",
+            front: "Qual é a principal vantagem comercial de dominar a análise conjunta de dados estruturados e não estruturados?",
+            back: "Obter **insights holísticos de 360 graus**, unindo métricas numéricas precisas com o comportamento real e sentimentos dos clientes."
+        },
+
+        // --- 2. AVALIAÇÃO DE MODELOS DE DADOS (20 CARDS) ---
+        {
+            category: "Avaliação de Modelos",
+            front: "O que significa **Avaliação de Modelos** no contexto de dados e aprendizado de máquina?",
+            back: "O processo de **medir a qualidade, a precisão e a capacidade de generalização** de um modelo preditivo usando métricas estatísticas adequadas."
+        },
+        {
+            category: "Divisão de Dados",
+            front: "Por que dividimos o conjunto de dados em **Treino e Teste** ao avaliar um modelo?",
+            back: "Para garantir que o modelo seja avaliado em **dados nunca vistos antes**, simulando seu comportamento real no mundo corporativo."
+        },
+        {
+            category: "Overfitting",
+            front: "O que é o **Overfitting (Sobreajuste)** na avaliação de modelos?",
+            back: "Quando o modelo decora excessivamente os dados de treino, apresentando **ótima performance no treino, mas péssima generalização** em dados novos."
+        },
+        {
+            category: "Underfitting",
+            front: "O que é o **Underfitting (Subajuste)**?",
+            back: "Quando o modelo é simples demais e **não consegue capturar os padrões básicos** nem mesmo nos dados de treinamento."
+        },
+        {
+            category: "Validação Cruzada",
+            front: "O que é a técnica de **Validação Cruzada (Cross-Validation / K-Fold)**?",
+            back: "Dividir o dataset em $K$ partes, treinando o modelo $K$ vezes usando partes diferentes como teste, garantindo uma **avaliação estatística mais robusta**."
+        },
+        {
+            category: "Matriz de Confusão",
+            front: "O que é uma **Matriz de Confusão** em modelos de classificação?",
+            back: "Uma tabela que compara as **previsões do modelo versus os valores reais**, dividida em Verdadeiros Positivos, Falsos Positivos, Verdadeiros Negativos e Falsos Negativos."
+        },
+        {
+            category: "Acurácia",
+            front: "O que mede a métrica de **Acurácia (*Accuracy*)**?",
+            back: "A porcentagem de **previsões corretas gerais** feitas pelo modelo em relação ao total de amostras avaliadas."
+        },
+        {
+            category: "Limitação da Acurácia",
+            front: "Por que a **Acurácia pode ser enganosa** em conjuntos de dados desbalanceados?",
+            back: "Porque se 99% dos dados forem da classe majoritária, um modelo inútil que sempre chuta essa classe terá 99% de acurácia, mas falhará totalmente."
+        },
+        {
+            category: "Precisão",
+            front: "O que mede a métrica de **Precisão (*Precision*)**?",
+            back: "Dentre todas as previsões que o modelo classificou como positivas, **quantas realmente eram positivas**? (Foca em evitar Falsos Positivos)."
+        },
+        {
+            category: "Recall (Revocação)",
+            front: "O que mede a métrica de **Recall (Sensibilidade / Revocação)**?",
+            back: "Dentre todos os casos positivos reais existentes, **quantos o modelo conseguiu identificar**? (Foca em evitar Falsos Negativos)."
+        },
+        {
+            category: "F1-Score",
+            front: "O que é o **F1-Score** na avaliação de modelos?",
+            back: "A **média harmônica entre Precisão e Recall**, fornecendo uma métrica única equilibrada quando há trade-off entre ambas."
+        },
+        {
+            category: "Curva ROC e AUC",
+            front: "Para que serve a **Curva ROC e a métrica AUC**?",
+            back: "Avaliam a **capacidade de discriminação** do modelo de classificação em diferentes limiares de decisão, medindo o quão bem ele separa classes."
+        },
+        {
+            category: "Métricas de Regressão",
+            front: "Quais são as métricas padrão para avaliar modelos de **Regressão** (previsão de valores contínuos)?",
+            back: "• **MAE** (Erro Absoluto Médio)<br>• **MSE** (Erro Quadrático Médio)<br>• **RMSE** (Raiz do Erro Quadrático Médio)."
+        },
+        {
+            category: "R-Quadrado (R²)",
+            front: "O que mede o coeficiente de determinação **R² (R-Squared)** em regressão?",
+            back: "A **proporção da variância da variável dependente** que é explicada pelas variáveis independentes do modelo (varia de 0 a 1)."
+        },
+        {
+            category: "Data Leakage",
+            front: "O que é o **Vazamento de Dados (*Data Leakage*)** durante a avaliação?",
+            back: "Uma falha grave onde informações do conjunto de teste 'vazam' para o treino, gerando **métricas de avaliação falsamente perfeitas** que falham na produção."
+        },
+        {
+            category: "Baseline",
+            front: "O que é um modelo **Baseline (Linha de Base)** na avaliação?",
+            back: "Um modelo simples ou heurística básica usado como **ponto de comparação inicial** para provar que o modelo complexo realmente agrega valor."
+        },
+        {
+            category: "Validação de Negócio",
+            front: "Por que métricas estatísticas sozinhas não bastam para a **avaliação completa de um modelo corporativo**?",
+            back: "Porque é preciso avaliar o **impacto financeiro de negócios** (ex: o custo de um falso positivo no mundo real versus um falso negativo)."
+        },
+        {
+            category: "Conjunto de Validação",
+            front: "Qual a utilidade do **Conjunto de Validação (*Validation Set*)** antes do teste final?",
+            back: "Ajustar os **hiperparâmetros** do modelo de forma segura sem contaminar nem o treino nem o teste final."
+        },
+        {
+            category: "Matriz de Custo",
+            front: "O que é a **Matriz de Custo** na avaliação de modelos de decisão?",
+            back: "Uma matriz que atribui **pesos financeiros diferentes para cada tipo de erro** (ex: errar um diagnóstico médico custa mais do que um alarme falso)."
+        },
+        {
+            category: "Monitoramento em Produção",
+            front: "O que é o **Drift de Dados (*Data Drift*)** na avaliação contínua de modelos?",
+            back: "A degradação da performance do modelo ao longo do tempo porque **o comportamento do mundo real mudou** em relação aos dados em que ele foi treinado."
+        }
+    ];
+
+    let currentIndex = 0;
+    const cardElement = document.getElementById('flashcard');
+    const categoryElement = document.getElementById('card-category');
+    const frontElement = document.getElementById('card-front');
+    const backElement = document.getElementById('card-back');
+    const trackerElement = document.getElementById('card-tracker');
+
+    function parseFormatting(str) {
+        return str.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+    }
+
+    function updateCard() {
+        cardElement.classList.remove('is-flipped');
+        setTimeout(() => {
+            const currentData = cardsData[currentIndex];
+            categoryElement.innerText = currentData.category;
+            frontElement.innerHTML = parseFormatting(currentData.front);
+            backElement.innerHTML = parseFormatting(currentData.back);
+            trackerElement.innerText = `Card ${currentIndex + 1} de ${cardsData.length}`;
+        }, 150);
+    }
+
+    function flipCard() {
+        cardElement.classList.toggle('is-flipped');
+    }
+
+    function nextCard() {
+        currentIndex = (currentIndex + 1) % cardsData.length;
+        updateCard();
+    }
+
+    function prevCard() {
+        currentIndex = (currentIndex - 1 + cardsData.length) % cardsData.length;
+        updateCard();
+    }
+
+    // Initialize App
+    updateCard();
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight') nextCard();
+        if (e.key === 'ArrowLeft') prevCard();
+        if (e.key === ' ' || e.key === 'Enter') {
+            e.preventDefault();
+            flipCard();
+        }
+    });
+    </script>
+</body>
+</html>
