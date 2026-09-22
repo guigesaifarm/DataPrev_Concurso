@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcards Interativos: DDL & DML em Bancos de Dados</title>
+    <style>
+        :root {
+            /* Paleta de Cores Refinada: Fundo claro sofisticado, azul e rosa */
+            --bg-color: #F4F7FB;
+            --card-bg: #FFFFFF;
+            --card-border: #D1D9E6;
+
+            --primary-color: #1E293B;
+            --accent-color: #3B82F6; /* Azul principal */
+            --accent-pink: #EC4899;  /* Rosa elegante */
+
+            --text-color: #1E293B;
+            --text-muted: #64748B;
+
+            --card-back-bg: #F8FAFC;
+
+            --shadow: 0 12px 30px rgba(30, 41, 59, 0.08);
+            --border-radius: 20px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px 15px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            margin-top: 10px;
+        }
+
+        header h1 {
+            font-size: 2.2rem;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .tracker {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--accent-color);
+            margin-bottom: 20px;
+            background: rgba(59, 130, 246, 0.1);
+            padding: 6px 18px;
+            border-radius: 20px;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        /* Flashcard Container */
+        .scene {
+            width: 100%;
+            max-width: 680px;
+            height: 400px;
+            perspective: 1200px;
+            margin-bottom: 25px;
+            cursor: pointer;
+        }
+
+        .card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+            transform-style: preserve-3d;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+
+        .card.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: var(--border-radius);
+            background: var(--card-bg);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 32px;
+            border: 1px solid var(--card-border);
+            overflow-y: auto;
+        }
+
+        .card-face-front {
+            background: linear-gradient(145deg, #FFFFFF, #F8FAFC);
+            border-top: 5px solid var(--accent-color);
+        }
+
+        .card-face-back {
+            background: linear-gradient(145deg, #FDF4F8, #FFFFFF);
+            transform: rotateY(180deg);
+            border-top: 5px solid var(--accent-pink);
+        }
+
+        .card-category {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 700;
+            color: var(--accent-pink);
+        }
+
+        .card-face-front .card-category {
+            color: var(--accent-color);
+        }
+
+        .card-content {
+            font-size: 1.35rem; 
+            line-height: 1.6;
+            color: var(--text-color);
+            font-weight: 500;
+            text-align: center;
+            margin: auto 0;
+        }
+
+        .card-face-back .card-content {
+            color: var(--primary-color);     
+            font-size: 1.05rem; 
+            text-align: left;
+        }
+
+        .card-face-back .card-content b {
+            color: #1E293B;
+            background: rgba(236, 72, 153, 0.12);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .card-hint {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-align: center;
+            font-style: italic;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            border: 1px solid var(--card-border);
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(30, 41, 59, 0.05);
+            user-select: none;
+        }
+
+        button:hover {
+            background-color: var(--accent-color);
+            color: #FFFFFF;
+            border-color: var(--accent-color);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        /* Scrollbar custom styles */
+        .card-face::-webkit-scrollbar {
+            width: 6px;
+        }
+        .card-face::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.03);
+            border-radius: 10px;
+        }
+        .card-face::-webkit-scrollbar-thumb {
+            background: var(--card-border);
+            border-radius: 10px;
+        }
+
+        @media (max-width: 640px) {
+            .scene {
+                height: 440px;
+            }
+            header h1 {
+                font-size: 1.6rem;
+            }
+            .card-content {
+                font-size: 1.15rem;
+            }
+            .card-face-back .card-content {
+                font-size: 0.95rem;
+            }
+            button {
+                padding: 10px 18px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Flashcards Interativos</h1>
+        <p>Linguagem de Definição de Dados (DDL) & Manipulação de Dados (DML)</p>
+    </header>
+
+    <div class="tracker" id="card-tracker">Card 1 de 40</div>
+
+    <div class="scene" onclick="flipCard()">
+        <div class="card" id="flashcard">
+            <div class="card-face card-face-front">
+                <div class="card-category" id="card-category">Categoria</div>
+                <div class="card-content" id="card-front">Carregando pergunta...</div>
+                <div class="card-hint">💡 Clique no card para ver a resposta</div>
+            </div>
+            <div class="card-face card-face-back">
+                <div class="card-category">Resposta Explicada</div>
+                <div class="card-content" id="card-back">Carregando resposta...</div>
+                <div class="card-hint">💡 Clique para virar novamente</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button onclick="prevCard()">Anterior</button>
+        <button onclick="flipCard()">Virar Card</button>
+        <button onclick="nextCard()">Próximo</button>
+    </div>
+
+    <script>
+    const cardsData = [
+        // --- 1. LINGUAGEM DE DEFINIÇÃO DE DADOS - DDL (20 CARDS) ---
+        {
+            category: "DDL (Definição de Dados)",
+            front: "O que significa a sigla **DDL** e qual é a sua principal função em bancos de dados?",
+            back: "Significa **Data Definition Language** (Linguagem de Definição de Dados). É usada para definir, estruturar e modificar o **esquema do banco de dados** (criar, alterar ou apagar tabelas, visões e índices)."
+        },
+        {
+            category: "DDL (Definição de Dados)",
+            front: "Quais são os **quatro comandos principais** que compõem o conjunto DDL?",
+            back: "`CREATE`, `ALTER`, `DROP` e `TRUNCATE`."
+        },
+        {
+            category: "DDL (Definição de Dados)",
+            front: "Para que serve o comando **CREATE** na DDL?",
+            back: "É utilizado para **criar novos objetos** no banco de dados, tais como bancos de dados inteiros, tabelas (`TABLE`), visões (`VIEW`), índices (`INDEX`) ou procedimentos."
+        },
+        {
+            category: "DDL (Definição de Dados)",
+            front: "Para que serve o comando **ALTER** na DDL?",
+            back: "Permite **modificar a estrutura de um objeto existente** sem precisar destruí-lo (ex: adicionar uma nova coluna, remover um campo ou alterar o tipo de dado de uma coluna)."
+        },
+        {
+            category: "DDL (Definição de Dados)",
+            front: "Para que serve o comando **DROP** na DDL?",
+            back: "Remove permanentemente um **objeto e toda a sua estrutura física e dados** do banco de dados (ex: `DROP TABLE cliente;`)."
+        },
+        {
+            category: "DDL (Definição de Dados)",
+            front: "O que o comando **TRUNCATE TABLE** faz e a qual categoria ele pertence?",
+            back: "Pertence à **DDL** e serve para **apagar todos os registros de uma tabela rapidamente**, reiniciando contadores de autoincremento, sem registrar cada linha excluída individualmente no log de transações."
+        },
+        {
+            category: "DDL (Definição de Dados)",
+            front: "Qual é o efeito padrão da maioria dos comandos DDL na maioria dos SGBDs em relação ao controle de transações?",
+            back: "Eles costumam realizar um **commit implícito automático**, ou seja, efetivam as alterações estruturais instantaneamente e **não podem ser desfeitos por um ROLLBACK**."
+        },
+        {
+            category: "DDL (Definição de Dados)",
+            front: "Como definir uma restrição de **Chave Primária (PRIMARY KEY)** durante a criação de uma tabela (`CREATE TABLE`)?",
+            back: "Através da cláusula `PRIMARY KEY` aplicada à coluna escolhida (ex: `id_cliente INT PRIMARY KEY`), garantindo unicidade e ausência de nulos."
+        },
+        {
+            category: "DDL (Definição de Dados)",
+            front: "Como definir uma **Chave Estrangeira (FOREIGN KEY)** usando DDL?",
+            back: "Utilizando a sintaxe: `FOREIGN KEY (coluna_filha) REFERENCES tabela_pai(coluna_pai)`, garantindo a integridade referencial entre as tabelas."
+        },
+        {
+            category: "DDL (Definição de Dados)",
+            front: "Para que serve a restrição **UNIQUE** em uma coluna definida via DDL?",
+            back: "Garante que **todos os valores inseridos em uma coluna sejam exclusivos** (sem duplicatas), permitindo contudo apenas um valor nulo (`NULL`), dependendo do SGBD."
+        },
+        {
+            category: "DDL (Definição de Dados)",
+            front: "Qual é a função da restrição **CHECK** em um comando `CREATE TABLE`?",
+            back: "Permite impor uma **condição lógica ou regra de validação** que os dados de uma coluna devem satisfazer (ex: `CHECK (idade >= 18)`)."
+        },
+        {
+            category: "DDL (Definição de Dados)",
+            front: "O que faz a cláusula **DEFAULT** na definição de uma coluna DDL?",
+            back: "Atribui um **valor padrão automático** a uma coluna caso nenhum valor seja fornecido durante a inserção de um novo registro."
+        },
+        {
+            category: "DDL (Definição de Dados)",
+            front: "Como adicionar uma nova coluna em uma tabela já existente utilizando o comando **ALTER**?",
+            back: "Utilizando a sintaxe: `ALTER TABLE nome_tabela ADD nome_coluna tipo_dado;`."
+        },
+        {
+            category: "DDL (Definição de Dados)",
+            front: "Como remover uma coluna de uma tabela existente utilizando DDL?",
+            back: "Utilizando a sintaxe: `ALTER TABLE nome_tabela DROP COLUMN nome_coluna;`."
+        },
+        {
+            category: "DDL (Definição de Dados)",
+            front: "Como modificar o tipo de dado de uma coluna existente via DDL?",
+            back: "Dependendo do SGBD, utiliza-se comandos como `ALTER TABLE nome_tabela MODIFY COLUMN coluna novo_tipo;` ou `ALTER TABLE nome_tabela ALTER COLUMN...`."
+        },
+        {
+            category: "DDL (Definição de Dados)",
+            front: "Qual a diferença estrutural conceitual entre **DROP TABLE** e **TRUNCATE TABLE**?",
+            back: "• **DROP TABLE:** Elimina a tabela inteira (estrutura + dados).<br>• **TRUNCATE TABLE:** Esvazia os dados, mas **mantém a estrutura** da tabela pronta para uso."
+        },
+        {
+            category: "DDL (Definição de Dados)",
+            front: "O que é um **Schema** (Esquema) gerenciado por comandos DDL?",
+            back: "É um **espaço de nomes lógico** que agrupa objetos de banco de dados relacionados (como tabelas, visões e procedimentos) sob um mesmo proprietário ou contexto."
+        },
+        {
+            category: "DDL (Definição de Dados)",
+            front: "O que acontece ao tentar excluir (`DROP`) uma tabela pai que possui tabelas filhas vinculadas por chave estrangeira?",
+            back: "O SGBD **bloqueia a operação e emite um erro de integridade referencial**, exigindo que as restrições ou as tabelas dependentes sejam tratadas primeiro."
+        },
+        {
+            category: "DDL (Definição de Dados)",
+            front: "Como criar uma visão (**VIEW**) utilizando DDL?",
+            back: "Através da sintaxe: `CREATE VIEW nome_visao AS SELECT colunas FROM tabela WHERE condicao;`, salvando uma consulta lógica reutilizável."
+        },
+        {
+            category: "DDL (Definição de Dados)",
+            front: "Por que os comandos DDL exigem privilégios elevados de acesso na maioria dos sistemas de banco de dados?",
+            back: "Porque eles **alteram diretamente a arquitetura e os metadados globais** do banco de dados, impactando todos os usuários e aplicações conectadas."
+        },
+
+        // --- 2. LINGUAGEM DE MANIPULAÇÃO DE DADOS - DML (20 CARDS) ---
+        {
+            category: "DML (Manipulação de Dados)",
+            front: "O que significa a sigla **DML** e qual é a sua principal finalidade?",
+            back: "Significa **Data Manipulation Language** (Linguagem de Manipulação de Dados). É usada para **consultar, inserir, atualizar e excluir registros** dentro das tabelas do banco de dados."
+        },
+        {
+            category: "DML (Manipulação de Dados)",
+            front: "Quais são os **quatro comandos fundamentais** que compõem a DML?",
+            back: "`SELECT`, `INSERT`, `UPDATE` e `DELETE`."
+        },
+        {
+            category: "DML (Manipulação de Dados)",
+            front: "Para que serve o comando **INSERT** na DML?",
+            back: "É utilizado para **adicionar novas linhas (registros)** em uma tabela de banco de dados."
+        },
+        {
+            category: "DML (Manipulação de Dados)",
+            front: "Qual é a estrutura básica de sintaxe para inserir dados em uma tabela via **INSERT**?",
+            back: "`INSERT INTO nome_tabela (coluna1, coluna2) VALUES (valor1, valor2);`"
+        },
+        {
+            category: "DML (Manipulação de Dados)",
+            front: "Para que serve o comando **UPDATE** na DML?",
+            back: "É utilizado para **modificar dados já existentes** em uma ou mais linhas de uma tabela."
+        },
+        {
+            category: "DML (Manipulação de Dados)",
+            front: "Qual é o perigo de executar um comando **UPDATE** ou **DELETE** sem a cláusula **WHERE**?",
+            back: "O comando afetará **absolutamente todas as linhas da tabela**, alterando ou apagando dados em massa de forma irreversível na transação."
+        },
+        {
+            category: "DML (Manipulação de Dados)",
+            front: "Para que serve o comando **DELETE** na DML?",
+            back: "É utilizado para **remover linhas específicas** de uma tabela com base nas condições especificadas na cláusula `WHERE`."
+        },
+        {
+            category: "DML (Manipulação de Dados)",
+            front: "Diferencie o comportamento de transação entre **DELETE** (DML) e **TRUNCATE** (DDL):",
+            back: "• **DELETE:** Registra linha a linha no log de transações e **pode ser desfeito** via `ROLLBACK` se estiver dentro de uma transação aberta.<br>• **TRUNCATE:** É executado rapidamente e geralmente não pode ser revertido."
+        },
+        {
+            category: "DML (Manipulação de Dados)",
+            front: "Para que serve o comando **SELECT** dentro do ecossistema DML?",
+            back: "É o comando responsável por **recuperar e consultar dados** armazenados nas tabelas do banco de dados de acordo com critérios definidos."
+        },
+        {
+            category: "DML (Manipulação de Dados)",
+            front: "Qual é a função da cláusula **WHERE** nas operações DML (`SELECT`, `UPDATE`, `DELETE`)?",
+            back: "Servir como um **filtro condicional**, restringindo quais linhas serão afetadas ou retornadas pela instrução."
+        },
+        {
+            category: "DML (Manipulação de Dados)",
+            front: "Como funciona a cláusula **ORDER BY** em uma instrução `SELECT` DML?",
+            back: "Ordena o conjunto de resultados retornados com base em uma ou mais colunas, podendo ser de forma ascendente (`ASC`) ou descendente (`DESC`)."
+        },
+        {
+            category: "DML (Manipulação de Dados)",
+            front: "Para que serve a cláusula **GROUP BY** combinada com funções de agregação em DML?",
+            back: "Agrupa linhas que possuem valores idênticos em colunas específicas para permitir **cálculos sumarizados por grupo** (ex: calcular a soma de vendas por região)."
+        },
+        {
+            category: "DML (Manipulação de Dados)",
+            front: "Qual é a função da cláusula **LIMIT** (ou `TOP` dependendo do SGBD) em consultas DML?",
+            back: "Restringe o **número máximo de linhas retornadas** por uma instrução de consulta (`SELECT`)."
+        },
+        {
+            category: "DML (Manipulação de Dados)",
+            front: "É possível realizar uma inserção de dados em massa (**INSERT**) utilizando os resultados de um comando **SELECT**?",
+            back: "Sim, através da sintaxe `INSERT INTO tabela_destino SELECT ... FROM tabela_origem`, permitindo copiar dados estruturados rapidamente."
+        },
+        {
+            category: "DML (Manipulação de Dados)",
+            front: "O que acontece com as restrições de integridade (como chaves estrangeiras) quando executamos comandos DML como `INSERT` ou `UPDATE`?",
+            back: "O SGBD **valida rigidamente as regras de integridade**. Se o dado violar alguma restrição (ex: inserir um ID pai inexistente), a operação DML é rejeitada com erro."
+        },
+        {
+            category: "DML (Manipulação de Dados)",
+            front: "Como utilizar subconsultas (subqueries) dentro de um comando **UPDATE** DML?",
+            back: "Podemos atualizar colunas com base em resultados obtidos de outras tabelas, utilizando estruturas como `UPDATE tabela SET coluna = (SELECT ... FROM ... WHERE ...)`."
+        },
+        {
+            category: "DML (Manipulação de Dados)",
+            front: "Qual a diferença conceitual principal entre **DDL** e **DML**?",
+            back: "• **DDL:** Gerencia a **estrutura e o esqueleto** do banco de dados (tabelas, esquemas).<br>• **DML:** Gerencia o **conteúdo dinâmico e os dados** armazenados dentro dessas estruturas."
+        },
+        {
+            category: "DML (Manipulação de Dados)",
+            front: "O que significa o conceito de **Transação** ao executar comandos DML?",
+            back: "Significa que um conjunto de operações DML (como múltiplos `INSERT`s ou `UPDATE`s) pode ser agrupado para rodar sob a regra **ACID**, sendo efetivado apenas se tudo ocorrer com sucesso (`COMMIT`) ou desfeito se houver falha (`ROLLBACK`)."
+        },
+        {
+            category: "DML (Manipulação de Dados)",
+            front: "O que são **Aliases (Apelidos)** em consultas DML utilizando `SELECT`?",
+            back: "São nomes temporários atribuídos a colunas ou tabelas através da palavra-chave `AS`, utilizados para **melhorar a legibilidade** e simplificar referências em queries complexas."
+        },
+        {
+            category: "DML (Manipulação de Dados)",
+            front: "Por que operações DML em grandes volumes de dados podem gerar alto consumo de recursos no SGBD?",
+            back: "Porque exigem o **controle de bloqueios de linha (*locks*)** e a escrita contínua de logs de transação (*undo/redo logs*) para garantir consistência e recuperação."
+        }
+    ];
+
+    let currentIndex = 0;
+    const cardElement = document.getElementById('flashcard');
+    const categoryElement = document.getElementById('card-category');
+    const frontElement = document.getElementById('card-front');
+    const backElement = document.getElementById('card-back');
+    const trackerElement = document.getElementById('card-tracker');
+
+    function parseFormatting(str) {
+        return str.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+    }
+
+    function updateCard() {
+        cardElement.classList.remove('is-flipped');
+        setTimeout(() => {
+            const currentData = cardsData[currentIndex];
+            categoryElement.innerText = currentData.category;
+            frontElement.innerHTML = parseFormatting(currentData.front);
+            backElement.innerHTML = parseFormatting(currentData.back);
+            trackerElement.innerText = `Card ${currentIndex + 1} de ${cardsData.length}`;
+        }, 150);
+    }
+
+    function flipCard() {
+        cardElement.classList.toggle('is-flipped');
+    }
+
+    function nextCard() {
+        currentIndex = (currentIndex + 1) % cardsData.length;
+        updateCard();
+    }
+
+    function prevCard() {
+        currentIndex = (currentIndex - 1 + cardsData.length) % cardsData.length;
+        updateCard();
+    }
+
+    // Initialize App
+    updateCard();
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight') nextCard();
+        if (e.key === 'ArrowLeft') prevCard();
+        if (e.key === ' ' || e.key === 'Enter') {
+            e.preventDefault();
+            flipCard();
+        }
+    });
+    </script>
+</body>
+</html>
