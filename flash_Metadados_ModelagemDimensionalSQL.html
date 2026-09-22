@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcards Interativos: Metadados, Modelagem Dimensional & SQL</title>
+    <style>
+        :root {
+            --bg-color: #F5F5F5;
+            --card-bg: #FFFFFF;
+            --card-border: #B0A87A;
+
+            --primary-color: #171717;
+            --accent-color: #FFBB1C;
+
+            --text-color: #171717;
+            --text-muted: #B0A87A;
+
+            --card-back-bg: #FFFDF5;
+
+            --shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+            --border-radius: 20px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px 15px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            margin-top: 10px;
+        }
+
+        header h1 {
+            font-size: 2.2rem;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .tracker {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            background: rgba(255, 187, 28, 0.15);
+            padding: 6px 18px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 187, 28, 0.3);
+        }
+
+        /* Flashcard Container */
+        .scene {
+            width: 100%;
+            max-width: 680px;
+            height: 400px;
+            perspective: 1200px;
+            margin-bottom: 25px;
+            cursor: pointer;
+        }
+
+        .card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+            transform-style: preserve-3d;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+
+        .card.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: var(--border-radius);
+            background: var(--card-bg);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 32px;
+            border: 1px solid var(--card-border);
+            overflow-y: auto;
+        }
+
+        .card-face-front {
+            background: linear-gradient(145deg, #FFFFFF, #F5F5F5);
+        }
+
+        .card-face-back {
+            background: linear-gradient(145deg, #FFFDF5, #FFFFFF);
+            transform: rotateY(180deg);
+            border-left: 6px solid var(--accent-color);
+        }
+
+        .card-category {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .card-content {
+            font-size: 1.35rem; 
+            line-height: 1.6;
+            color: var(--text-color);
+            font-weight: 500;
+            text-align: center;
+            margin: auto 0;
+        }
+
+        .card-face-back .card-content {
+            color: var(--primary-color);     
+            font-size: 1.05rem; 
+            text-align: left;
+        }
+
+        .card-face-back .card-content b {
+            color: var(--primary-color);
+            background: rgba(255, 187, 28, 0.3);
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+
+        .card-hint {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-align: center;
+            font-style: italic;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            border: 1px solid var(--card-border);
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            user-select: none;
+        }
+
+        button:hover {
+            background-color: var(--accent-color);
+            color: #171717;
+            border-color: var(--accent-color);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(255, 187, 28, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        /* Scrollbar custom styles */
+        .card-face::-webkit-scrollbar {
+            width: 6px;
+        }
+        .card-face::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 10px;
+        }
+        .card-face::-webkit-scrollbar-thumb {
+            background: var(--card-border);
+            border-radius: 10px;
+        }
+
+        @media (max-width: 640px) {
+            .scene {
+                height: 440px;
+            }
+            header h1 {
+                font-size: 1.6rem;
+            }
+            .card-content {
+                font-size: 1.15rem;
+            }
+            .card-face-back .card-content {
+                font-size: 0.95rem;
+            }
+            button {
+                padding: 10px 18px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Flashcards Interativos</h1>
+        <p>Metadados, Modelagem Dimensional & Linguagem SQL</p>
+    </header>
+
+    <div class="tracker" id="card-tracker">Card 1 de 40</div>
+
+    <div class="scene" onclick="flipCard()">
+        <div class="card" id="flashcard">
+            <div class="card-face card-face-front">
+                <div class="card-category" id="card-category">Categoria</div>
+                <div class="card-content" id="card-front">Carregando pergunta...</div>
+                <div class="card-hint">💡 Clique no card para ver a resposta</div>
+            </div>
+            <div class="card-face card-face-back">
+                <div class="card-category">Resposta Explicada</div>
+                <div class="card-content" id="card-back">Carregando resposta...</div>
+                <div class="card-hint">💡 Clique para virar novamente</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button onclick="prevCard()">Anterior</button>
+        <button onclick="flipCard()">Virar Card</button>
+        <button onclick="nextCard()">Próximo</button>
+    </div>
+
+    <script>
+    const cardsData = [
+        // --- 1. METADADOS (10 CARDS) ---
+        {
+            category: "Metadados",
+            front: "Qual é o conceito fundamental de **Metadados**?",
+            back: "Metadados são definidos como **'dados sobre dados'**. Eles fornecem contexto, descrição, proveniência e estrutura para que os dados possam ser compreendidos e gerenciados."
+        },
+        {
+            category: "Metadados",
+            front: "O que são **Metadados Técnicos**?",
+            back: "Informações sobre a estrutura física dos dados, como **nomes de tabelas, tipos de colunas, chaves, índices, esquemas, partições** e formatos de arquivo."
+        },
+        {
+            category: "Metadados",
+            front: "O que são **Metadados de Negócio**?",
+            back: "Descrevem o significado das informações em linguagem corporativa, como **definições de termos do glossário, regras de negócio, proprietário dos dados (data owner)** e requisitos de privacidade."
+        },
+        {
+            category: "Metadados",
+            front: "O que são **Metadados Operacionais** (ou Processuais)?",
+            back: "Informações geradas pela execução de sistemas, como **logs de execução ETL/ELT, volumes de linhas processadas, horários de atualização e taxas de erro**."
+        },
+        {
+            category: "Metadados",
+            front: "O que é a **Linhagem de Dados (Data Lineage)**?",
+            back: "É o mapeamento do **caminho percorrido pelo dado desde sua origem até o destino final**, mostrando todas as transformações efetuadas ao longo do pipeline."
+        },
+        {
+            category: "Metadados",
+            front: "Qual a importância da **Linhagem de Dados** na análise de impacto?",
+            back: "Permite **prever quais relatórios, dashboards ou tabelas a jusante serão afetados** caso uma estrutura ou campo na origem seja alterado."
+        },
+        {
+            category: "Metadados",
+            front: "O que é um **Catálogo de Dados (Data Catalog)**?",
+            back: "Uma plataforma centralizada que **organiza, indexa e torna pesquisáveis os metadados**, facilitando a descoberta e governança de dados na empresa."
+        },
+        {
+            category: "Metadados",
+            front: "Qual a função do **Dicionário de Dados**?",
+            back: "Documento ou repositório que contém as **definições detalhadas de cada coluna/campo**, tipos de dados, restrições e relacionamentos em um banco específico."
+        },
+        {
+            category: "Metadados",
+            front: "Como a **Governança de Dados** se beneficia dos Metadados?",
+            back: "Os metadados permitem **classificar dados sensíveis (LGPD/GDPR)**, auditando acessos, definindo permissões e garantindo o alinhamento com conformidades regulatórias."
+        },
+        {
+            category: "Metadados",
+            front: "O que é um **Glossário de Negócios (Business Glossary)**?",
+            back: "Uma lista oficial padronizada de **conceitos e termos de negócio**, garantindo que departamentos diferentes tenham a mesma interpretação sobre uma métrica."
+        },
+
+        // --- 2. MODELAGEM DIMENSIONAL (15 CARDS) ---
+        {
+            category: "Modelagem Dimensional",
+            front: "Qual é o foco da **Modelagem Dimensional**?",
+            back: "Desenvolver bancos de dados analíticos (**Data Warehouses e Data Marts**) otimizados para **leitura rápida, agregação e facilidade de consulta** via ferramentas OLAP."
+        },
+        {
+            category: "Modelagem Dimensional",
+            front: "O que é uma **Tabela Fato**?",
+            back: "Tabela central que armazena os **eventos quantitativos e métricas de negócio** (ex: valor da venda, quantidade de itens), conectada a várias tabelas dimensão."
+        },
+        {
+            category: "Modelagem Dimensional",
+            front: "O que é uma **Tabela Dimensão**?",
+            back: "Tabela que guarda os **atributos descritivos e o contexto do evento** (ex: cliente, produto, local, tempo), permitindo filtrar e agrupar os dados da Fato."
+        },
+        {
+            category: "Modelagem Dimensional",
+            front: "O que caracteriza o **Esquema Estrela (Star Schema)**?",
+            back: "Modelo centralizado na Tabela Fato com **dimensões totalmente desnormalizadas** conectadas diretamente a ela. Oferece alta performance por exigir menos JOINs."
+        },
+        {
+            category: "Modelagem Dimensional",
+            front: "O que caracteriza o **Esquema Floco de Neve (Snowflake Schema)**?",
+            back: "Modelo onde as **dimensões são normalizadas** em sub-tabelas. Economiza espaço e reduz redundância, mas aumenta a complexidade dos JOINs nas consultas."
+        },
+        {
+            category: "Modelagem Dimensional",
+            front: "O que é o **Nível de Granularidade (Grain)** na Fato?",
+            back: "Define o **nível exato de detalhe de cada linha** da Tabela Fato (ex: uma linha por item individual do cupom fiscal vs uma linha consolidada por dia)."
+        },
+        {
+            category: "Modelagem Dimensional",
+            front: "O que são **Métricas Aditivas**?",
+            back: "Medidas que podem ser **somadas através de todas as dimensões** presentes na tabela fato (ex: quantidade vendida, receita total)."
+        },
+        {
+            category: "Modelagem Dimensional",
+            front: "O que são **Métricas Semi-Aditivas**?",
+            back: "Medidas que podem ser somadas em **algumas dimensões, mas não em todas** (ex: saldo bancário, que pode ser somado por agência, mas NÃO pela dimensão Tempo)."
+        },
+        {
+            category: "Modelagem Dimensional",
+            front: "O que são **Métricas Não-Aditivas**?",
+            back: "Valores que **não podem ser somados em nenhuma dimensão** diretamente (ex: taxas percentuais, margem de lucro, preços unitários, temperaturas)."
+        },
+        {
+            category: "Modelagem Dimensional",
+            front: "O que são **SCD (Slowly Changing Dimensions)**?",
+            back: "Conjunto de técnicas para lidar com **mudanças históricas nos atributos das dimensões** ao longo do tempo (ex: cliente mudou de cidade)."
+        },
+        {
+            category: "Modelagem Dimensional",
+            front: "Como atua a **SCD Tipo 1**?",
+            back: "**Sobrescreve o dado antigo** com o novo valor. Não guarda o histórico de alterações anteriores."
+        },
+        {
+            category: "Modelagem Dimensional",
+            front: "Como atua a **SCD Tipo 2**?",
+            back: "**Cria uma nova linha** na dimensão com novas chaves e datas de vigência, **preservando o histórico completo** das alterações."
+        },
+        {
+            category: "Modelagem Dimensional",
+            front: "Como atua a **SCD Tipo 3**?",
+            back: "**Adiciona uma nova coluna** na mesma linha da tabela para registrar o valor anterior, mantendo apenas um histórico limitado."
+        },
+        {
+            category: "Modelagem Dimensional",
+            front: "O que é uma **Fato Sem Fatos (Factless Fact Table)**?",
+            back: "Tabela fato que **não possui métricas numéricas**, registrando apenas a ocorrência de um evento ou cobertura (ex: registro de presença dos alunos)."
+        },
+        {
+            category: "Modelagem Dimensional",
+            front: "O que é uma **Dimensão Conformada (Conformed Dimension)**?",
+            back: "Uma dimensão **compartilhada e idêntica entre múltiplos Data Marts/Fatos**, garantindo consistência na análise corporativa (ex: Dimensão Tempo/Calendário)."
+        },
+
+        // --- 3. LINGUAGEM DE CONSULTA ESTRUTURADA - SQL (15 CARDS) ---
+        {
+            category: "SQL",
+            front: "O que compõe o grupo de comandos **DDL (Data Definition Language)**?",
+            back: "Comandos que definem e alteram a **estrutura do banco**: `CREATE`, `ALTER`, `DROP`, `TRUNCATE`."
+        },
+        {
+            category: "SQL",
+            front: "O que compõe o grupo de comandos **DML (Data Manipulation Language)**?",
+            back: "Comandos para **manipulação e alteração dos dados**: `INSERT`, `UPDATE`, `DELETE` (e frequentemente `SELECT`)."
+        },
+        {
+            category: "SQL",
+            front: "O que compõe o grupo de comandos **DCL** e **DTL/TCL**?",
+            back: "• **DCL (Controle):** `GRANT`, `REVOKE` (gerencia permissões).<br>• **DTL/TCL (Transação):** `COMMIT`, `ROLLBACK`, `SAVEPOINT` (gerencia transações)."
+        },
+        {
+            category: "SQL",
+            front: "Diferencie **INNER JOIN** de **FULL OUTER JOIN**:",
+            back: "• **INNER JOIN:** Retorna apenas as linhas com **correspondência em ambas as tabelas**.<br>• **FULL OUTER JOIN:** Retorna **todas as linhas de ambas**, combinando-as quando possível."
+        },
+        {
+            category: "SQL",
+            front: "Como funcionam os **LEFT JOIN** e **RIGHT JOIN**?",
+            back: "• **LEFT JOIN:** Mantém **todas as linhas da tabela da esquerda**, trazendo correspondências da direita (ou NULL).<br>• **RIGHT JOIN:** Mantém **todas da tabela da direita**."
+        },
+        {
+            category: "SQL",
+            front: "Qual é a diferença funcional entre **WHERE** e **HAVING**?",
+            back: "• **WHERE:** Filtra as linhas **antes da agrupação** e cálculo de agregação.<br>• **HAVING:** Filtra os resultados **após o agrupamento** (`GROUP BY`)."
+        },
+        {
+            category: "SQL",
+            front: "Mencione as 5 principais **Funções de Agregação** do SQL:",
+            back: "`SUM()`, `AVG()`, `COUNT()`, `MAX()` e `MIN()`."
+        },
+        {
+            category: "SQL",
+            front: "Qual a diferença entre **COUNT(*)** e **COUNT(nome_coluna)**?",
+            back: "• `COUNT(*)` conta **todas as linhas** da tabela, incluindo nulos.<br>• `COUNT(coluna)` conta apenas os registros **não nulos (NOT NULL)** dessa coluna."
+        },
+        {
+            category: "SQL",
+            front: "Diferencie as operações **UNION** e **UNION ALL**:",
+            back: "• **UNION:** Combina os resultados de duas consultas e **remove registros duplicados**.<br>• **UNION ALL:** Combina todos os resultados **preservando as duplicatas** (mais rápido)."
+        },
+        {
+            category: "SQL",
+            front: "O que é uma **Subconsulta (Subquery)**?",
+            back: "Uma instrução `SELECT` aninhada **dentro de outra consulta SQL principal** (em cláusulas como `WHERE`, `FROM` ou `SELECT`)."
+        },
+        {
+            category: "SQL",
+            front: "O que são **Funções de Janela (Window Functions)**?",
+            back: "Funções que realizam cálculos em conjuntos de linhas relacionados ao registro atual (cláusula `OVER()`), **sem colapsar as linhas como faz o GROUP BY**."
+        },
+        {
+            category: "SQL",
+            front: "Diferencie as funções de janela **ROW_NUMBER()**, **RANK()** e **DENSE_RANK()**:",
+            back: "• **ROW_NUMBER():** Número sequencial único sem empates.<br>• **RANK():** Pula numeração após empates (ex: 1, 2, 2, 4).<br>• **DENSE_RANK():** Não pula numeração após empates (ex: 1, 2, 2, 3)."
+        },
+        {
+            category: "SQL",
+            front: "O que é uma **CTE (Common Table Expression)**?",
+            back: "Um conjunto de resultados temporário e nomeado, definido com a cláusula `WITH`, que melhora a **legibilidade e organização de queries complexas**."
+        },
+        {
+            category: "SQL",
+            front: "Para que servem os **Índices** em bancos de dados SQL?",
+            back: "São estruturas de dados que aceleram drasticamente as operações de **busca/consulta (`SELECT`)**, embora possam reduzir a velocidade de inserções e atualizações (`INSERT/UPDATE`)."
+        },
+        {
+            category: "SQL",
+            front: "Diferencie a instrução **DELETE** de **TRUNCATE**:",
+            back: "• **DELETE:** Comando DML, remove linhas uma a uma, permite cláusula `WHERE` e pode ser revertido via `ROLLBACK`.<br>• **TRUNCATE:** Comando DDL, remove **todos os dados** limpando a estrutura, sendo muito mais rápido."
+        }
+    ];
+
+    let currentIndex = 0;
+    const cardElement = document.getElementById('flashcard');
+    const categoryElement = document.getElementById('card-category');
+    const frontElement = document.getElementById('card-front');
+    const backElement = document.getElementById('card-back');
+    const trackerElement = document.getElementById('card-tracker');
+
+    function parseFormatting(str) {
+        return str.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+    }
+
+    function updateCard() {
+        cardElement.classList.remove('is-flipped');
+        setTimeout(() => {
+            const currentData = cardsData[currentIndex];
+            categoryElement.innerText = currentData.category;
+            frontElement.innerHTML = parseFormatting(currentData.front);
+            backElement.innerHTML = parseFormatting(currentData.back);
+            trackerElement.innerText = `Card ${currentIndex + 1} de ${cardsData.length}`;
+        }, 150);
+    }
+
+    function flipCard() {
+        cardElement.classList.toggle('is-flipped');
+    }
+
+    function nextCard() {
+        currentIndex = (currentIndex + 1) % cardsData.length;
+        updateCard();
+    }
+
+    function prevCard() {
+        currentIndex = (currentIndex - 1 + cardsData.length) % cardsData.length;
+        updateCard();
+    }
+
+    // Initialize App
+    updateCard();
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight') nextCard();
+        if (e.key === 'ArrowLeft') prevCard();
+        if (e.key === ' ' || e.key === 'Enter') {
+            e.preventDefault();
+            flipCard();
+        }
+    });
+    </script>
+</body>
+</html>
