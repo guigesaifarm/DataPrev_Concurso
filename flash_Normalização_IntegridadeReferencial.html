@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcards Interativos: Normalização e Integridade Referencial</title>
+    <style>
+        :root {
+            --bg-color: #F5F5F5;
+            --card-bg: #FFFFFF;
+            --card-border: #B0A87A;
+
+            --primary-color: #171717;
+            --accent-color: #FFBB1C;
+
+            --text-color: #171717;
+            --text-muted: #B0A87A;
+
+            --card-back-bg: #FFFDF5;
+
+            --shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+            --border-radius: 20px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px 15px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            margin-top: 10px;
+        }
+
+        header h1 {
+            font-size: 2.2rem;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .tracker {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            background: rgba(255, 187, 28, 0.15);
+            padding: 6px 18px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 187, 28, 0.3);
+        }
+
+        /* Flashcard Container */
+        .scene {
+            width: 100%;
+            max-width: 680px;
+            height: 400px;
+            perspective: 1200px;
+            margin-bottom: 25px;
+            cursor: pointer;
+        }
+
+        .card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+            transform-style: preserve-3d;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+
+        .card.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: var(--border-radius);
+            background: var(--card-bg);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 32px;
+            border: 1px solid var(--card-border);
+            overflow-y: auto;
+        }
+
+        .card-face-front {
+            background: linear-gradient(145deg, #FFFFFF, #F5F5F5);
+        }
+
+        .card-face-back {
+            background: linear-gradient(145deg, #FFFDF5, #FFFFFF);
+            transform: rotateY(180deg);
+            border-left: 6px solid var(--accent-color);
+        }
+
+        .card-category {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .card-content {
+            font-size: 1.35rem; 
+            line-height: 1.6;
+            color: var(--text-color);
+            font-weight: 500;
+            text-align: center;
+            margin: auto 0;
+        }
+
+        .card-face-back .card-content {
+            color: var(--primary-color);     
+            font-size: 1.05rem; 
+            text-align: left;
+        }
+
+        .card-face-back .card-content b {
+            color: var(--primary-color);
+            background: rgba(255, 187, 28, 0.3);
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+
+        .card-hint {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-align: center;
+            font-style: italic;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            border: 1px solid var(--card-border);
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            user-select: none;
+        }
+
+        button:hover {
+            background-color: var(--accent-color);
+            color: #171717;
+            border-color: var(--accent-color);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(255, 187, 28, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        /* Scrollbar custom styles */
+        .card-face::-webkit-scrollbar {
+            width: 6px;
+        }
+        .card-face::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 10px;
+        }
+        .card-face::-webkit-scrollbar-thumb {
+            background: var(--card-border);
+            border-radius: 10px;
+        }
+
+        @media (max-width: 640px) {
+            .scene {
+                height: 440px;
+            }
+            header h1 {
+                font-size: 1.6rem;
+            }
+            .card-content {
+                font-size: 1.15rem;
+            }
+            .card-face-back .card-content {
+                font-size: 0.95rem;
+            }
+            button {
+                padding: 10px 18px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Flashcards Interativos</h1>
+        <p>Normalização das Estruturas de Dados & Integridade Referencial</p>
+    </header>
+
+    <div class="tracker" id="card-tracker">Card 1 de 40</div>
+
+    <div class="scene" onclick="flipCard()">
+        <div class="card" id="flashcard">
+            <div class="card-face card-face-front">
+                <div class="card-category" id="card-category">Categoria</div>
+                <div class="card-content" id="card-front">Carregando pergunta...</div>
+                <div class="card-hint">💡 Clique no card para ver a resposta</div>
+            </div>
+            <div class="card-face card-face-back">
+                <div class="card-category">Resposta Explicada</div>
+                <div class="card-content" id="card-back">Carregando resposta...</div>
+                <div class="card-hint">💡 Clique para virar novamente</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button onclick="prevCard()">Anterior</button>
+        <button onclick="flipCard()">Virar Card</button>
+        <button onclick="nextCard()">Próximo</button>
+    </div>
+
+    <script>
+    const cardsData = [
+        // --- 1. CONCEITOS FUNDAMENTAIS DE NORMALIZAÇÃO (10 CARDS) ---
+        {
+            category: "Conceitos de Normalização",
+            front: "O que é o processo de **Normalização de Dados**?",
+            back: "É uma técnica sistemática para **organizar as tabelas e atributos** de um banco de dados relacional, visando **reduzir a redundância** e evitar anomalias de atualização, inserção e exclusão."
+        },
+        {
+            category: "Conceitos de Normalização",
+            front: "Qual é o principal objetivo de normalizar um banco de dados?",
+            back: "Garantir a **consistência dos dados**, economizar espaço de armazenamento e eliminar a **duplicação desnecessária de informações**."
+        },
+        {
+            category: "Conceitos de Normalização",
+            front: "O que é uma **Anomalia de Inserção**?",
+            back: "Ocorre quando é **impossível inserir um dado** sem a obrigação de inserir outro dado não relacionado ou ainda inexistente (ex: cadastrar um cliente apenas se ele fizer uma compra)."
+        },
+        {
+            category: "Conceitos de Normalização",
+            front: "O que é uma **Anomalia de Exclusão**?",
+            back: "Ocorre quando a exclusão de um registro causa a **perda involuntária de outras informações importantes** (ex: deletar uma venda e perder todos os dados do cliente)."
+        },
+        {
+            category: "Conceitos de Normalização",
+            front: "O que é uma **Anomalia de Atualização**?",
+            back: "Ocorre quando a alteração de um único dado exige a **atualização em múltiplos registros repetidos**, gerando inconsistência caso algum fique de fora."
+        },
+        {
+            category: "Conceitos de Normalização",
+            front: "O que é uma **Dependência Funcional (A → B)**?",
+            back: "Significa que o valor do atributo A **determina de forma única** o valor do atributo B (ou seja, sabendo A, descobre-se B com certeza)."
+        },
+        {
+            category: "Conceitos de Normalização",
+            front: "O que é uma **Dependência Funcional Total**?",
+            back: "Ocorre quando um atributo não-chave depende da **totalidade de uma chave primária composta**, e não apenas de parte dela."
+        },
+        {
+            category: "Conceitos de Normalização",
+            front: "O que é uma **Dependência Parcial**?",
+            back: "Ocorre em tabelas com chave primária composta, quando um atributo depende de **apenas uma parte da chave primária**, gerando redundância."
+        },
+        {
+            category: "Conceitos de Normalização",
+            front: "O que é uma **Dependência Transitiva**?",
+            back: "Ocorre quando um atributo não-chave **depende de outro atributo não-chave**, em vez de depender diretamente da chave primária."
+        },
+        {
+            category: "Conceitos de Normalização",
+            front: "O que é a **Desnormalização** e quando deve ser utilizada?",
+            back: "É o processo intencional de introduzir redundância para **otimizar a velocidade de leitura/consultas (OLAP)**, reduzindo o número de JOINs necessários."
+        },
+
+        // --- 2. FORMAS NORMAIS - 1FN, 2FN, 3FN, BCNF (12 CARDS) ---
+        {
+            category: "Formas Normais",
+            front: "O que exige a **Primeira Forma Normal (1FN)**?",
+            back: "Exige **atributos atômicos** (indivisíveis), eliminação de grupos repetitivos, ausência de colunas com múltiplos valores e definição de uma Chave Primária."
+        },
+        {
+            category: "Formas Normais",
+            front: "Como adequar uma tabela que viola a **1FN** por possuir campos multivalorados?",
+            back: "Criando uma **nova tabela para o atributo repetitivo** e ligando-a à tabela principal através de uma Chave Estrangeira."
+        },
+        {
+            category: "Formas Normais",
+            front: "O que exige a **Segunda Forma Normal (2FN)**?",
+            back: "Estar na **1FN** e garantir que todos os atributos não-chave possuam **dependência funcional total** da chave primária (elimina dependências parciais)."
+        },
+        {
+            category: "Formas Normais",
+            front: "Quando uma tabela na 1FN já está automaticamente na **2FN**?",
+            back: "Quando a **Chave Primária é simples** (composta por apenas uma única coluna), pois é impossível haver dependência parcial."
+        },
+        {
+            category: "Formas Normais",
+            front: "O que exige a **Terceira Forma Normal (3FN)**?",
+            back: "Estar na **2FN** e garantir que nenhum atributo não-chave dependa de outro atributo não-chave (elimina **dependências transitivas**)."
+        },
+        {
+            category: "Formas Normais",
+            front: "Exemplo prático de violação da **3FN**:",
+            back: "Tabela `PEDIDO` contendo `ID_Pedido (PK)`, `CEP_Entrega` e `Cidade_Entrega`. Como `Cidade` depende do `CEP` (atributos não-chave), viola a 3FN."
+        },
+        {
+            category: "Formas Normais",
+            front: "O que é a **Forma Normal de Boyce-Codd (BCNF/FNBC)**?",
+            back: "É uma versão mais rigorosa da 3FN que exige que, para toda dependência funcional X → Y, **X deve ser obrigatoriamente uma Superchave**."
+        },
+        {
+            category: "Formas Normais",
+            front: "Qual a diferença entre **3FN** e **BCNF**?",
+            back: "A BCNF resolve anomalias em tabelas que possuem **múltiplas chaves candidatas compostas e sobrepostas**, onde a 3FN ainda permite inconsistências."
+        },
+        {
+            category: "Formas Normais",
+            front: "O que exige a **Quarta Forma Normal (4FN)**?",
+            back: "Estar na BCNF e eliminar **dependências multivaloradas independentes** entre atributos (onde um atributo determina múltiplos valores de outro)."
+        },
+        {
+            category: "Formas Normais",
+            front: "O que exige a **Quinta Forma Normal (5FN)**?",
+            back: "Trata da decomposição de tabelas sem perda de informação (**dependências de junção**), garantindo que a reconstrução dos dados originais seja perfeita."
+        },
+        {
+            category: "Formas Normais",
+            front: "Até qual Forma Normal a maioria das aplicações práticas de mercado costuma normalizar?",
+            back: "Até a **Terceira Forma Normal (3FN)**, pois ela oferece um excelente equilíbrio entre integridade dos dados e desempenho."
+        },
+        {
+            category: "Formas Normais",
+            front: "Qual o impacto de sobre-normalizar um banco de dados transacional?",
+            back: "Aumento excessivo do número de tabelas, tornando as consultas complexas e lentas devido ao alto número de **junções (JOINs)**."
+        },
+
+        // --- 3. INTEGRIDADE REFERENCIAL E CHAVES (18 CARDS) ---
+        {
+            category: "Integridade Referencial",
+            front: "O que é a **Integridade Referencial** em bancos de dados?",
+            back: "É a regra que garante a **consistência entre tabelas relacionadas**, assegurando que uma Chave Estrangeira sempre aponte para uma Chave Primária válida e existente."
+        },
+        {
+            category: "Integridade Referencial",
+            front: "O que acontece se tentarmos inserir um valor inexistente em uma **Chave Estrangeira (FK)**?",
+            back: "O SGBD **rejeita a operação e gera um erro**, impedindo a criação de registros 'órfãos'."
+        },
+        {
+            category: "Integridade Referencial",
+            front: "O que é uma **Chave Primária (Primary Key - PK)**?",
+            back: "Atributo (ou conjunto de atributos) que **identifica unicamente** cada linha de uma tabela. Deve ser **único e NUNCA nulo (NOT NULL)**."
+        },
+        {
+            category: "Integridade Referencial",
+            front: "O que é uma **Chave Estrangeira (Foreign Key - FK)**?",
+            back: "Coluna em uma tabela dependente que **referencia a Chave Primária de outra tabela**, estabelecendo o vínculo e a integridade referencial."
+        },
+        {
+            category: "Integridade Referencial",
+            front: "O que é a regra de **Integridade de Entidade**?",
+            back: "Determina que **nenhum componente da Chave Primária pode conter valor NULO (NULL)**, pois perderia a capacidade de identificação única."
+        },
+        {
+            category: "Integridade Referencial",
+            front: "O que é a regra de **Integridade de Domínio**?",
+            back: "Garante que todos os valores de uma coluna pertençam ao **conjunto de valores válidos e tipo de dado definidos** (ex: idade positiva, data válida)."
+        },
+        {
+            category: "Integridade Referencial",
+            front: "O que faz a cláusula **ON DELETE CASCADE**?",
+            back: "Ao excluir um registro da tabela pai, o SGBD **exclui automaticamente todos os registros filhos associados** na tabela dependente."
+        },
+        {
+            category: "Integridade Referencial",
+            front: "O que faz a cláusula **ON DELETE SET NULL**?",
+            back: "Ao excluir o registro pai, o SGBD **altera o valor da Chave Estrangeira para NULL** nos registros filhos correspondentes."
+        },
+        {
+            category: "Integridade Referencial",
+            front: "O que faz a cláusula **ON DELETE RESTRICT / NO ACTION**?",
+            back: "O SGBD **bloqueia a exclusão do registro pai** enquanto existirem registros filhos vinculados a ele (comportamento padrão de proteção)."
+        },
+        {
+            category: "Integridade Referencial",
+            front: "O que faz a cláusula **ON UPDATE CASCADE**?",
+            back: "Se o valor da Chave Primária na tabela pai for alterado, o SGBD **atualiza automaticamente o valor correspondente na Chave Estrangeira** dos filhos."
+        },
+        {
+            category: "Integridade Referencial",
+            front: "O que é uma **Chave Candidata**?",
+            back: "É qualquer atributo ou combinação de atributos com potencial para ser Chave Primária, por possuir a propriedade de **unicidade**."
+        },
+        {
+            category: "Integridade Referencial",
+            front: "O que é uma **Chave Alternativa (Surrogate Key / Unique)**?",
+            back: "É uma Chave Candidata que **não foi escolhida como Chave Primária**, mas continua sendo protegida por uma constraint de unicidade (`UNIQUE`)."
+        },
+        {
+            category: "Integridade Referencial",
+            front: "O que é uma **Chave Composta**?",
+            back: "Chave Primária formada pela **combinação de duas ou mais colunas** para identificar unicamente um registro."
+        },
+        {
+            category: "Integridade Referencial",
+            front: "O que é uma **Chave Sucedânea (Surrogate Key)**?",
+            back: "Chave **sintética e numérica** gerada automaticamente pelo sistema (ex: `AUTO_INCREMENT`, `SEQUENCE`, `UUID`) sem significado de negócio."
+        },
+        {
+            category: "Integridade Referencial",
+            front: "Diferencie **Chave Natural** de **Chave Sucedânea (Surrogate Key)**:",
+            back: "• **Natural:** Dado que existe no mundo real (ex: CPF, CNPJ).<br>• **Surrogate Key:** Código numérico artificial gerado pelo banco para simplificar relacionamentos."
+        },
+        {
+            category: "Integridade Referencial",
+            front: "O que é um **Registro Órfão**?",
+            back: "É um registro na tabela filha cujo valor de **Chave Estrangeira não possui correspondente** na tabela pai (situação evitada pela integridade referencial)."
+        },
+        {
+            category: "Integridade Referencial",
+            front: "Como a **Integridade Referencial** afeta o desempenho de modificações (`INSERT`/`DELETE`)?",
+            back: "Pode reduzir ligeiramente a velocidade de inserção e exclusão, pois o SGBD precisa **verificar a existência da chave** em outra tabela antes de efetivar a operação."
+        },
+        {
+            category: "Integridade Referencial",
+            front: "O que é uma restrição de verificação (**CHECK Constraint**)?",
+            back: "Regra no nível de coluna/tabela que garante a integridade de domínio, **validando condições lógicas** (ex: `CHECK (salario > 0)`)."
+        }
+    ];
+
+    let currentIndex = 0;
+    const cardElement = document.getElementById('flashcard');
+    const categoryElement = document.getElementById('card-category');
+    const frontElement = document.getElementById('card-front');
+    const backElement = document.getElementById('card-back');
+    const trackerElement = document.getElementById('card-tracker');
+
+    function parseFormatting(str) {
+        return str.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+    }
+
+    function updateCard() {
+        cardElement.classList.remove('is-flipped');
+        setTimeout(() => {
+            const currentData = cardsData[currentIndex];
+            categoryElement.innerText = currentData.category;
+            frontElement.innerHTML = parseFormatting(currentData.front);
+            backElement.innerHTML = parseFormatting(currentData.back);
+            trackerElement.innerText = `Card ${currentIndex + 1} de ${cardsData.length}`;
+        }, 150);
+    }
+
+    function flipCard() {
+        cardElement.classList.toggle('is-flipped');
+    }
+
+    function nextCard() {
+        currentIndex = (currentIndex + 1) % cardsData.length;
+        updateCard();
+    }
+
+    function prevCard() {
+        currentIndex = (currentIndex - 1 + cardsData.length) % cardsData.length;
+        updateCard();
+    }
+
+    // Initialize App
+    updateCard();
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight') nextCard();
+        if (e.key === 'ArrowLeft') prevCard();
+        if (e.key === ' ' || e.key === 'Enter') {
+            e.preventDefault();
+            flipCard();
+        }
+    });
+    </script>
+</body>
+</html>
