@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcards Interativos: Desenvolvimento Mobile</title>
+    <style>
+        :root {
+            --bg-color: #F5F5F5;
+            --card-bg: #FFFFFF;
+            --card-border: #B0A87A;
+
+            --primary-color: #171717;
+            --accent-color: #FFBB1C;
+
+            --text-color: #171717;
+            --text-muted: #B0A87A;
+
+            --card-back-bg: #FFFDF5;
+
+            --shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+            --border-radius: 20px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px 15px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            margin-top: 10px;
+        }
+
+        header h1 {
+            font-size: 2.3rem;
+            color: var(--accent-color);
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        .tracker {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            background: rgba(255, 187, 28, 0.15);
+            padding: 6px 18px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 187, 28, 0.3);
+        }
+
+        /* Flashcard Container */
+        .scene {
+            width: 100%;
+            max-width: 680px;
+            height: 400px;
+            perspective: 1200px;
+            margin-bottom: 25px;
+            cursor: pointer;
+        }
+
+        .card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+            transform-style: preserve-3d;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+
+        .card.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: var(--border-radius);
+            background: var(--card-bg);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 32px;
+            border: 1px solid var(--card-border);
+            overflow-y: auto;
+        }
+
+        .card-face-front {
+             background: linear-gradient(145deg, #FFFFFF, #F5F5F5);
+        }
+
+        .card-face-back {
+            background: linear-gradient(145deg, #FFFDF5, #FFFFFF);
+            transform: rotateY(180deg);
+            border-left: 6px solid var(--accent-color);
+        }
+
+        .card-category {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .card-content {
+            font-size: 1.35rem; 
+            line-height: 1.6;
+            color: var(--text-color);
+            font-weight: 500;
+            text-align: center;
+            margin: auto 0;
+        }
+
+        .card-face-back .card-content {
+            color: var(--primary-color);     
+            font-size: 1.05rem; 
+            text-align: left;
+        }
+
+        .card-face-back .card-content b {
+            color: var(--primary-color);
+            background: rgba(255, 187, 28, 0.3);
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+
+        .card-hint {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-align: center;
+            font-style: italic;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            border: 1px solid var(--card-border);
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            user-select: none;
+        }
+
+        button:hover {
+            background-color: var(--accent-color);
+            color: #171717;
+            border-color: var(--accent-color);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(255, 187, 28, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        /* Scrollbar custom styles */
+        .card-face::-webkit-scrollbar {
+            width: 6px;
+        }
+        .card-face::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 10px;
+        }
+        .card-face::-webkit-scrollbar-thumb {
+            background: var(--card-border);
+            border-radius: 10px;
+        }
+
+        @media (max-width: 640px) {
+            .scene {
+                height: 440px;
+            }
+            header h1 {
+                font-size: 1.6rem;
+            }
+            .card-content {
+                font-size: 1.15rem;
+            }
+            .card-face-back .card-content {
+                font-size: 0.95rem;
+            }
+            button {
+                padding: 10px 18px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Flashcards Interativos</h1>
+        <p>Desenvolvimento Mobile: Android (Kotlin) & iOS (Swift) / Multiplataforma</p>
+    </header>
+
+    <div class="tracker" id="card-tracker">Card 1 de 40</div>
+
+    <div class="scene" onclick="flipCard()">
+        <div class="card" id="flashcard">
+            <div class="card-face card-face-front">
+                <div class="card-category" id="card-category">Categoria</div>
+                <div class="card-content" id="card-front">Carregando pergunta...</div>
+                <div class="card-hint">💡 Clique no card para ver a resposta</div>
+            </div>
+            <div class="card-face card-face-back">
+                <div class="card-category">Resposta Explicada</div>
+                <div class="card-content" id="card-back">Carregando resposta...</div>
+                <div class="card-hint">💡 Clique para virar novamente</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button onclick="prevCard()">Anterior</button>
+        <button onclick="flipCard()">Virar Card</button>
+        <button onclick="nextCard()">Próximo</button>
+    </div>
+
+    <script>
+    const cardsData = [
+        // --- ANDROID: COMPONENTES BÁSICOS & CICLO DE VIDA ---
+        {
+            category: "Android - Componentes",
+            front: "Quais são os **4 componentes fundamentais** de uma aplicação Android?",
+            back: "1. <b>Activity:</b> Interface do usuário.<br>2. <b>Service:</b> Processamento em segundo plano.<br>3. <b>BroadcastReceiver:</b> Escuta mensagens do sistema/apps.<br>4. <b>ContentProvider:</b> Gerencia e compartilha dados entre apps."
+        },
+        {
+            category: "Android - Ciclo de Vida",
+            front: "Quais são os principais métodos do ciclo de vida de uma **Activity**?",
+            back: "• <code>onCreate()</code>: Criação inicial.<br>• <code>onStart()</code>: Torna visível.<br>• <code>onResume()</code>: Pronto para interação.<br>• <code>onPause()</code>: Perde o foco.<br>• <code>onStop()</code>: Não visível.<br>• <code>onDestroy()</code>: Destruição."
+        },
+        {
+            category: "Android - Arquivos de Configuração",
+            front: "Qual a função do arquivo **AndroidManifest.xml**?",
+            back: "Declara a estrutura básica do app para o SO: pacotes, componentes (Activities, Services), permissões necessárias (como câmera/GPS) e a versão mínima do Android suportada."
+        },
+        {
+            category: "Android - Comunicação",
+            front: "O que é uma **Intent** no Android e quais seus tipos?",
+            back: "Objeto de mensagem usado para solicitar uma ação de outro componente.<br><br>• <b>Explícita:</b> Especifica o componente exato a ser aberto (ex: navegar para outra Activity).<br>• <b>Implícita:</b> Solicita uma ação geral (ex: 'abrir link no navegador')."
+        },
+        {
+            category: "Android - UI Avançada",
+            front: "O que é um **Fragment** e qual sua vantagem?",
+            back: "Representa um trecho reutilizável ou modular de interface do usuário dentro de uma Activity. Permite criar layouts dinâmicos e adaptáveis a diferentes tamanhos de tela (como tablets e dobráveis)."
+        },
+        {
+            category: "Android - Kotlin",
+            front: "O que é a funcionalidade de **Null Safety** no Kotlin e como ela evita o NullPointerException?",
+            back: "O sistema de tipos do Kotlin diferencia referências que podem conter <code>null</code> (<code>String?</code>) das que não podem (<code>String</code>). O compilador força a verificação segura antes de acessar propriedades de tipos anuláveis."
+        },
+        {
+            category: "Android - Assincronismo",
+            front: "O que são **Coroutines** no Kotlin?",
+            back: "Solução para programação assíncrona leve e simplificada. Permitem executar código assíncrono (como chamadas de rede ou leitura do banco) de forma sequencial sem bloquear a thread principal (UI Thread)."
+        },
+        {
+            category: "Android - UI Moderna",
+            front: "O que é o **Jetpack Compose**?",
+            back: "Toolkit moderno e declarativo do Android para construção de interfaces nativas usando diretamente código Kotlin, substituindo o antigo modelo baseado em layouts XML."
+        },
+
+        // --- iOS: COMPONENTES & SWIFT ---
+        {
+            category: "iOS - Ciclo de Vida",
+            front: "Quais são os principais métodos do ciclo de vida de uma **UIViewController**?",
+            back: "• <code>viewDidLoad()</code>: View carregada na memória.<br>• <code>viewWillAppear()</code>: Prestes a aparecer.<br>• <code>viewDidAppear()</code>: Visível na tela.<br>• <code>viewWillDisappear()</code>: Prestes a sumir.<br>• <code>viewDidDisappear()</code>: Removida da tela."
+        },
+        {
+            category: "iOS - Linguagem Swift",
+            front: "O que são **Optionals** na linguagem Swift?",
+            back: "Tipo que encapsula a presença ou ausência de um valor (pode conter um valor ou <code>nil</code>). É declarado usando interrogação (ex: <code>String?</code>) para garantir a segurança no tratamento de dados ausentes."
+        },
+        {
+            category: "iOS - Swift",
+            front: "Como funciona a técnica de **Optional Binding** com **if let** e **guard let**?",
+            back: "Desembrulha um Optional com segurança:<br>• <b>if let:</b> Executa o bloco de código apenas se o valor não for <code>nil</code>.<br>• <b>guard let:</b> Exige o valor para continuar a execução do método, caso contrário faz um <code>return</code> antecipado."
+        },
+        {
+            category: "iOS - Layout",
+            front: "O que é o **Auto Layout** no desenvolvimento iOS nativo?",
+            back: "Sistema de layout baseado em restrições (constraints) que calcula dinamicamente a posição e o tamanho dos elementos de UI com base em regras relativas, garantindo adaptação a diferentes tamanhos de tela."
+        },
+        {
+            category: "iOS - Memory Management",
+            front: "O que é o **ARC** (Automatic Reference Counting) no iOS?",
+            back: "Mecanismo do compilador Swift/Objective-C para gerenciamento automático de memória. Ele rastreia e desaloca instâncias de classes quando o número de referências fortes a elas cai para zero."
+        },
+        {
+            category: "iOS - Retain Cycles",
+            front: "Como prevenir vazamento de memória (**Memory Leak**) provocado por Ciclos de Retenção (Retain Cycles)?",
+            back: "Utilizando referências fracas (**weak**) ou não-proprietárias (**unowned**) em closures ou delegates, evitando que dois objetos mantenham referências fortes mútuas indefinidamente."
+        },
+        {
+            category: "iOS - UI Moderna",
+            front: "O que é o **SwiftUI** e qual o seu paradigma?",
+            back: "Framework declarativo da Apple para criar interfaces de usuário em todas as plataformas iOS/macOS com código Swift unificado, alterando a UI automaticamente em resposta a mudanças de estado."
+        },
+
+        // --- MULTIPLATAFORMA: REACT NATIVE & FLUTTER ---
+        {
+            category: "Multiplataforma - Conceitos",
+            front: "Qual a diferença entre um app **Nativo Puro**, **Híbrido/Web** e **Multiplataforma Compilado**?",
+            back: "• <b>Nativo:</b> Escrito na linguagem/SDK própria da plataforma (Kotlin/Swift).<br>• <b>Híbrido:</b> Roda dentro de uma WebView (HTML/CSS/JS).<br>• <b>Multiplataforma:</b> Código único que compila/renderiza componentes nativos (Flutter/React Native)."
+        },
+        {
+            category: "Flutter - Arquitetura",
+            front: "O que é um **Widget** no Flutter e quais os dois tipos principais?",
+            back: "O bloco básico de construção de UI no Flutter. Tudo é um Widget.<br>• <b>StatelessWidget:</b> Imutável, não guarda estado.<br>• <b>StatefulWidget:</b> Possui estado interno dinâmico que pode mudar durante a execução."
+        },
+        {
+            category: "Flutter - Renderização",
+            front: "Como o **Flutter** renderiza a interface em relação aos componentes nativos do SO?",
+            back: "O Flutter não utiliza os componentes nativos de UI do Android/iOS. Ele desenha cada pixel da tela usando seu próprio mecanismo gráfico (**Impeller** / **Skia**) diretamente sobre uma Canvas."
+        },
+        {
+            category: "Flutter - Linguagem",
+            front: "Por que a linguagem **Dart** foi escolhida para o Flutter?",
+            back: "Suporta compilação **JIT** (Just-In-Time) para desenvolvimento rápido com **Hot Reload**, e compilação **AOT** (Ahead-Of-Time) para código de máquina nativo e alta performance em produção."
+        },
+        {
+            category: "React Native - Arquitetura",
+            front: "O que é a nova arquitetura do React Native (**JSI** e **Fabric**)?",
+            back: "Substituiu a antiga 'Bridge' assíncrona. O **JSI (JavaScript Interface)** permite chamada direta entre o motor JS e o código nativo, e o **Fabric** é o novo sistema de renderização nativo síncrono."
+        },
+        {
+            category: "React Native - Conceitos",
+            front: "Como o React Native converte elementos do código para a tela do dispositivo?",
+            back: "O código JSX/JS descreve a interface, e o React Native instancia os **componentes de UI nativos reais** da plataforma (ex: `<View>` vira um `android.view.ViewGroup` no Android e um `UIView` no iOS)."
+        },
+
+        // --- PERSISTÊNCIA DE DADOS & BANCO LOCAL ---
+        {
+            category: "Mobile - Persistência Local",
+            front: "Quais são as soluções comuns para armazenar dados do tipo **Chave-Valor** no Android e iOS?",
+            back: "• <b>Android:</b> SharedPreferences / DataStore.<br>• <b>iOS:</b> UserDefaults / Keychain (para dados sensíveis).<br>• <b>Multiplataforma:</b> AsyncStorage / Flutter Secure Storage."
+        },
+        {
+            category: "Mobile - Banco de Dados",
+            front: "Quais são as bibliotecas de abstração ORM baseadas em **SQLite** mais usadas no Android e iOS?",
+            back: "• <b>Android:</b> Room (da suíte Jetpack).<br>• <b>iOS:</b> Core Data ou SwiftData.<br>• <b>Multiplataforma/Embedded:</b> Realm / Isar DB / SQLite nativo."
+        },
+
+        // --- ARQUITETURA & PADRÕES DE PROJETO MOBILE ---
+        {
+            category: "Mobile - Arquitetura",
+            front: "Como funciona o padrão **MVVM** (Model-View-ViewModel) em aplicações mobile?",
+            back: "• <b>View:</b> Exibe a UI e observa mudanças.<br>• <b>ViewModel:</b> Mantém os dados da tela e processa lógica de negócios, sobrevivendo a mudanças de configuração.<br>• <b>Model:</b> Fonte de dados (repositório/API/Banco)."
+        },
+        {
+            category: "Mobile - Gerenciamento de Estado",
+            front: "O que significa o conceito de **Unidirectional Data Flow (UDF)**?",
+            back: "Padrão onde o **Estado** flui para baixo (em direção aos componentes de interface) e os **Eventos/Ações** fluem para cima (em direção ao processador de estado), garantindo previsibilidade da UI."
+        },
+        {
+            category: "Mobile - Injeção de Dependência",
+            front: "Qual a vantagem de usar **Injeção de Dependência (DI)** em apps móveis e quais frameworks são populares?",
+            back: "Facilita o desacoplamento de classes e testes unitários.<br>• <b>Android:</b> Hilt / Dagger / Koin.<br>• <b>iOS:</b> Factory / Swinject.<br>• <b>Flutter:</b> GetIt / Provider / Riverpod."
+        },
+
+        // --- REDE, APIS E TRATAMENTO DE DADOS ---
+        {
+            category: "Mobile - Comunicação REST",
+            front: "Quais são as bibliotecas padrão da indústria para requisições HTTP no Android e iOS nativos?",
+            back: "• <b>Android:</b> Retrofit / OkHttp.<br>• <b>iOS:</b> URLSession / Alamofire.<br>• <b>Multiplataforma:</b> Dio (Flutter) / Axios ou fetch (React Native)."
+        },
+        {
+            category: "Mobile - Desempenho de Rede",
+            front: "Por que é fundamental implementar estratégias de **Caching de Imagens** em aplicativos móveis?",
+            back: "Evita downloads repetidos e consumo excessivo de dados, previne travamentos na rolagem (UI jank) e reduz o uso de memória RAM armazenando imagens no disco/memória local."
+        },
+
+        // --- RECURSOS DO DISPOSITIVO & SEGURANÇA ---
+        {
+            category: "Mobile - Permissões",
+            front: "Qual a diferença entre permissões **Normais** e **Perigosas/Sensíveis** nos sistemas operacionais mobile?",
+            back: "• <b>Normais:</b> Concedidas automaticamente na instalação (ex: acesso à internet).<br>• <b>Perigosas/Sensíveis:</b> Requerem autorização explícita do usuário em tempo de execução (ex: Câmera, GPS, Contatos)."
+        },
+        {
+            category: "Mobile - Notificações",
+            front: "Como funcionam as **Push Notifications** e quais serviços centrais intermedeiam o envio?",
+            back: "Servidor backend -> Serviço de Mensagens da plataforma -> Dispositivo do usuário.<br>• <b>Android:</b> FCM (Firebase Cloud Messaging).<br>• <b>iOS:</b> APNs (Apple Push Notification service)."
+        },
+        {
+            category: "Mobile - Segurança",
+            front: "O que é **Certificate Pinning** e qual sua importância em apps móveis?",
+            back: "Técnica de segurança que vincula o app a um certificado SSL/TLS específico do servidor backend, prevenindo ataques do tipo **Man-in-the-Middle (MitM)** mesmo se uma AC for comprometida."
+        },
+
+        // --- RECURSOS DE HARDWARE & BACKGROUND ---
+        {
+            category: "Mobile - Localização",
+            front: "Quais são as boas práticas para consumo eficiente de **GPS/Geolocalização**?",
+            back: "Solicitar apenas a precisão necessária, aumentar o intervalo de atualizações quando parado, desligar a leitura quando a tela estiver apagada ou usar APIs de 'fencing' para economizar bateria."
+        },
+        {
+            category: "Mobile - Background Work",
+            front: "Como o Android e iOS lidam com execução de tarefas prolongadas em **segundo plano**?",
+            back: "Sistemas modernos restringem o background para economizar bateria.<br>• <b>Android:</b> Usa <code>WorkManager</code> para tarefas agendadas ou <code>Foreground Services</code>.<br>• <b>iOS:</b> Usa <code>BGTaskScheduler</code> para janelas restritas de processamento."
+        },
+
+        // --- TESTES & QUALIDADE DE CÓDIGO ---
+        {
+            category: "Mobile - Testes",
+            front: "Quais são os 3 níveis da **Pirâmide de Testes** aplicada ao desenvolvimento móvel?",
+            back: "1. <b>Testes Unitários:</b> Testam funções/ViewModels isoladas (Rápidos).<br>2. <b>Testes de Integração/Widget/Componente:</b> Testam a interação entre módulos ou telas.<br>3. <b>Testes E2E / UI de Instrumentação:</b> Testam o fluxo do app em simuladores/dispositivos (Espresso/XCUITest)."
+        },
+
+        // --- DESEMPENHO & PERFORMANCE ---
+        {
+            category: "Mobile - Performance",
+            front: "O que é a taxa de atualização de **60 FPS / 120 FPS** e o que causa a perda de quadros (**Jank**)?",
+            back: "Para manter 60 FPS, cada quadro deve ser processado em no máximo **16.6ms** (8.3ms para 120 FPS). O *Jank* ocorre quando a thread principal (UI Thread) é bloqueada por processamento pesado, pulando a renderização de quadros."
+        },
+        {
+            category: "Mobile - Otimização",
+            front: "Qual a importância da reciclagem de views em listas longas (**RecyclerView** no Android / **UITableView** no iOS)?",
+            back: "Evita instanciar centenas de objetos na memória. Reutiliza as estruturas visuais das células que saíram da tela e apenas atualiza seus dados à medida que o usuário rola a lista."
+        },
+
+        // --- PUBLICAÇÃO & DEPLOYMENT ---
+        {
+            category: "Mobile - Publicação",
+            front: "Quais são os formatos de empacotamento finais para distribuição na **Google Play Store** e **Apple App Store**?",
+            back: "• <b>Android:</b> **AAB (Android App Bundle)** para a Play Store (que gera APKs otimizados para cada aparelho).<br>• <b>iOS:</b> Arquivo **.IPA** assinado com certificados de produção e Provisioning Profiles."
+        },
+        {
+            category: "Mobile - Assinatura de Apps",
+            front: "Para que servem a **Keystore (Android)** e o **Provisioning Profile (iOS)**?",
+            back: "Garantem a autenticidade e a integridade do aplicativo, comprovando a identidade do desenvolvedor e definindo os recursos do sistema que o app está autorizado a utilizar no dispositivo."
+        },
+        {
+            category: "Mobile - Deploy Contínuo",
+            front: "O que é o **Fastlane** no fluxo de CI/CD para desenvolvimento móvel?",
+            back: "Ferramenta open-source que automatiza tarefas repetitivas de desenvolvimento móvel, como geração de screenshots, gerenciamento de certificados, compilação de builds e publicação nas lojas (TestFlight/Play Console)."
+        }
+    ];
+
+    let currentIndex = 0;
+    const cardElement = document.getElementById('flashcard');
+    const categoryElement = document.getElementById('card-category');
+    const frontElement = document.getElementById('card-front');
+    const backElement = document.getElementById('card-back');
+    const trackerElement = document.getElementById('card-tracker');
+
+    // Helper function to render Markdown bold **text** to <b>text</b>
+    function parseFormatting(str) {
+        return str.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+    }
+
+    function updateCard() {
+        cardElement.classList.remove('is-flipped');
+        setTimeout(() => {
+            const currentData = cardsData[currentIndex];
+            categoryElement.innerText = currentData.category;
+            frontElement.innerHTML = parseFormatting(currentData.front);
+            backElement.innerHTML = parseFormatting(currentData.back);
+            trackerElement.innerText = `Card ${currentIndex + 1} de ${cardsData.length}`;
+        }, 150);
+    }
+
+    function flipCard() {
+        cardElement.classList.toggle('is-flipped');
+    }
+
+    function nextCard() {
+        currentIndex = (currentIndex + 1) % cardsData.length;
+        updateCard();
+    }
+
+    function prevCard() {
+        currentIndex = (currentIndex - 1 + cardsData.length) % cardsData.length;
+        updateCard();
+    }
+
+    // Initialize App
+    updateCard();
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight') nextCard();
+        if (e.key === 'ArrowLeft') prevCard();
+        if (e.key === ' ' || e.key === 'Enter') {
+            e.preventDefault();
+            flipCard();
+        }
+    });
+    </script>
+</body>
+</html>
