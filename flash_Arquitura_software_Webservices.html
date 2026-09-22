@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcards Interativos: Arquitetura, Interoperabilidade & Web Services</title>
+    <style>
+        :root {
+            --bg-color: #F5F5F5;
+            --card-bg: #FFFFFF;
+            --card-border: #B0A87A;
+
+            --primary-color: #171717;
+            --accent-color: #FFBB1C;
+
+            --text-color: #171717;
+            --text-muted: #B0A87A;
+
+            --card-back-bg: #FFFDF5;
+
+            --shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+            --border-radius: 20px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px 15px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            margin-top: 10px;
+        }
+
+        header h1 {
+            font-size: 2.3rem;
+            color: var(--accent-color);
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        .tracker {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            background: rgba(255, 187, 28, 0.15);
+            padding: 6px 18px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 187, 28, 0.3);
+        }
+
+        /* Flashcard Container */
+        .scene {
+            width: 100%;
+            max-width: 680px;
+            height: 400px;
+            perspective: 1200px;
+            margin-bottom: 25px;
+            cursor: pointer;
+        }
+
+        .card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+            transform-style: preserve-3d;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+
+        .card.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: var(--border-radius);
+            background: var(--card-bg);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 32px;
+            border: 1px solid var(--card-border);
+            overflow-y: auto;
+        }
+
+        .card-face-front {
+             background: linear-gradient(145deg, #FFFFFF, #F5F5F5);
+        }
+
+        .card-face-back {
+            background: linear-gradient(145deg, #FFFDF5, #FFFFFF);
+            transform: rotateY(180deg);
+            border-left: 6px solid var(--accent-color);
+        }
+
+        .card-category {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .card-content {
+            font-size: 1.35rem; 
+            line-height: 1.6;
+            color: var(--text-color);
+            font-weight: 500;
+            text-align: center;
+            margin: auto 0;
+        }
+
+        .card-face-back .card-content {
+            color: var(--primary-color);     
+            font-size: 1.05rem; 
+            text-align: left;
+        }
+
+        .card-face-back .card-content b {
+            color: var(--primary-color);
+            background: rgba(255, 187, 28, 0.3);
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+
+        .card-hint {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-align: center;
+            font-style: italic;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            border: 1px solid var(--card-border);
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            user-select: none;
+        }
+
+        button:hover {
+            background-color: var(--accent-color);
+            color: #171717;
+            border-color: var(--accent-color);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(255, 187, 28, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        /* Scrollbar custom styles */
+        .card-face::-webkit-scrollbar {
+            width: 6px;
+        }
+        .card-face::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 10px;
+        }
+        .card-face::-webkit-scrollbar-thumb {
+            background: var(--card-border);
+            border-radius: 10px;
+        }
+
+        @media (max-width: 640px) {
+            .scene {
+                height: 440px;
+            }
+            header h1 {
+                font-size: 1.6rem;
+            }
+            .card-content {
+                font-size: 1.15rem;
+            }
+            .card-face-back .card-content {
+                font-size: 0.95rem;
+            }
+            button {
+                padding: 10px 18px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Flashcards Interativos</h1>
+        <p>Arquitetura de Software, Interoperabilidade, SOA & Web Services</p>
+    </header>
+
+    <div class="tracker" id="card-tracker">Card 1 de 40</div>
+
+    <div class="scene" onclick="flipCard()">
+        <div class="card" id="flashcard">
+            <div class="card-face card-face-front">
+                <div class="card-category" id="card-category">Categoria</div>
+                <div class="card-content" id="card-front">Carregando pergunta...</div>
+                <div class="card-hint">💡 Clique no card para ver a resposta</div>
+            </div>
+            <div class="card-face card-face-back">
+                <div class="card-category">Resposta Explicada</div>
+                <div class="card-content" id="card-back">Carregando resposta...</div>
+                <div class="card-hint">💡 Clique para virar novamente</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button onclick="prevCard()">Anterior</button>
+        <button onclick="flipCard()">Virar Card</button>
+        <button onclick="nextCard()">Próximo</button>
+    </div>
+
+    <script>
+    const cardsData = [
+        // --- ARQUITETURA DE SOFTWARE: CONCEITOS & PADRÕES ---
+        {
+            category: "Arquitetura de Software",
+            front: "O que define a **Arquitetura de Software** de um sistema?",
+            back: "É a estrutura fundamental do sistema, composta por seus **componentes de software**, as **propriedades visíveis** desses componentes e os **relacionamentos/interações** entre eles, servindo como blueprint para a construção e evolução."
+        },
+        {
+            category: "Arquitetura de Software",
+            front: "Qual a diferença entre **Requisitos Funcionais** e **Atributos de Qualidade** (Não Funcionais)?",
+            back: "• <b>Funcionais:</b> O que o sistema deve FAZER (ex: cadastrar cliente).<br>• <b>Atributos de Qualidade:</b> COMO o sistema se comporta em relação a desempenho, escalabilidade, segurança, disponibilidade e manutenibilidade."
+        },
+        {
+            category: "Padrões Arquiteturais",
+            front: "Como funciona a **Arquitetura em Camadas** (Layered Architecture) e qual seu objetivo?",
+            back: "Organiza o código em camadas horizontais de responsabilidade (ex: Apresentação, Negócio, Acesso a Dados). Cada camada só se comunica com a camada imediatamente inferior, promovendo a **separação de preocupações** (SoC)."
+        },
+        {
+            category: "Padrões Arquiteturais",
+            front: "O que é a **Arquitetura Hexagonal** (Ports and Adapters)?",
+            back: "Padrão que isola o núcleo de lógica de negócios (domínio) de dependências externas (bancos de dados, interfaces Web, APIs). O núcleo define **Portas** (interfaces) e o mundo externo conecta-se via **Adaptadores**."
+        },
+        {
+            category: "Padrões Arquiteturais",
+            front: "O que caracteriza uma **Arquitetura Orientada a Eventos** (Event-Driven Architecture)?",
+            back: "Sistemas baseados na produção, detecção e consumo de **eventos**. Produtores publicam eventos sem saber quem os consumirá, permitindo desacoplamento assíncrono e alta escalabilidade através de brokers de mensagens (ex: Kafka, RabbitMQ)."
+        },
+        {
+            category: "Padrões Arquiteturais",
+            front: "Qual a diferença essencial entre uma arquitetura **Monolítica** e de **Microsserviços**?",
+            back: "• <b>Monolito:</b> Toda a aplicação é implantada como uma única unidade executável.<br>• <b>Microsserviços:</b> A aplicação é dividida em serviços pequenos, independentes, implantáveis separadamente e focados em domínios de negócio."
+        },
+
+        // --- INTEROPERABILIDADE DE SISTEMAS ---
+        {
+            category: "Interoperabilidade",
+            front: "O que é **Interoperabilidade** em sistemas de informação?",
+            back: "A capacidade de dois ou mais sistemas ou componentes heterogêneos de **trocar informações** de maneira precisa e eficiente e **utilizar as informações** que foram trocadas sem esforço especial do usuário."
+        },
+        {
+            category: "Interoperabilidade",
+            front: "Quais são os 3 níveis principais de **Interoperabilidade**?",
+            back: "1. <b>Técnica:</b> Conectividade física e protocolos de rede (TCP/IP, HTTP).<br>2. <b>Sintática:</b> Formato de codificação dos dados (XML, JSON).<br>3. <b>Semântica:</b> Significado preciso e compartilhado da informação entre as partes."
+        },
+        {
+            category: "Interoperabilidade",
+            front: "Qual o papel das **Ontologias** e **Modelos Conceituais** na interoperabilidade semântica?",
+            back: "Definem um vocabulário comum e regras formais para descrever conceitos e relações em um domínio, garantindo que o sistema receptor interprete o **significado exato** enviado pelo emissor."
+        },
+        {
+            category: "Interoperabilidade",
+            front: "O que é a estrutura **ePING** no contexto do governo brasileiro?",
+            back: "<b>ePING (Padrões de Interoperabilidade de Governo Eletrônico):</b> Um conjunto de premissas, políticas e especificações técnicas que regulam a troca de informações entre sistemas governamentais e a sociedade."
+        },
+
+        // --- ARQUITETURA ORIENTADA A SERVIÇOS (SOA) ---
+        {
+            category: "Arquitetura SOA",
+            front: "O que é a **Arquitetura Orientada a Serviços (SOA)**?",
+            back: "Estilo arquitetural corporativo que organiza funcionalidades de negócio em forma de **serviços desacoplados**, reutilizáveis e interoperáveis, que se comunicam através de contratos bem definidos através de uma rede."
+        },
+        {
+            category: "Arquitetura SOA",
+            front: "O que é o **Barramento de Serviços Corporativo (ESB - Enterprise Service Bus)**?",
+            back: "Componente de infraestrutura central em SOA que gerencia o roteamento, transformação de dados, tradução de protocolos e mediação da comunicação assíncrona/síncrona entre serviços divergentes."
+        },
+        {
+            category: "Princípios SOA",
+            front: "Quais são os **princípios fundamentais** do design de serviços em SOA?",
+            back: "• **Contrato Padronizado** (Standardized Service Contract)<br>• **Baixo Acoplamento** (Loose Coupling)<br>• **Abstração** (Hide Internal Logic)<br>• **Reutilização** (Reusability)<br>• **Autonomia** (Autonomy)<br>• **Sem Estado** (Statelessness)<br>• **Descobribilidade** (Discoverability)"
+        },
+        {
+            category: "Linguagem e Modelagem SOA",
+            front: "O que é a linguagem **WS-BPEL** (Business Process Execution Language)?",
+            back: "Linguagem baseada em XML usada para descrever a **orquestração de serviços Web**, definindo a sequência e a lógica de execução de processos de negócio automatizados entre múltiplos serviços."
+        },
+        {
+            category: "SOA vs Microsserviços",
+            front: "Qual a diferença entre **Orquestração** e **Coreografia** de serviços?",
+            back: "• <b>Orquestração:</b> Um maestro central (ex: ESB/BPEL) controla o fluxo e instrui cada serviço a agir.<br>• <b>Coreografia:</b> Os serviços reagem autonomamente a eventos sem um ponto central de controle."
+        },
+        {
+            category: "SOA vs Microsserviços",
+            front: "Como o compartilhamento de banco de dados difere entre **SOA** e **Microsserviços**?",
+            back: "• <b>SOA:</b> Frequentemente compartilha bancos de dados relacionais corporativos entre múltiplos serviços.<br>• <b>Microsserviços:</b> Prega que cada serviço deve possuir estritamente seu próprio banco de dados isolado (*Database per Service*)."
+        },
+
+        // --- WEB SERVICES: CONCEITOS GERAIS ---
+        {
+            category: "Web Services",
+            front: "O que é um **Web Service**?",
+            back: "Uma solução de software projetada para suportar a **interação interoperável máquina-a-máquina** sobre uma rede, utilizando mensagens padronizadas baseadas na Web (como HTTP, XML ou JSON)."
+        },
+        {
+            category: "Web Services",
+            front: "Quais são os dois principais estilos/padrões de **Web Services** utilizados no mercado?",
+            back: "1. <b>SOAP (Simple Object Access Protocol):</b> Baseado em XML, fortemente tipado e focado em RPC/Operações.<br>2. <b>REST (Representational State Transfer):</b> Baseado em recursos e no uso nativo dos métodos HTTP."
+        },
+
+        // --- WEB SERVICES: SOAP & ECOSSISTEMA XML ---
+        {
+            category: "Web Services - SOAP",
+            front: "O que é o protocolo **SOAP** e qual seu formato de mensagem?",
+            back: "Um protocolo rigoroso baseado em **XML** para troca de informações estruturadas. Uma mensagem SOAP é composta por um envelope com um cabeçalho opcional (<b>Header</b>) e um corpo obrigatório (<b>Body</b>)."
+        },
+        {
+            category: "Web Services - SOAP",
+            front: "Para que serve o arquivo **WSDL** (Web Services Description Language)?",
+            back: "É um documento em XML que **descreve o contrato** do Web Service SOAP: especifica as operações disponíveis, os formatos de parâmetros aceitos e o endereço (endpoint) para acessar o serviço."
+        },
+        {
+            category: "Web Services - SOAP",
+            front: "O que é o registro **UDDI** (Universal Description, Discovery, and Integration)?",
+            back: "Um padrão de diretório (página amarela) onde organizações podem **cadastrar e pesquisar** Web Services SOAP e suas respectivas especificações WSDL."
+        },
+        {
+            category: "Web Services - Segurança SOAP",
+            front: "O que especifica o padrão **WS-Security** em serviços SOAP?",
+            back: "Extensão que adiciona recursos de segurança diretamente no cabeçalho (Header) da mensagem XML SOAP, incluindo assinaturas digitais, criptografia de dados e tokens de autenticação."
+        },
+
+        // --- WEB SERVICES: REST & RESTful ---
+        {
+            category: "Web Services - REST",
+            front: "O que define a arquitetura **REST** (Representational State Transfer)?",
+            back: "Um estilo arquitetural para sistemas distribuídos que utiliza as abstrações e métodos do protocolo **HTTP** para manipular **Recursos** identificados por URIs de forma stateless (sem estado)."
+        },
+        {
+            category: "Web Services - REST",
+            front: "Quais são as 6 restrições obrigatórias para um sistema ser considerado **RESTful**?",
+            back: "1. Cliente-Servidor<br>2. Stateless (Sem Estado)<br>3. Cacheable (Cacheável)<br>4. Interface Uniforme<br>5. Sistema em Camadas<br>6. Código sob Demanda (opcional)"
+        },
+        {
+            category: "Web Services - REST",
+            front: "Como os verbos **HTTP principais** correspondem às operações CRUD no REST?",
+            back: "• <b>GET:</b> Recupera/Lê um recurso (Idempotente).<br>• <b>POST:</b> Cria um novo recurso.<br>• <b>PUT:</b> Atualiza/Substitui totalmente um recurso existente (Idempotente).<br>• <b>PATCH:</b> Atualiza parcialmente um recurso.<br>• <b>DELETE:</b> Remove um recurso."
+        },
+        {
+            category: "Web Services - REST",
+            front: "O que significa dizer que uma operação HTTP é **Idempotente**?",
+            back: "Significa que executar a mesma requisição múltiplas vezes produzirá o **mesmo efeito no servidor** que executá-la apenas uma única vez (ex: GET, PUT, DELETE)."
+        },
+        {
+            category: "Web Services - REST",
+            front: "O que representa o nível 3 do Modelo de Maturidade de Richardson (**HATEOAS**)?",
+            back: "<b>HATEOAS (Hypermedia As The Engine Of Application State):</b> O servidor retorna junto com a resposta os **links navegáveis** que indicam quais próximas ações/recursos o cliente pode acessar."
+        },
+        {
+            category: "Web Services - REST",
+            front: "O que é a especificação **OpenAPI / Swagger**?",
+            back: "Um formato padronizado e neutro em termos de linguagem para **descrever e documentar** APIs RESTful, facilitando a geração de código, testes e interfaces visuais interativas."
+        },
+
+        // --- FORMATOS DE TROCA DE DADOS: JSON & XML ---
+        {
+            category: "Formatos de Dados",
+            front: "Quais as principais vantagens do formato **JSON** em relação ao **XML** na comunicação REST?",
+            back: "O JSON é mais leve, possui uma sintaxe menos verbosa, exige menor largura de banda e é nativamente parseado pelo JavaScript e pela maioria das linguagens modernas com altíssimo desempenho."
+        },
+        {
+            category: "Formatos de Dados",
+            front: "O que é e para que serve o **JSON Schema**?",
+            back: "Uma ferramenta que permite descrever a estrutura e a **validação** do formato de dados de um documento JSON, garantindo tipos de dados, campos obrigatórios e formatos antes do processamento."
+        },
+
+        // --- SEGURANÇA EM APIS & WEB SERVICES ---
+        {
+            category: "Segurança de APIs",
+            front: "Como funciona a autenticação via **JWT (JSON Web Token)**?",
+            back: "Utiliza um token codificado em Base64 assinado digitalmente contendo **Claims** (afirmações sobre a identidade). O cliente envia esse token no cabeçalho HTTP (<code>Authorization: Bearer</code>) sem necessidade do servidor manter sessão."
+        },
+        {
+            category: "Segurança de APIs",
+            front: "O que é o protocolo **OAuth 2.0**?",
+            back: "Um framework de **autorização** que permite a uma aplicação de terceiros obter acesso limitado a recursos de um usuário em um serviço HTTP, sem expor as credenciais/senhas do usuário."
+        },
+        {
+            category: "Segurança de APIs",
+            front: "Qual o propósito do padrão **CORS** (Cross-Origin Resource Sharing)?",
+            back: "Mecanismo de segurança executado pelos navegadores que utiliza cabeçalhos HTTP adicionais para autorizar que uma aplicação web rodando em uma origem acesse recursos de um servidor em outra **origem diferente**."
+        },
+
+        // --- GESTÃO & DESIGN DE APIS ---
+        {
+            category: "API Gateway & Management",
+            front: "O que é um **API Gateway** e quais suas responsabilidades?",
+            back: "Um servidor que atua como ponto de entrada único para APIs. Responsável por **roteamento**, **autenticação**, **rate limiting (limitação de taxa)**, **balanceamento de carga**, **caching** e **telemetria**."
+        },
+        {
+            category: "API Management",
+            front: "O que é o mecanismo de **Rate Limiting** e por que ele é crucial?",
+            back: "Técnica que limita o número de requisições HTTP que um cliente pode fazer em um intervalo de tempo, protegendo a infraestrutura contra sobrecarga, ataques DoS e consumo indevido."
+        },
+
+        // --- ALTERNATIVAS MODERNAS A REST/SOAP ---
+        {
+            category: "APIs Modernas",
+            front: "O que é o **GraphQL** e qual problema ele resolve em relação ao REST?",
+            back: "Linguagem de consulta e runtime criada pelo Facebook. Permite ao cliente solicitar **exatamente os dados de que precisa**, evitando o *Over-fetching* (dados em excesso) e *Under-fetching* (múltiplas requisições)."
+        },
+        {
+            category: "APIs Modernas",
+            front: "O que é o **gRPC** e em qual protocolo de transporte ele se baseia?",
+            back: "Um framework RPC de alta performance que utiliza **Protocol Buffers (Protobuf)** para serialização binária de dados compactos e utiliza o protocolo **HTTP/2** para transporte multiplexado."
+        },
+
+        // --- RESILIÊNCIA E PADRÕES DE COMUNICAÇÃO ---
+        {
+            category: "Resiliência em Comunicação",
+            front: "Como funciona o padrão **Circuit Breaker** em chamadas a serviços distribuídos?",
+            back: "Monitora falhas em requisições remotas. Se a taxa de erros ultrapassa um limite, o 'disjuntor abre' e **interrompe imediatamente** as chamadas para o serviço com falha, retornando erro rapidamente para evitar consumo em cascata."
+        },
+        {
+            category: "Resiliência em Comunicação",
+            front: "O que é e quando usar o protocolo de mensagens **WebSockets**?",
+            back: "Protocolo que estabelece um canal de comunicação **full-duplex e bidirecional** sobre uma única conexão TCP persistente, ideal para aplicações em tempo real (chats, dashboards, streaming)."
+        }
+    ];
+
+    let currentIndex = 0;
+    const cardElement = document.getElementById('flashcard');
+    const categoryElement = document.getElementById('card-category');
+    const frontElement = document.getElementById('card-front');
+    const backElement = document.getElementById('card-back');
+    const trackerElement = document.getElementById('card-tracker');
+
+    // Helper function to render Markdown bold **text** to <b>text</b>
+    function parseFormatting(str) {
+        return str.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+    }
+
+    function updateCard() {
+        cardElement.classList.remove('is-flipped');
+        setTimeout(() => {
+            const currentData = cardsData[currentIndex];
+            categoryElement.innerText = currentData.category;
+            frontElement.innerHTML = parseFormatting(currentData.front);
+            backElement.innerHTML = parseFormatting(currentData.back);
+            trackerElement.innerText = `Card ${currentIndex + 1} de ${cardsData.length}`;
+        }, 150);
+    }
+
+    function flipCard() {
+        cardElement.classList.toggle('is-flipped');
+    }
+
+    function nextCard() {
+        currentIndex = (currentIndex + 1) % cardsData.length;
+        updateCard();
+    }
+
+    function prevCard() {
+        currentIndex = (currentIndex - 1 + cardsData.length) % cardsData.length;
+        updateCard();
+    }
+
+    // Initialize App
+    updateCard();
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight') nextCard();
+        if (e.key === 'ArrowLeft') prevCard();
+        if (e.key === ' ' || e.key === 'Enter') {
+            e.preventDefault();
+            flipCard();
+        }
+    });
+    </script>
+</body>
+</html>
