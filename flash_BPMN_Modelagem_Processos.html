@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcards Interativos: BPM & Notação BPMN</title>
+    <style>
+        :root {
+            --bg-color: #F5F5F5;
+            --card-bg: #FFFFFF;
+            --card-border: #B0A87A;
+
+            --primary-color: #171717;
+            --accent-color: #FFBB1C;
+
+            --text-color: #171717;
+            --text-muted: #B0A87A;
+
+            --card-back-bg: #FFFDF5;
+
+            --shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+            --border-radius: 20px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px 15px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            margin-top: 10px;
+        }
+
+        header h1 {
+            font-size: 2.3rem;
+            color: var(--accent-color);
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        .tracker {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            background: rgba(255, 187, 28, 0.15);
+            padding: 6px 18px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 187, 28, 0.3);
+        }
+
+        /* Flashcard Container */
+        .scene {
+            width: 100%;
+            max-width: 680px;
+            height: 400px;
+            perspective: 1200px;
+            margin-bottom: 25px;
+            cursor: pointer;
+        }
+
+        .card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+            transform-style: preserve-3d;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+
+        .card.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: var(--border-radius);
+            background: var(--card-bg);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 32px;
+            border: 1px solid var(--card-border);
+            overflow-y: auto;
+        }
+
+        .card-face-front {
+            background: linear-gradient(145deg, #FFFFFF, #F5F5F5);
+        }
+
+        .card-face-back {
+            background: linear-gradient(145deg, #FFFDF5, #FFFFFF);
+            transform: rotateY(180deg);
+            border-left: 6px solid var(--accent-color);
+        }
+
+        .card-category {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .card-content {
+            font-size: 1.35rem; 
+            line-height: 1.6;
+            color: var(--text-color);
+            font-weight: 500;
+            text-align: center;
+            margin: auto 0;
+        }
+
+        .card-face-back .card-content {
+            color: var(--primary-color);     
+            font-size: 1.05rem; 
+            text-align: left;
+        }
+
+        .card-face-back .card-content b {
+            color: var(--primary-color);
+            background: rgba(255, 187, 28, 0.3);
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+
+        .card-hint {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-align: center;
+            font-style: italic;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            border: 1px solid var(--card-border);
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            user-select: none;
+        }
+
+        button:hover {
+            background-color: var(--accent-color);
+            color: #171717;
+            border-color: var(--accent-color);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(255, 187, 28, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        /* Scrollbar custom styles */
+        .card-face::-webkit-scrollbar {
+            width: 6px;
+        }
+        .card-face::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 10px;
+        }
+        .card-face::-webkit-scrollbar-thumb {
+            background: var(--card-border);
+            border-radius: 10px;
+        }
+
+        @media (max-width: 640px) {
+            .scene {
+                height: 440px;
+            }
+            header h1 {
+                font-size: 1.6rem;
+            }
+            .card-content {
+                font-size: 1.15rem;
+            }
+            .card-face-back .card-content {
+                font-size: 0.95rem;
+            }
+            button {
+                padding: 10px 18px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Flashcards Interativos</h1>
+        <p>BPM, BPMN & Modelagem de Processos de Negócio</p>
+    </header>
+
+    <div class="tracker" id="card-tracker">Card 1 de 40</div>
+
+    <div class="scene" onclick="flipCard()">
+        <div class="card" id="flashcard">
+            <div class="card-face card-face-front">
+                <div class="card-category" id="card-category">Categoria</div>
+                <div class="card-content" id="card-front">Carregando pergunta...</div>
+                <div class="card-hint">💡 Clique no card para ver a resposta</div>
+            </div>
+            <div class="card-face card-face-back">
+                <div class="card-category">Resposta Explicada</div>
+                <div class="card-content" id="card-back">Carregando resposta...</div>
+                <div class="card-hint">💡 Clique para virar novamente</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button onclick="prevCard()">Anterior</button>
+        <button onclick="flipCard()">Virar Card</button>
+        <button onclick="nextCard()">Próximo</button>
+    </div>
+
+    <script>
+    const cardsData = [
+        // --- CONCEITOS BÁSICOS DE BPM & PROCESSO DE NEGÓCIO (10 CARDS) ---
+        {
+            category: "Conceitos de BPM",
+            front: "O que é **BPM (Business Process Management)**?",
+            back: "É uma disciplina gerencial que integra estratégia e objetivos de uma organização com foco no cliente, por meio do **mapeamento, modelagem, execução, medição e otimização contínua** dos seus processos de negócio."
+        },
+        {
+            category: "Conceitos de BPM",
+            front: "O que é um **Processo de Negócio**?",
+            back: "É um conjunto de atividades inter-relacionadas ou interativas que utilizam entradas (inputs) para entregar um resultado específico (output) que **agrega valor para o cliente ou para a organização**."
+        },
+        {
+            category: "Conceitos de BPM",
+            front: "Quais são as diferenças entre os processos **Primários**, **de Suporte** e **de Gerenciamento**?",
+            back: "• <b>Primários (Core):</b> Ponta a ponta, geram valor direto para o cliente externo.<br>• <b>De Suporte (Apoio):</b> Viabilizam os processos primários (ex: TI, RH).<br>• <b>De Gerenciamento:</b> Medem, monitoram e controlam os demais processos."
+        },
+        {
+            category: "Conceitos de BPM",
+            front: "Qual a diferença entre um **Processo**, um **Procedimento** e uma **Tarefa**?",
+            back: "• <b>Processo:</b> 'O que é feito' (visão macro, ponta a ponta).<br>• <b>Procedimento:</b> 'Como deve ser feito' (instruções operacionais detalhadas).<br>• <b>Tarefa:</b> Unidade individual e indivisível de trabalho executada por uma pessoa ou sistema."
+        },
+        {
+            category: "Conceitos de BPM",
+            front: "O que é a abordagem **Ponta a Ponta (End-to-End)** em BPM?",
+            back: "É a visão que atravessa as fronteiras funcionais (departamentos) da organização, acompanhando todo o fluxo de valor desde o **primeiro contato do cliente até a entrega final**."
+        },
+        {
+            category: "Conceitos de BPM",
+            front: "Quais são as fases do **Ciclo de Vida do BPM**?",
+            back: "1. **Planejamento / Estratégia**<br>2. **Análise de Processos**<br>3. **Desenho e Modelagem**<br>4. **Implementação / Execução**<br>5. **Monitoramento e Controle**<br>6. **Otimização / Melhoria Contínua**"
+        },
+        {
+            category: "Conceitos de BPM",
+            front: "O que significa o conceito **BPO (Business Process Outsourcing)**?",
+            back: "É a terceirização do gerenciamento e da execução de processos de negócio específicos da empresa para fornecedores especializados (ex: folha de pagamento, call center)."
+        },
+        {
+            category: "Conceitos de BPM",
+            front: "O que é o guia **BPM CBOK**?",
+            back: "É o Guia para o Gerenciamento de Processos de Negócio (*Common Body of Knowledge*), mantido pela **ABPMP**, que compila as práticas fundamentais e conceitos aceitos globalmente em BPM."
+        },
+        {
+            category: "Conceitos de BPM",
+            front: "Qual a diferença entre a abordagem **Silo Funcional** e a **Gestão por Processos**?",
+            back: "• <b>Silo Funcional:</b> Foco em departamentos isolados, gerando falhas de comunicação nas transições.<br>• <b>Gestão por Processos:</b> Foco na integração horizontal e no fluxo contínuo de valor focado no cliente."
+        },
+        {
+            category: "Conceitos de BPM",
+            front: "O que é a metodologia **BPMS (Business Process Management Suite/System)**?",
+            back: "É uma classe de software que automatiza, executa, monitora e orquestra o fluxo de processos de negócio modelados, conectando pessoas, dados e sistemas."
+        },
+
+        // --- MODELAGEM DE PROCESSOS: AS-IS, TO-BE & ANÁLISE (10 CARDS) ---
+        {
+            category: "Análise e Desenho de Processos",
+            front: "O que é o mapeamento **AS-IS**?",
+            back: "É a representação da **situação atual e real do processo**, mostrando exatamente como as atividades são executadas no dia a dia, com seus erros, gargalos e ineficiências."
+        },
+        {
+            category: "Análise e Desenho de Processos",
+            front: "O que é o desenho **TO-BE**?",
+            back: "É a modelagem da **situação futura e desejada do processo**, propondo melhorias, eliminação de desperdícios, automações e correção de gargalos identificados no AS-IS."
+        },
+        {
+            category: "Análise e Desenho de Processos",
+            front: "O que é uma análise de **Gargalo (Bottleneck)** em processos?",
+            back: "Identificação do ponto ou etapa que restringe a capacidade total do fluxo, acumulando trabalho e **determinando a velocidade máxima de entrega do processo**."
+        },
+        {
+            category: "Análise e Desenho de Processos",
+            front: "O que significa o conceito de **Hand-off** e por que ele é crítico?",
+            back: "É o momento de **passagem de bastão** ou transferência de responsabilidade da tarefa entre pessoas, áreas ou sistemas. É onde ocorrem os maiores riscos de erros e atrasos."
+        },
+        {
+            category: "Análise e Desenho de Processos",
+            front: "O que é o **Grau de Maturidade de Processos**?",
+            back: "É uma escala que mede a capacidade de uma organização em gerenciar, documentar, controlar e otimizar seus processos de forma padronizada e previsível."
+        },
+        {
+            category: "Análise e Desenho de Processos",
+            front: "O que é a ferramenta **SIPOC** no mapeamento de processos?",
+            back: "Matriz simplificada que identifica 5 elementos principais: **S**uppliers (Fornecedores), **I**nputs (Entradas), **P**rocess (Processo), **O**utputs (Saídas) e **C**ustomers (Clientes)."
+        },
+        {
+            category: "Análise e Desenho de Processos",
+            front: "O que significa **RPA (Robotic Process Automation)** na melhoria de processos?",
+            back: "Uso de bots de software para automatizar **tarefas repetitivas, manuais e baseadas em regras**, simulando a interação humana em sistemas sem alterar o código do sistema original."
+        },
+        {
+            category: "Análise e Desenho de Processos",
+            front: "Qual a diferença entre **Melhoria Contínua (Kaizen)** e **Reengenharia (BPR)**?",
+            back: "• <b>Melhoria Contínua:</b> Ajustes graduais, incrementais e constantes no processo atual.<br>• <b>Reengenharia (BPR):</b> Redesenho radical e do zero para alcançar saltos dramáticos de desempenho."
+        },
+        {
+            category: "Análise e Desenho de Processos",
+            front: "O que é o indicador de **Tempo de Ciclo (Cycle Time)** no fluxo de processos?",
+            back: "Tempo total transcorrido desde o **início da execução de uma atividade até a sua conclusão efetiva** no processo."
+        },
+        {
+            category: "Análise e Desenho de Processos",
+            front: "O que são **KPIs (Key Performance Indicators)** de Processo?",
+            back: "Métricas quantitativas que medem o desempenho, eficácia e eficiência de um processo em relação aos seus objetivos estratégicos (ex: custo por transação, tempo médio, taxa de erro)."
+        },
+
+        // --- BPMN: ELEMENTOS BÁSICOS & FLUXO (10 CARDS) ---
+        {
+            category: "Notação BPMN",
+            front: "O que é a notação **BPMN (Business Process Model and Notation)**?",
+            back: "É o padrão global mantido pela OMG (Object Management Group) que fornece uma **linguagem gráfica padronizada** para diagramação de processos de negócio, compreensível por analistas e desenvolvedores."
+        },
+        {
+            category: "Notação BPMN",
+            front: "Quais são as 4 categorias principais de elementos gráficos do BPMN?",
+            back: "1. **Objetos de Fluxo** (Eventos, Atividades, Gateways)<br>2. **Objetos de Conexão** (Fluxos de Sequência, Mensagem, Associação)<br>3. **Swimlanes / Raias** (Pools, Lanes)<br>4. **Artefatos** (Objetos de Dados, Grupos, Anotações)"
+        },
+        {
+            category: "Notação BPMN",
+            front: "O que representa uma **Pool (Piscina)** em BPMN?",
+            back: "Representa um **participante principal ou organização inteira** em um diagrama. Define as fronteiras externas de um processo completo e atua como contêiner das Lanes."
+        },
+        {
+            category: "Notação BPMN",
+            front: "O que representa uma **Lane (Raia)** dentro de uma Pool?",
+            back: "É uma subpartição dentro da Pool usada para organizar e categorizar atividades com base em **papéis, setores, cargos ou sistemas responsáveis**."
+        },
+        {
+            category: "Notação BPMN",
+            front: "O que é uma **Atividade (Activity)** e quais suas formas em BPMN?",
+            back: "Representa um trabalho executado dentro do processo. Pode ser uma **Tarefa (Task)** (trabalho simples/atômico) ou um **Subprocesso (Sub-process)** (fluxo composto e detalhado em outro nível)."
+        },
+        {
+            category: "Notação BPMN",
+            front: "O que é um **Fluxo de Sequência (Sequence Flow)** em BPMN?",
+            back: "Representado por uma linha contínua com seta, mostra a **ordem exata de execução** das atividades e eventos **dentro do mesmo processo/Pool**."
+        },
+        {
+            category: "Notação BPMN",
+            front: "O que é um **Fluxo de Mensagem (Message Flow)** em BPMN?",
+            back: "Linha tracejada com círculo na ponta e seta. Representa a **troca de informações entre duas Pools (participantes) distintas**. Não pode ligar elementos dentro da mesma Pool."
+        },
+        {
+            category: "Notação BPMN",
+            front: "O que é um **Evento (Event)** em BPMN e como se divide pelo tempo?",
+            back: "Indica algo que acontece durante o processo. Divide-se em: **Evento de Início (Start)** (borda fina), **Intermediário (Intermediate)** (borda dupla) e **Fim (End)** (borda grossa)."
+        },
+        {
+            category: "Notação BPMN",
+            front: "O que é um **Objeto de Dados (Data Object)** em BPMN?",
+            back: "Representa informações, documentos, e-mails ou registros digitais/físicos consumidos ou produzidos pelas atividades durante o processo."
+        },
+        {
+            category: "Notação BPMN",
+            front: "Qual a diferença entre **Processo Privado** e **Processo Público** em BPMN?",
+            back: "• <b>Privado (Executável):</b> Detalha todo o fluxo interno de uma organização específica.<br>• <b>Público:</b> Exibe apenas as interações e pontos de contato com participantes externos sem revelar o fluxo interno detalhado."
+        },
+
+        // --- BPMN: GATEWAYS, TAREFAS & EVENTOS AVANÇADOS (10 CARDS) ---
+        {
+            category: "BPMN Avançado",
+            front: "O que é um **Gateway** na notação BPMN?",
+            back: "Elemento em formato de losango usado para **controlar a divergência (divisão) ou convergência (junção)** dos caminhos de fluxo de sequência no processo."
+        },
+        {
+            category: "BPMN Avançado",
+            front: "Como funciona um **Gateway Exclusivo (XOR)**?",
+            back: "Símbolo com um 'X' ou vazio. Avalia condições e direciona o fluxo por **apenas UM caminho de saída** dentre as opções disponíveis."
+        },
+        {
+            category: "BPMN Avançado",
+            front: "Como funciona um **Gateway Paralelo (AND)**?",
+            back: "Símbolo de '+'. Divide o fluxo em **múltiplas rotas simultâneas** sem necessidade de avaliação de condição. Ao convergir, aguarda todas as ramificações terminarem."
+        },
+        {
+            category: "BPMN Avançado",
+            front: "Como funciona um **Gateway Inclusivo (OR)**?",
+            back: "Símbolo com círculo interno. Avalia condições e permite a ativação de **um, vários ou todos os caminhos de saída válidos** ao mesmo tempo."
+        },
+        {
+            category: "BPMN Avançado",
+            front: "Como funciona um **Gateway Baseado em Eventos (Event-Based)**?",
+            back: "Símbolo com um pentágono interno. O caminho a seguir depende de qual **evento externo ocorrer primeiro** (ex: receber mensagem vs vencer o timer), e não de condições de dados."
+        },
+        {
+            category: "BPMN Avançado",
+            front: "Diferencie **Tarefa de Usuário (User Task)** e **Tarefa de Serviço (Service Task)**:",
+            back: "• <b>User Task (Ícone de pessoa):</b> Realizada por um ser humano interagindo com uma aplicação.<br>• <b>Service Task (Ícone de engrenagens):</b> Executada automaticamente por um sistema de software ou API sem intervenção humana."
+        },
+        {
+            category: "BPMN Avançado",
+            front: "O que é uma **Tarefa de Regra de Negócio (Business Rule Task)** em BPMN?",
+            back: "Tarefa que envia parâmetros para uma ferramenta de Regras de Negócio (BRMS/DMN) e aguarda o resultado do cálculo para decidir o rumo do processo."
+        },
+        {
+            category: "BPMN Avançado",
+            front: "O que é um **Evento de Fronteira (Boundary Event)** de Interrupção?",
+            back: "É um evento intermediário anexado à borda de uma atividade. Se ativado (ex: Erro ou Temporizador), ele **interrompe imediatamente a execução da atividade principal** e desvia o fluxo."
+        },
+        {
+            category: "BPMN Avançado",
+            front: "O que é um **Subprocesso Ad-Hoc** em BPMN?",
+            back: "É um grupo de atividades sem ordem fixa predefinida de sequência, onde a execução de cada tarefa ocorre conforme a **decisão ou necessidade do usuário no momento**."
+        },
+        {
+            category: "BPMN Avançado",
+            front: "O que representa o **Evento de Compensação** em BPMN?",
+            back: "Usado para **desfazer ou anular os efeitos de uma ação** que já foi concluída com sucesso no passado, caso ocorra uma falha posterior no processo (ex: estorno de pagamento)."
+        }
+    ];
+
+    let currentIndex = 0;
+    const cardElement = document.getElementById('flashcard');
+    const categoryElement = document.getElementById('card-category');
+    const frontElement = document.getElementById('card-front');
+    const backElement = document.getElementById('card-back');
+    const trackerElement = document.getElementById('card-tracker');
+
+    // Helper function to render Markdown bold **text** to <b>text</b>
+    function parseFormatting(str) {
+        return str.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+    }
+
+    function updateCard() {
+        cardElement.classList.remove('is-flipped');
+        setTimeout(() => {
+            const currentData = cardsData[currentIndex];
+            categoryElement.innerText = currentData.category;
+            frontElement.innerHTML = parseFormatting(currentData.front);
+            backElement.innerHTML = parseFormatting(currentData.back);
+            trackerElement.innerText = `Card ${currentIndex + 1} de ${cardsData.length}`;
+        }, 150);
+    }
+
+    function flipCard() {
+        cardElement.classList.toggle('is-flipped');
+    }
+
+    function nextCard() {
+        currentIndex = (currentIndex + 1) % cardsData.length;
+        updateCard();
+    }
+
+    function prevCard() {
+        currentIndex = (currentIndex - 1 + cardsData.length) % cardsData.length;
+        updateCard();
+    }
+
+    // Initialize App
+    updateCard();
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight') nextCard();
+        if (e.key === 'ArrowLeft') prevCard();
+        if (e.key === ' ' || e.key === 'Enter') {
+            e.preventDefault();
+            flipCard();
+        }
+    });
+    </script>
+</body>
+</html>
