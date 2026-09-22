@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcards Interativos: Mapeamento de Fontes de Dados & Arquitetura de BI</title>
+    <style>
+        :root {
+            /* Paleta de Cores Inspirada na Seleção da Irlanda (Verde Esmeralda, Laranja e Branco) */
+            --bg-color: #F2F7F4;
+            --card-bg: #FFFFFF;
+            --card-border: #D1E5D8;
+
+            --primary-color: #004C24;   /* Verde Escuro Tradicional da Irlanda */
+            --accent-orange: #FF7900;   /* Laranja Vibrante */
+            --accent-gold: #D4AF37;     /* Dourado de Destaque */
+
+            --text-color: #12281A;
+            --text-muted: #4A6353;
+
+            --shadow: 0 12px 30px rgba(0, 76, 36, 0.1);
+            --border-radius: 20px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px 15px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            margin-top: 10px;
+        }
+
+        header h1 {
+            font-size: 2.2rem;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .tracker {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            background: rgba(255, 121, 0, 0.12);
+            padding: 6px 18px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 121, 0, 0.3);
+        }
+
+        /* Flashcard Container */
+        .scene {
+            width: 100%;
+            max-width: 680px;
+            height: 400px;
+            perspective: 1200px;
+            margin-bottom: 25px;
+            cursor: pointer;
+        }
+
+        .card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+            transform-style: preserve-3d;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+
+        .card.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: var(--border-radius);
+            background: var(--card-bg);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 32px;
+            border: 1px solid var(--card-border);
+            overflow-y: auto;
+        }
+
+        .card-face-front {
+            background: linear-gradient(145deg, #FFFFFF, #F5FAF6);
+            border-top: 5px solid var(--primary-color);
+        }
+
+        .card-face-back {
+            background: linear-gradient(145deg, #FFF9F5, #FFFFFF);
+            transform: rotateY(180deg);
+            border-top: 5px solid var(--accent-orange);
+        }
+
+        .card-category {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .card-face-back .card-category {
+            color: var(--accent-orange);
+        }
+
+        .card-content {
+            font-size: 1.35rem; 
+            line-height: 1.6;
+            color: var(--text-color);
+            font-weight: 500;
+            text-align: center;
+            margin: auto 0;
+        }
+
+        .card-face-back .card-content {
+            color: var(--text-color);     
+            font-size: 1.05rem; 
+            text-align: left;
+        }
+
+        .card-face-back .card-content b {
+            color: var(--primary-color);
+            background: rgba(0, 76, 36, 0.1);
+            padding: 2px 5px;
+            border-radius: 4px;
+        }
+
+        .card-hint {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-align: center;
+            font-style: italic;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            background-color: var(--card-bg);
+            color: var(--primary-color);
+            border: 1px solid var(--card-border);
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0, 76, 36, 0.08);
+            user-select: none;
+        }
+
+        button:hover {
+            background-color: var(--primary-color);
+            color: #FFFFFF;
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 76, 36, 0.25);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        /* Scrollbar custom styles */
+        .card-face::-webkit-scrollbar {
+            width: 6px;
+        }
+        .card-face::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.03);
+            border-radius: 10px;
+        }
+        .card-face::-webkit-scrollbar-thumb {
+            background: var(--card-border);
+            border-radius: 10px;
+        }
+
+        @media (max-width: 640px) {
+            .scene {
+                height: 440px;
+            }
+            header h1 {
+                font-size: 1.6rem;
+            }
+            .card-content {
+                font-size: 1.15rem;
+            }
+            .card-face-back .card-content {
+                font-size: 0.95rem;
+            }
+            button {
+                padding: 10px 18px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Flashcards Interativos</h1>
+        <p>Mapeamento de Fontes & Arquitetura de Business Intelligence (BI)</p>
+    </header>
+
+    <div class="tracker" id="card-tracker">Card 1 de 40</div>
+
+    <div class="scene" onclick="flipCard()">
+        <div class="card" id="flashcard">
+            <div class="card-face card-face-front">
+                <div class="card-category" id="card-category">Categoria</div>
+                <div class="card-content" id="card-front">Carregando pergunta...</div>
+                <div class="card-hint">💡 Clique no card para ver a resposta</div>
+            </div>
+            <div class="card-face card-face-back">
+                <div class="card-category">Resposta Explicada</div>
+                <div class="card-content" id="card-back">Carregando resposta...</div>
+                <div class="card-hint">💡 Clique para virar novamente</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button onclick="prevCard()">Anterior</button>
+        <button onclick="flipCard()">Virar Card</button>
+        <button onclick="nextCard()">Próximo</button>
+    </div>
+
+    <script>
+    const cardsData = [
+        // --- 1. MAPEAMENTO DE FONTES DE DADOS E TÉCNICAS DE COLETA (20 CARDS) ---
+        {
+            category: "Mapeamento de Fontes",
+            front: "O que é o **Mapeamento de Fontes de Dados** em um projeto analítico?",
+            back: "É o processo de identificar, catalogar e documentar **onde os dados residem, quem é o dono, qual o formato e como acessá-los** dentro de uma organização."
+        },
+        {
+            category: "Catálogo de Dados",
+            front: "Qual é a utilidade de um **Catálogo de Dados** durante o mapeamento?",
+            back: "Servir como um 'Google interno' que armazena metadados, facilitando a **descoberta, linhagem e compreensão** das fontes de dados disponíveis."
+        },
+        {
+            category: "Fontes Internas vs Externas",
+            front: "Qual a diferença entre fontes de dados **internas e externas**?",
+            back: "• **Internas:** Geradas dentro da própria empresa (ERPs, CRMs, logs operacionais).<br>• **Externas:** Obtidas de fora (redes sociais, APIs de mercado, dados governamentais)."
+        },
+        {
+            category: "Técnica de Coleta",
+            front: "O que caracteriza a técnica de coleta baseada em **APIs (Interface de Programação de Aplicações)**?",
+            back: "Permite a recuperação programática e estruturada de dados de sistemas terceiros ou microsserviços usando protocolos padrão (como REST ou GraphQL)."
+        },
+        {
+            category: "Web Scraping",
+            front: "O que é **Web Scraping** e quando ele é utilizado na coleta de dados?",
+            back: "Técnica de extração automatizada de **dados públicos exibidos em páginas web**, usada quando não há uma API formal disponível."
+        },
+        {
+            category: "Sensores e IoT",
+            front: "Como funcionam as técnicas de coleta baseadas em **Dispositivos IoT e Sensores**?",
+            back: "Capturam dados de telemetria e ambiente em **tempo real** (temperatura, localização, tráfego), gerando fluxos contínuos de dados (*streaming*)."
+        },
+        {
+            category: "Questionários e Formulários",
+            front: "Qual é o papel de formulários digitais e pesquisas na coleta de **dados primários**?",
+            back: "Permitem coletar **opiniões, feedbacks e comportamentos declarados** diretamente dos usuários ou clientes."
+        },
+        {
+            category: "Logs de Sistemas",
+            front: "O que revelam os **arquivos de log** coletados de servidores e aplicações?",
+            back: "Rastreiam eventos de sistema, cliques de usuários, erros de código e acessos, sendo cruciais para auditoria e análise de comportamento."
+        },
+        {
+            category: "Silos de Dados",
+            front: "O que são **Silos de Dados** e por que o mapeamento ajuda a combatê-los?",
+            back: "São ilhas de dados isoladas em departamentos específicos. O mapeamento centraliza a visão e permite unificar essas informações dispersas."
+        },
+        {
+            category: "Dicionário de Dados",
+            front: "O que deve constar em um **Dicionário de Dados** gerado no mapeamento?",
+            back: "O nome dos campos, tipos de dados (inteiro, texto, data), regras de negócio aplicadas e restrições de cada atributo."
+        },
+        {
+            category: "Auditoria de Fontes",
+            front: "Por que avaliar a **confiabilidade e a latência** de uma fonte durante o mapeamento?",
+            back: "Para garantir que os dados alimentados nos relatórios sejam **atualizados no tempo certo e livres de corrupção crônica**."
+        },
+        {
+            category: "Dados Legados",
+            front: "Quais são os principais desafios ao mapear **sistemas legados antigos**?",
+            back: "Falta de documentação, estruturas de banco de dados obsoletas, ausência de APIs e riscos de instabilidade ao tentar extrair dados."
+        },
+        {
+            category: "Compliance e LGPD",
+            front: "Como o mapeamento de fontes se relaciona com leis de privacidade como a **LGPD/GDPR**?",
+            back: "É indispensável para **localizar onde estão guardados os Dados Pessoais Sensíveis**, permitindo mascaramento, exclusão ou auditoria quando solicitado."
+        },
+        {
+            category: "Data Profiling",
+            front: "O que é o **Perfilamento de Dados (*Data Profiling*)** na etapa inicial?",
+            back: "Análise estatística executada nas fontes para descobrir valores nulos, unicidade de chaves, padrões e distribuições de frequência."
+        },
+        {
+            category: "Identificação de Gargalos",
+            front: "Por que é importante mapear o **volume e a frequência** de atualização de cada fonte?",
+            back: "Para dimensionar corretamente a largura de banda, capacidade de armazenamento e o custo computacional da infraestrutura de ingestão."
+        },
+        {
+            category: "Metadados",
+            front: "Qual é a importância de documentar os **metadados de origem**?",
+            back: "Garantir a rastreabilidade (quem gerou o dado, quando e de onde veio), fundamental para a governança corporativa."
+        },
+        {
+            category: "Integração Multicanal",
+            front: "O que significa mapear fontes em uma estratégia **multicanal**?",
+            back: "Consolidar dados de diferentes pontos de contato do cliente (loja física, app, site, central de atendimento) em uma visão única."
+        },
+        {
+            category: "Fontes Não Estruturadas",
+            front: "Como o mapeamento deve tratar **fontes de dados não estruturados** (áudios, PDFs, imagens)?",
+            back: "Catalogando onde os repositórios brutos estão (ex: buckets S3) e identificando quais ferramentas de IA serão necessárias para interpretá-los."
+        },
+        {
+            category: "Análise de Impacto",
+            front: "Para que serve a análise de impacto em mudanças de fontes de dados mapeadas?",
+            back: "Prever quais relatórios, dashboards ou modelos de machine learning **vão quebrar caso a estrutura da fonte seja alterada**."
+        },
+        {
+            category: "Resumo do Mapeamento",
+            front: "Qual é o principal benefício estratégico de um bom mapeamento e coleta de dados?",
+            back: "Garantir a **qualidade e a confiabilidade ponta a ponta** da cadeia de valor analítica da organização."
+        },
+
+        // --- 2. ARQUITETURA DE BUSINESS INTELLIGENCE - BI (20 CARDS) ---
+        {
+            category: "Conceito de BI",
+            front: "O que é **Business Intelligence (BI)** na arquitetura corporativa?",
+            back: "Um conjunto de tecnologias, ferramentas e processos que transformam **dados brutos em informações acionáveis** para apoiar a tomada de decisão."
+        },
+        {
+            category: "Camadas da Arquitetura",
+            front: "Quais são as principais **camadas tradicionais** de uma arquitetura de BI?",
+            back: "1. Fontes de Dados<br>2. Camada de Ingestão / ETL<br>3. Armazenamento (Data Warehouse)<br>4. Camada de Apresentação (Dashboards/Relatórios)."
+        },
+        {
+            category: "Data Warehouse",
+            front: "Qual é o coração de uma arquitetura de BI tradicional?",
+            back: "O **Data Warehouse (DWH)**, repositório central otimizado para consultas analíticas de grande volume e histórico corporativo."
+        },
+        {
+            category: "Data Mart",
+            front: "O que é um **Data Mart** dentro da arquitetura de BI?",
+            back: "Um subconjunto focado de um Data Warehouse, voltado para atender às necessidades analíticas de um **departamento específico** (ex: Vendas ou RH)."
+        },
+        {
+            category: "Modelagem Dimensional",
+            front: "O que é a **Modelagem Dimensional** proposta por Ralph Kimball no BI?",
+            back: "Uma técnica de design de banco de dados otimizada para leitura rápida, dividida em **Tabelas Fatos** (métricas numéricas) e **Tabelas Dimensões** (contexto)."
+        },
+        {
+            category: "Tabela Fato",
+            front: "O que armazena uma **Tabela Fato** em um modelo dimensional?",
+            back: "Métricas quantitativas e numéricas de eventos de negócio (ex: valor da venda, quantidade de itens vendidos, tempo de atendimento)."
+        },
+        {
+            category: "Tabela Dimensão",
+            front: "O que armazena uma **Tabela Dimensão**?",
+            back: "Os atributos descritivos que dão contexto à fato (ex: nome do cliente, categoria do produto, data da venda, localização geográfica)."
+        },
+        {
+            category: "Esquema Estrela",
+            front: "O que é o **Esquema Estrela (*Star Schema*)**?",
+            back: "Um modelo dimensional onde uma tabela fato central está conectada diretamente a várias tabelas de dimensão desnormalizadas."
+        },
+        {
+            category: "Esquema Floco de Neve",
+            front: "O que é o **Esquema Floco de Neve (*Snowflake Schema*)**?",
+            back: "Uma variação do esquema estrela onde as **tabelas de dimensão são normalizadas**, ramificando-se em sub-dimensões."
+        },
+        {
+            category: "OLAP",
+            front: "O que significa **OLAP (Online Analytical Processing)** no contexto de BI?",
+            back: "Tecnologia que permite aos usuários analisar rapidamente dados multidimensionais de diferentes perspectivas (operações como *drill-down*, *slice* e *dice*)."
+        },
+        {
+            category: "ETL no BI",
+            front: "Qual é o papel do processo de **ETL/ELT** na arquitetura de BI?",
+            back: "Extrair dados operacionais, limpá-los e carregá-los estruturados no Data Warehouse para consumo analítico."
+        },
+        {
+            category: "Data Modeling Semântico",
+            front: "O que é a **Camada Semântica** em uma ferramenta moderna de BI?",
+            back: "Uma camada de tradução que padroniza nomes de campos, cálculos de negócio e métricas (KPIs) para que todos usem as mesmas definições."
+        },
+        {
+            category: "Self-Service BI",
+            front: "O que é o conceito de **Self-Service BI**?",
+            back: "A capacidade de capacitar usuários de negócios (não técnicos) a **criarem seus próprios relatórios e análises** de forma autônoma."
+        },
+        {
+            category: "Ferramentas de BI",
+            front: "Cite exemplos de ferramentas líderes de mercado para visualização e BI.",
+            back: "• Microsoft Power BI<br>• Tableau<br>• Looker / Looker Studio<br>• Qlik Sense."
+        },
+        {
+            category: "Data Storytelling",
+            front: "O que é **Data Storytelling** na entrega de projetos de BI?",
+            back: "A habilidade de combinar dados, visualizações e uma narrativa clara para **comunicar insights de forma persuasiva** aos gestores."
+        },
+        {
+            category: "Governança em BI",
+            front: "Por que a **Governança de BI** é necessária quando se adota Self-Service BI?",
+            back: "Para evitar o problema de 'versões da verdade divergentes', onde diferentes setores criam métricas calculadas de formas opostas."
+        },
+        {
+            category: "Data Warehouse em Nuvem",
+            front: "Como a computação em nuvem revolucionou a arquitetura de BI moderna?",
+            back: "Desacoplou armazenamento e processamento, permitindo consultas instantâneas em petabytes de dados (ex: **Snowflake, Google BigQuery, AWS Redshift**)."
+        },
+        {
+            category: "ETLT / Modern Data Stack",
+            front: "O que compõe a **Modern Data Stack (MDS)** atual para arquiteturas de BI?",
+            back: "Ferramentas modulares em nuvem: Ingestão (Fivetran/Airbyte) + Armazenamento (Snowflake/BigQuery) + Transformação (dbt) + Visualização (Power BI/Tableau)."
+        },
+        {
+            category: "KPIs e Métricas",
+            front: "Qual é a diferença entre um relatório operacional e um painel de **KPIs de BI**?",
+            back: "• **Operacional:** Mostra o detalhe do dia a dia (ex: lista de pedidos pendentes).<br>• **KPIs (Estratégico):** Foca em indicadores-chave de desempenho de longo prazo da empresa."
+        },
+        {
+            category: "Valor do BI",
+            front: "Qual é o principal objetivo de negócio de uma arquitetura de BI bem-sucedida?",
+            back: "Substituir suposições e achismos por **decisões baseadas em evidências e dados precisos**."
+        }
+    ];
+
+    let currentIndex = 0;
+    const cardElement = document.getElementById('flashcard');
+    const categoryElement = document.getElementById('card-category');
+    const frontElement = document.getElementById('card-front');
+    const backElement = document.getElementById('card-back');
+    const trackerElement = document.getElementById('card-tracker');
+
+    function parseFormatting(str) {
+        return str.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+    }
+
+    function updateCard() {
+        cardElement.classList.remove('is-flipped');
+        setTimeout(() => {
+            const currentData = cardsData[currentIndex];
+            categoryElement.innerText = currentData.category;
+            frontElement.innerHTML = parseFormatting(currentData.front);
+            backElement.innerHTML = parseFormatting(currentData.back);
+            trackerElement.innerText = `Card ${currentIndex + 1} de ${cardsData.length}`;
+        }, 150);
+    }
+
+    function flipCard() {
+        cardElement.classList.toggle('is-flipped');
+    }
+
+    function nextCard() {
+        currentIndex = (currentIndex + 1) % cardsData.length;
+        updateCard();
+    }
+
+    function prevCard() {
+        currentIndex = (currentIndex - 1 + cardsData.length) % cardsData.length;
+        updateCard();
+    }
+
+    // Initialize App
+    updateCard();
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight') nextCard();
+        if (e.key === 'ArrowLeft') prevCard();
+        if (e.key === ' ' || e.key === 'Enter') {
+            e.preventDefault();
+            flipCard();
+        }
+    });
+    </script>
+</body>
+</html>
