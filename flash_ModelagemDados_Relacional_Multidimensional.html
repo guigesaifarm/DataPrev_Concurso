@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcards Interativos: Modelagem de Dados & Abordagens</title>
+    <style>
+        :root {
+            --bg-color: #F5F5F5;
+            --card-bg: #FFFFFF;
+            --card-border: #B0A87A;
+
+            --primary-color: #171717;
+            --accent-color: #FFBB1C;
+
+            --text-color: #171717;
+            --text-muted: #B0A87A;
+
+            --card-back-bg: #FFFDF5;
+
+            --shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+            --border-radius: 20px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px 15px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            margin-top: 10px;
+        }
+
+        header h1 {
+            font-size: 2.2rem;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .tracker {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            background: rgba(255, 187, 28, 0.15);
+            padding: 6px 18px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 187, 28, 0.3);
+        }
+
+        /* Flashcard Container */
+        .scene {
+            width: 100%;
+            max-width: 680px;
+            height: 400px;
+            perspective: 1200px;
+            margin-bottom: 25px;
+            cursor: pointer;
+        }
+
+        .card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+            transform-style: preserve-3d;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+
+        .card.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: var(--border-radius);
+            background: var(--card-bg);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 32px;
+            border: 1px solid var(--card-border);
+            overflow-y: auto;
+        }
+
+        .card-face-front {
+            background: linear-gradient(145deg, #FFFFFF, #F5F5F5);
+        }
+
+        .card-face-back {
+            background: linear-gradient(145deg, #FFFDF5, #FFFFFF);
+            transform: rotateY(180deg);
+            border-left: 6px solid var(--accent-color);
+        }
+
+        .card-category {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .card-content {
+            font-size: 1.35rem; 
+            line-height: 1.6;
+            color: var(--text-color);
+            font-weight: 500;
+            text-align: center;
+            margin: auto 0;
+        }
+
+        .card-face-back .card-content {
+            color: var(--primary-color);     
+            font-size: 1.05rem; 
+            text-align: left;
+        }
+
+        .card-face-back .card-content b {
+            color: var(--primary-color);
+            background: rgba(255, 187, 28, 0.3);
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+
+        .card-hint {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-align: center;
+            font-style: italic;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            border: 1px solid var(--card-border);
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            user-select: none;
+        }
+
+        button:hover {
+            background-color: var(--accent-color);
+            color: #171717;
+            border-color: var(--accent-color);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(255, 187, 28, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        /* Scrollbar custom styles */
+        .card-face::-webkit-scrollbar {
+            width: 6px;
+        }
+        .card-face::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 10px;
+        }
+        .card-face::-webkit-scrollbar-thumb {
+            background: var(--card-border);
+            border-radius: 10px;
+        }
+
+        @media (max-width: 640px) {
+            .scene {
+                height: 440px;
+            }
+            header h1 {
+                font-size: 1.6rem;
+            }
+            .card-content {
+                font-size: 1.15rem;
+            }
+            .card-face-back .card-content {
+                font-size: 0.95rem;
+            }
+            button {
+                padding: 10px 18px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Flashcards Interativos</h1>
+        <p>Modelagem de Dados (Conceitual, Lógica, Física, Relacional e Multidimensional)</p>
+    </header>
+
+    <div class="tracker" id="card-tracker">Card 1 de 40</div>
+
+    <div class="scene" onclick="flipCard()">
+        <div class="card" id="flashcard">
+            <div class="card-face card-face-front">
+                <div class="card-category" id="card-category">Categoria</div>
+                <div class="card-content" id="card-front">Carregando pergunta...</div>
+                <div class="card-hint">💡 Clique no card para ver a resposta</div>
+            </div>
+            <div class="card-face card-face-back">
+                <div class="card-category">Resposta Explicada</div>
+                <div class="card-content" id="card-back">Carregando resposta...</div>
+                <div class="card-hint">💡 Clique para virar novamente</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button onclick="prevCard()">Anterior</button>
+        <button onclick="flipCard()">Virar Card</button>
+        <button onclick="nextCard()">Próximo</button>
+    </div>
+
+    <script>
+    const cardsData = [
+        // --- 1. NÍVEIS DE MODELAGEM DE DADOS (13 CARDS) ---
+        {
+            category: "Níveis de Modelagem",
+            front: "O que é o **Modelo Conceitual** de dados?",
+            back: "É o nível de mais **alto nível de abstração**, focado em descrever o negócio e suas regras através de entidades e relacionamentos, **sem compromisso com tecnologias** ou SGDBs."
+        },
+        {
+            category: "Níveis de Modelagem",
+            front: "Quem é o público-alvo principal do **Modelo Conceitual**?",
+            back: "Os **usuários de negócio, gestores e analistas de requisitos**, pois o modelo utiliza linguagem de fácil compreensão e sem jargões técnicos."
+        },
+        {
+            category: "Níveis de Modelagem",
+            front: "O que é o Diagrama Entidade-Relacionamento (**DER**)?",
+            back: "É a representação gráfica do modelo conceitual que ilustra as **entidades**, seus **atributos** e como elas se **relacionam** entre si no domínio do negócio."
+        },
+        {
+            category: "Níveis de Modelagem",
+            front: "O que é o **Modelo Lógico** de dados?",
+            back: "É a representação intermediária que define a **estrutura das tabelas, chaves primárias/estrangeiras, tipos de dados genéricos e relacionamentos**, adaptado ao paradigma do SGBD (ex: relacional), mas ainda independente do software específico."
+        },
+        {
+            category: "Níveis de Modelagem",
+            front: "O que muda na transição do **Modelo Conceitual** para o **Modelo Lógico**?",
+            back: "As entidades viram **tabelas**, os atributos viram **colunas**, são definidas as **Chaves Primárias (PK)** e **Estrangeiras (FK)**, e relacionamentos N:N são resolvidos com tabelas associativas."
+        },
+        {
+            category: "Níveis de Modelagem",
+            front: "O que é o **Modelo Físico** de dados?",
+            back: "É o nível de implementação final, codificado em **SQL (DDL)** e configurado especificamente para um **SGBD alvo** (ex: PostgreSQL, Oracle, MySQL), considerando desempenho e armazenamento."
+        },
+        {
+            category: "Níveis de Modelagem",
+            front: "Quais elementos específicos aparecem apenas no **Modelo Físico**?",
+            back: "Tipos de dados nativos do SGBD (ex: `VARCHAR2`, `BIGINT`), **índices, particionamento, tablespaces, constraints** específicas e regras de armazenamento em disco."
+        },
+        {
+            category: "Níveis de Modelagem",
+            front: "O que representa a **Cardinalidade** em um relacionamento?",
+            back: "Indica a **quantidade mínima e máxima de ocorrências** de uma entidade que podem estar associadas a uma ocorrência de outra entidade (ex: 1:1, 1:N, N:N)."
+        },
+        {
+            category: "Níveis de Modelagem",
+            front: "Como é resolvido um relacionamento de cardinalidade **Muitos-para-Muitos (N:N)** no modelo lógico?",
+            back: "É decomposto criando-se uma **Tabela Associativa (ou Entidade de Junção)** contendo as chaves estrangeiras das duas tabelas originais, transformando em dois relacionamentos 1:N."
+        },
+        {
+            category: "Níveis de Modelagem",
+            front: "O que é uma **Chave Primária (Primary Key - PK)**?",
+            back: "É um atributo (ou conjunto de atributos) que **identifica unicamente** cada registro em uma tabela, não podendo conter valores nulos nem duplicados."
+        },
+        {
+            category: "Níveis de Modelagem",
+            front: "O que é uma **Chave Estrangeira (Foreign Key - FK)**?",
+            back: "É uma coluna em uma tabela que faz **referência à Chave Primária de outra tabela**, garantindo a integridade referencial entre os dados."
+        },
+        {
+            category: "Níveis de Modelagem",
+            front: "O que é a **Integridade Referencial**?",
+            back: "É a regra de negócio do SGBD que impede a existência de valores na **Chave Estrangeira** que não existam na **Chave Primária** da tabela referenciada."
+        },
+        {
+            category: "Níveis de Modelagem",
+            front: "Qual é a ordem sequencial correta da **Modelagem de Dados**?",
+            back: "1º **Modelo Conceitual** (O que armazenar?) <br>2º **Modelo Lógico** (Como organizar?) <br>3º **Modelo Físico** (Onde e como implementar?)"
+        },
+
+        // --- 2. ABORDAGEM RELACIONAL (13 CARDS) ---
+        {
+            category: "Abordagem Relacional",
+            front: "Qual é o foco principal da **Modelagem Relacional**?",
+            back: "Focada no processamento de transações de negócios (**OLTP**), visando **eliminar a redundância de dados**, garantir a consistência e manter a integridade transacional."
+        },
+        {
+            category: "Abordagem Relacional",
+            front: "O que significa o termo **OLTP** (Online Transaction Processing)?",
+            back: "Sistemas focados em **operações transacionais rápidas e corriqueiras** (inserts, updates, deletes), com alto volume de escritas de pequeno porte em tempo real."
+        },
+        {
+            category: "Abordagem Relacional",
+            front: "O que é o processo de **Normalização de Dados**?",
+            back: "Técnica aplicável a modelos relacionais para **organizar colunas e tabelas**, reduzindo a redundância e prevenindo anomalias de inserção, atualização e exclusão."
+        },
+        {
+            category: "Abordagem Relacional",
+            front: "O que exige a **Primeira Forma Normal (1FN)**?",
+            back: "Exige que **todos os atributos sejam atômicos** (indivisíveis), eliminando grupos repetitivos, tabelas aninhadas e colunas com múltiplos valores."
+        },
+        {
+            category: "Abordagem Relacional",
+            front: "O que exige a **Segunda Forma Normal (2FN)**?",
+            back: "Estar na 1FN e garantir que **todos os atributos não-chave dependam totalmente da chave primária** (elimina dependência parcial em chaves compostas)."
+        },
+        {
+            category: "Abordagem Relacional",
+            front: "O que exige a **Terceira Forma Normal (3FN)**?",
+            back: "Estar na 2FN e garantir que **nenhum atributo não-chave dependa de outro atributo não-chave** (elimina a dependência transitiva)."
+        },
+        {
+            category: "Abordagem Relacional",
+            front: "O que é a **Denormalização** no modelo relacional?",
+            back: "Processo intencional de introduzir **redundância de dados** em um modelo normalizado para **melhorar o desempenho de leitura/consultas** pesadas."
+        },
+        {
+            category: "Abordagem Relacional",
+            front: "Quais são as propriedades **ACID** dos bancos de dados relacionais?",
+            back: "• **A**tomicidade (tudo ou nada)<br>• **C**onsistência (regras mantidas)<br>• **I**solamento (transações concorrentes)<br>• **D**urabilidade (dados salvos permanentemente)"
+        },
+        {
+            category: "Abordagem Relacional",
+            front: "O que é um **Índice** em um banco de dados relacional?",
+            back: "Estrutura de dados auxiliar (geralmente Árvore B/B+) que **acelera a busca e recuperação de registros**, reduzindo a necessidade de varrer toda a tabela."
+        },
+        {
+            category: "Abordagem Relacional",
+            front: "O que é uma **Chave Composta**?",
+            back: "É uma Chave Primária constituída pela **combinação de duas ou mais colunas** para identificar de forma única um registro em uma tabela."
+        },
+        {
+            category: "Abordagem Relacional",
+            front: "Diferencie **Chave Natural** de **Chave Sucedânea (Surrogate Key)**:",
+            back: "• **Natural:** Dado que existe no mundo real (ex: CPF, CNPJ).<br>• **Surrogate Key:** Identificador numérico artificial gerado pelo sistema (ex: ID auto-incremento, UUID)."
+        },
+        {
+            category: "Abordagem Relacional",
+            front: "O que é uma **Anomalia de Atualização** em tabelas não-normalizadas?",
+            back: "Ocorre quando a alteração de um dado em um local exige a atualização em múltiplos outros registros, gerando **inconsistência se algum for esquecido**."
+        },
+        {
+            category: "Abordagem Relacional",
+            front: "Para qual tipo de carga de trabalho o modelo relacional normalizado **NÃO** é ideal?",
+            back: "Para **consultas analíticas complexas e relatórios (OLAP)** com cruzamento de milhões de linhas, pois exige a junção (`JOIN`) de dezenas de tabelas."
+        },
+
+        // --- 3. ABORDAGEM MULTIDIMENSIONAL (14 CARDS) ---
+        {
+            category: "Abordagem Multidimensional",
+            front: "Qual é o objetivo principal da **Modelagem Multidimensional**?",
+            back: "Otimizar a consulta de grandes volumes de dados para **análises de negócios e tomada de decisão (OLAP / Data Warehouse)**, priorizando a velocidade de leitura e a simplicidade conceitual."
+        },
+        {
+            category: "Abordagem Multidimensional",
+            front: "O que significa o termo **OLAP** (Online Analytical Processing)?",
+            back: "Sistemas projetados para **consultas analíticas complexas, agregadas e de leitura**, permitindo navegação multidimensional rápida sobre grandes históricos de dados."
+        },
+        {
+            category: "Abordagem Multidimensional",
+            front: "O que é uma **Tabela Fato** no Data Warehouse?",
+            back: "É a tabela central do modelo multidimensional que armazena os **eventos quantitativos e métricas de negócio** (ex: valor da venda, quantidade), além das chaves estrangeiras para as dimensões."
+        },
+        {
+            category: "Abordagem Multidimensional",
+            front: "O que é uma **Tabela Dimensão**?",
+            back: "É a tabela que contém o **contexto descritivo dos fatos** (ex: Cliente, Produto, Tempo, Local), permitindo filtrar, agrupar e fatiar os dados analíticos."
+        },
+        {
+            category: "Abordagem Multidimensional",
+            front: "O que caracteriza o **Esquema Estrela (Star Schema)**?",
+            back: "Estrutura onde a **Tabela Fato fica no centro** conectada diretamente às **Tabelas Dimensão denormalizadas** (desnormalizadas), tornando as consultas mais simples e rápidas."
+        },
+        {
+            category: "Abordagem Multidimensional",
+            front: "O que caracteriza o **Esquema Floco de Neve (Snowflake Schema)**?",
+            back: "Variação do Star Schema onde as **Tabelas Dimensão são normalizadas**, dividindo-se em subtabelas (ex: Dim_Produto ligada à Dim_Categoria). Reduz redundância, mas exige mais `JOINs`."
+        },
+        {
+            category: "Abordagem Multidimensional",
+            front: "Diferencie **Star Schema** de **Snowflake Schema**:",
+            back: "• **Star Schema:** Dimensões desnormalizadas, consultas com performance mais rápida, mais redundância.<br>• **Snowflake Schema:** Dimensões normalizadas, economiza espaço, consultas exigem mais JOINs."
+        },
+        {
+            category: "Abordagem Multidimensional",
+            front: "O que são **SCD (Slowly Changing Dimensions)**?",
+            back: "Técnicas para **gerenciar mudanças históricas** nos atributos de uma tabela dimensão ao longo do tempo (ex: alteração de endereço do cliente)."
+        },
+        {
+            category: "Abordagem Multidimensional",
+            front: "Como funciona o **SCD Tipo 1** (Sobrescrita)?",
+            back: "O valor antigo do atributo é **sobrescrito pelo novo**. Não mantém histórico de alterações passadas."
+        },
+        {
+            category: "Abordagem Multidimensional",
+            front: "Como funciona o **SCD Tipo 2** (Adição de Nova Linha)?",
+            back: "Cria-se um **novo registro na dimensão** com uma nova chave sucedânea (Surrogate Key) e controle de datas de validade (`data_inicio`, `data_fim`), **preservando todo o histórico**."
+        },
+        {
+            category: "Abordagem Multidimensional",
+            front: "O que é a operação analítica de **Drill-Down**?",
+            back: "Navegação nos dados passando de um nível genérico para um nível de **maior detalhamento** (ex: passar da análise de vendas do *Ano* para o *Mês*)."
+        },
+        {
+            category: "Abordagem Multidimensional",
+            front: "O que é a operação analítica de **Roll-Up** (ou Drill-Up)?",
+            back: "Navegação nos dados realizando a **agregação para um nível superior** de abstração (ex: passar da análise por *Cidade* para análise por *País*)."
+        },
+        {
+            category: "Abordagem Multidimensional",
+            front: "O que são as operações **Slice** e **Dice** em OLAP?",
+            back: "• **Slice (Fatiar):** Filtra os dados selecionando um único valor de uma dimensão (ex: Vendas do ano 2026).<br>• **Dice (Dados):** Seleciona um subcubo definindo critérios em múltiplas dimensões."
+        },
+        {
+            category: "Abordagem Multidimensional",
+            front: "O que é a **Granularidade** de uma Tabela Fato?",
+            back: "Define o **nível de detalhe do registro** armazenado na fato (ex: um registro por *item de linha do cupom fiscal* vs. um registro com o *total diário da loja*)."
+        }
+    ];
+
+    let currentIndex = 0;
+    const cardElement = document.getElementById('flashcard');
+    const categoryElement = document.getElementById('card-category');
+    const frontElement = document.getElementById('card-front');
+    const backElement = document.getElementById('card-back');
+    const trackerElement = document.getElementById('card-tracker');
+
+    function parseFormatting(str) {
+        return str.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+    }
+
+    function updateCard() {
+        cardElement.classList.remove('is-flipped');
+        setTimeout(() => {
+            const currentData = cardsData[currentIndex];
+            categoryElement.innerText = currentData.category;
+            frontElement.innerHTML = parseFormatting(currentData.front);
+            backElement.innerHTML = parseFormatting(currentData.back);
+            trackerElement.innerText = `Card ${currentIndex + 1} de ${cardsData.length}`;
+        }, 150);
+    }
+
+    function flipCard() {
+        cardElement.classList.toggle('is-flipped');
+    }
+
+    function nextCard() {
+        currentIndex = (currentIndex + 1) % cardsData.length;
+        updateCard();
+    }
+
+    function prevCard() {
+        currentIndex = (currentIndex - 1 + cardsData.length) % cardsData.length;
+        updateCard();
+    }
+
+    // Initialize App
+    updateCard();
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight') nextCard();
+        if (e.key === 'ArrowLeft') prevCard();
+        if (e.key === ' ' || e.key === 'Enter') {
+            e.preventDefault();
+            flipCard();
+        }
+    });
+    </script>
+</body>
+</html>
