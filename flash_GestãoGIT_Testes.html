@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcards Interativos: Git, Testes & Gestão do Ciclo de Vida</title>
+    <style>
+        :root {
+            --bg-color: #F5F5F5;
+            --card-bg: #FFFFFF;
+            --card-border: #B0A87A;
+
+            --primary-color: #171717;
+            --accent-color: #FFBB1C;
+
+            --text-color: #171717;
+            --text-muted: #B0A87A;
+
+            --card-back-bg: #FFFDF5;
+
+            --shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+            --border-radius: 20px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px 15px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            margin-top: 10px;
+        }
+
+        header h1 {
+            font-size: 2.3rem;
+            color: var(--accent-color);
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        .tracker {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            background: rgba(255, 187, 28, 0.15);
+            padding: 6px 18px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 187, 28, 0.3);
+        }
+
+        /* Flashcard Container */
+        .scene {
+            width: 100%;
+            max-width: 680px;
+            height: 400px;
+            perspective: 1200px;
+            margin-bottom: 25px;
+            cursor: pointer;
+        }
+
+        .card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+            transform-style: preserve-3d;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+
+        .card.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: var(--border-radius);
+            background: var(--card-bg);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 32px;
+            border: 1px solid var(--card-border);
+            overflow-y: auto;
+        }
+
+        .card-face-front {
+             background: linear-gradient(145deg, #FFFFFF, #F5F5F5);
+        }
+
+        .card-face-back {
+            background: linear-gradient(145deg, #FFFDF5, #FFFFFF);
+            transform: rotateY(180deg);
+            border-left: 6px solid var(--accent-color);
+        }
+
+        .card-category {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .card-content {
+            font-size: 1.35rem; 
+            line-height: 1.6;
+            color: var(--text-color);
+            font-weight: 500;
+            text-align: center;
+            margin: auto 0;
+        }
+
+        .card-face-back .card-content {
+            color: var(--primary-color);     
+            font-size: 1.05rem; 
+            text-align: left;
+        }
+
+        .card-face-back .card-content b {
+            color: var(--primary-color);
+            background: rgba(255, 187, 28, 0.3);
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+
+        .card-hint {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-align: center;
+            font-style: italic;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            border: 1px solid var(--card-border);
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            user-select: none;
+        }
+
+        button:hover {
+            background-color: var(--accent-color);
+            color: #171717;
+            border-color: var(--accent-color);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(255, 187, 28, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        /* Scrollbar custom styles */
+        .card-face::-webkit-scrollbar {
+            width: 6px;
+        }
+        .card-face::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 10px;
+        }
+        .card-face::-webkit-scrollbar-thumb {
+            background: var(--card-border);
+            border-radius: 10px;
+        }
+
+        @media (max-width: 640px) {
+            .scene {
+                height: 440px;
+            }
+            header h1 {
+                font-size: 1.6rem;
+            }
+            .card-content {
+                font-size: 1.15rem;
+            }
+            .card-face-back .card-content {
+                font-size: 0.95rem;
+            }
+            button {
+                padding: 10px 18px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Flashcards Interativos</h1>
+        <p>Gestão de Configuração & Git, Conceitos de Testes, Práticas e Ciclo de Vida (STLC)</p>
+    </header>
+
+    <div class="tracker" id="card-tracker">Card 1 de 40</div>
+
+    <div class="scene" onclick="flipCard()">
+        <div class="card" id="flashcard">
+            <div class="card-face card-face-front">
+                <div class="card-category" id="card-category">Categoria</div>
+                <div class="card-content" id="card-front">Carregando pergunta...</div>
+                <div class="card-hint">💡 Clique no card para ver a resposta</div>
+            </div>
+            <div class="card-face card-face-back">
+                <div class="card-category">Resposta Explicada</div>
+                <div class="card-content" id="card-back">Carregando resposta...</div>
+                <div class="card-hint">💡 Clique para virar novamente</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button onclick="prevCard()">Anterior</button>
+        <button onclick="flipCard()">Virar Card</button>
+        <button onclick="nextCard()">Próximo</button>
+    </div>
+
+    <script>
+    const cardsData = [
+        // --- GESTÃO DE CONFIGURAÇÃO & GIT (10 CARDS) ---
+        {
+            category: "Gestão de Configuração & Git",
+            front: "O que é **Gestão de Configuração de Software (GCS)** e qual seu objetivo principal?",
+            back: "É o conjunto de disciplinas e processos para **identificar, controlar, rastrear e gerenciar revisões** de todos os artefatos de um sistema (código, documentos, scripts), garantindo a integridade e rastreabilidade ao longo do ciclo de vida."
+        },
+        {
+            category: "Gestão de Configuração & Git",
+            front: "Qual a diferença entre um sistema de controle de versão **Centralizado (ex: SVN)** e **Distribuído (ex: Git)**?",
+            back: "• <b>Centralizado:</b> Existe um único servidor central; operações exigem conexão e histórico reside no servidor.<br>• <b>Distribuído:</b> Cada desenvolvedor possui uma cópia local completa do repositório com todo o seu histórico de revisões."
+        },
+        {
+            category: "Gestão de Configuração & Git",
+            front: "Qual é a diferença funcional entre **`git fetch`** e **`git pull`**?",
+            back: "• <b>git fetch:</b> Baixa as atualizações do repositório remoto para o repositório local sem alterar seu código atual.<br>• <b>git pull:</b> Executa um `git fetch` e em seguida faz o **merge** automático das alterações na sua branch atual."
+        },
+        {
+            category: "Gestão de Configuração & Git",
+            front: "Qual a diferença entre **`git merge`** e **`git rebase`**?",
+            back: "• <b>git merge:</b> Une duas branches criando um commit de mesclagem extra, preservando o histórico exato de como as branches divergiram.<br>• <b>git rebase:</b> Aplica os seus commits no topo da branch de destino, reescrevendo o histórico de forma linear e limpa."
+        },
+        {
+            category: "Gestão de Configuração & Git",
+            front: "Para que serve o comando **`git stash`** e quando ele deve ser utilizado?",
+            back: "Guarda temporariamente as alterações modificadas no diretório de trabalho que ainda não foram salvas em commit, deixando o diretório limpo para trocar de branch sem perder o progresso."
+        },
+        {
+            category: "Gestão de Configuração & Git",
+            front: "O que é o modelo de ramificação **Gitflow** e quais são suas branches principais?",
+            back: "É um fluxo de trabalho estruturado para gerenciamento de branches.<br>• <b>master/main:</b> Código de produção estável.<br>• <b>develop:</b> Código em integração contínua de funcionalidades.<br>• Auxiliares: <i>feature</i>, <i>release</i> e <i>hotfix</i>."
+        },
+        {
+            category: "Gestão de Configuração & Git",
+            front: "O que é uma **Baseline** (Linha de Base) na Gestão de Configuração?",
+            back: "É uma versão especificada e aprovada de um item de configuração ou projeto que serve como base oficial para desenvolvimentos futuros e só pode ser alterada via processo formal de controle de mudanças."
+        },
+        {
+            category: "Gestão de Configuração & Git",
+            front: "O que faz o comando **`git cherry-pick <commit-hash>`**?",
+            back: "Aplica as alterações introduzidas por um **commit específico** de qualquer branch na branch atual em que você está trabalhando, sem trazer a branch inteira."
+        },
+        {
+            category: "Gestão de Configuração & Git",
+            front: "Qual a diferença entre **`git reset`** e **`git revert`**?",
+            back: "• <b>git reset:</b> Move o ponteiro da branch para trás, alterando/apagando o histórico (indicado para commits locais não publicados).<br>• <b>git revert:</b> Cria um **novo commit de compensação** que desfaz as alterações de um commit passado sem reescrever o histórico."
+        },
+        {
+            category: "Gestão de Configuração & Git",
+            front: "O que é um **Pull Request (PR)** ou **Merge Request (MR)**?",
+            back: "É um mecanismo para notificar a equipe de que uma nova funcionalidade foi finalizada, permitindo a **revisão de código (Code Review)** e execução de testes automatizados antes da integração na branch principal."
+        },
+
+        // --- CONCEITOS E TIPOS DE TESTES (10 CARDS) ---
+        {
+            category: "Conceitos e Tipos de Teste",
+            front: "Qual a diferença fundamental entre **Erro**, **Defeito (Bug)** e **Falha** (Segundo a IEEE/ISTQB)?",
+            back: "• <b>Erro:</b> Ação humana incorreta cometida pelo desenvolvedor.<br>• <b>Defeito (Bug):</b> A imperfeição no código/artefato decorrente do erro.<br>• <b>Falha:</b> O comportamento incorreto manifestado pelo sistema em execução quando atinge o defeito."
+        },
+        {
+            category: "Conceitos e Tipos de Teste",
+            front: "Qual a diferença entre **Verificação** e **Validação** no contexto de qualidade de software?",
+            back: "• <b>Verificação:</b> 'Estamos construindo o produto corretamente?' (Conformidade com especificações e código).<br>• <b>Validação:</b> 'Estamos construindo o produto certo?' (Atendimento às necessidades reais do cliente)."
+        },
+        {
+            category: "Conceitos e Tipos de Teste",
+            front: "O que são **Testes Estáticos** vs **Testes Dinâmicos**?",
+            back: "• <b>Testes Estáticos:</b> Análise de artefatos, requisitos e código sem executar a aplicação (ex: inspeções, code reviews, linters).<br>• <b>Testes Dinâmicos:</b> Avaliação do software mediante a execução do código com entradas reais ou simuladas."
+        },
+        {
+            category: "Conceitos e Tipos de Teste",
+            front: "O que são os **Testes de Caixa-Preta**, **Caixa-Branca** e **Caixa-Cinza**?",
+            back: "• <b>Caixa-Preta:</b> Testes baseados em requisitos e entradas/saídas, sem conhecimento do código interno.<br>• <b>Caixa-Branca:</b> Testes baseados na estrutura interna, fluxo lógico e código-fonte.<br>• <b>Caixa-Cinza:</b> Combinação com conhecimento parcial da estrutura interna."
+        },
+        {
+            category: "Conceitos e Tipos de Teste",
+            front: "O que é um **Teste de Regressão** e quando ele deve ser executado?",
+            back: "É o reteste do software após alterações (correções de bugs ou novas funcionalidades) para garantir que as modificações **não quebraram** funcionalidades existentes que funcionavam anteriormente."
+        },
+        {
+            category: "Conceitos e Tipos de Teste",
+            front: "Qual a diferença entre **Teste de Carga**, **Teste de Estresse** e **Teste de Pico**?",
+            back: "• <b>Carga:</b> Avalia o desempenho sob volume de usuários/dados esperado.<br>• <b>Estresse:</b> Avalia o comportamento no limite ou além da capacidade máxima para ver onde e como o sistema quebra.<br>• <b>Pico (Spike):</b> Avalia a resposta a aumentos repentinos e massivos de tráfego."
+        },
+        {
+            category: "Conceitos e Tipos de Teste",
+            front: "O que é o **Teste de Fumaça (Smoke Test)**?",
+            back: "É um conjunto inicial e rápido de testes nos caminhos críticos do sistema para confirmar se as funções mais básicas estão operacionais antes de liberar a build para fases mais profundas de teste."
+        },
+        {
+            category: "Conceitos e Tipos de Teste",
+            front: "O que é o **Teste de Sanidade (Sanity Test)**?",
+            back: "Um teste focado e rápido executado após uma alteração pequena para comprovar que um bug específico foi corrigido ou que uma funcionalidade restrita funciona, sem testar a aplicação por completo."
+        },
+        {
+            category: "Conceitos e Tipos de Teste",
+            front: "O que são **Testes Funcionais** vs **Testes Não-Funcionais**?",
+            back: "• <b>Funcionais:</b> Avaliam 'o que' o sistema faz (regras de negócio, casos de uso, requisitos funcionais).<br>• <b>Não-Funcionais:</b> Avaliam 'como' o sistema funciona (desempenho, segurança, usabilidade, acessibilidade, escalabilidade)."
+        },
+        {
+            category: "Conceitos e Tipos de Teste",
+            front: "O que é o **Teste de Aceitação do Usuário (UAT)**?",
+            back: "É a fase final do ciclo de testes realizada pelos usuários finais ou clientes no ambiente de homologação para validar se o sistema atende aos requisitos do negócio antes do lançamento em produção."
+        },
+
+        // --- APLICAÇÕES E PRÁTICAS DE TESTES (10 CARDS) ---
+        {
+            category: "Aplicações & Práticas de Teste",
+            front: "Como funciona o ciclo **Red-Green-Refactor** do TDD (Test-Driven Development)?",
+            back: "1. <b>Red:</b> Escreve-se um teste automatizado que falha antes de codificar a solução.<br>2. <b>Green:</b> Escreve-se o código mínimo necessário para fazer o teste passar.<br>3. <b>Refactor:</b> Melhora-se a estrutura e qualidade do código mantendo os testes passando."
+        },
+        {
+            category: "Aplicações & Práticas de Teste",
+            front: "O que é **BDD (Behavior-Driven Development)** e qual a sintaxe comum utilizada?",
+            back: "É uma técnica colaborativa focada no comportamento do sistema usando linguagem natural.<br>Sintaxe **Gherkin**: <b>Given</b> (Dado que), <b>When</b> (Quando), <b>Then</b> (Então)."
+        },
+        {
+            category: "Aplicações & Práticas de Teste",
+            front: "O que é a técnica de **Partição por Equivalência** na elaboração de testes?",
+            back: "Divisão do conjunto de dados de entrada em classes/grupos equivalentes, onde assume-se que o sistema responderá da mesma forma a qualquer valor do mesmo grupo, reduzindo a quantidade necessária de testes."
+        },
+        {
+            category: "Aplicações & Práticas de Teste",
+            front: "O que é a análise de **Valor Limite (Boundary Value Analysis)**?",
+            back: "Técnica complementar à partição por equivalência focada em testar os **valores nas bordas/limites** das classes de entrada (ex: se o intervalo válido é 1 a 100, testam-se 0, 1, 100 e 101), onde a maioria dos defeitos se concentra."
+        },
+        {
+            category: "Aplicações & Práticas de Teste",
+            front: "Qual a diferença entre objetos simulados **Dummy**, **Stub** e **Mock**?",
+            back: "• <b>Dummy:</b> Objeto apenas passado para preencher parâmetros de métodos.<br>• <b>Stub:</b> Objeto que retorna respostas pré-programadas fixas.<br>• <b>Mock:</b> Objeto programado com expectativas de chamadas e verificação de comportamento."
+        },
+        {
+            category: "Aplicações & Práticas de Teste",
+            front: "O que representa a **Pirâmide de Testes** proposta por Mike Cohn?",
+            back: "Uma diretriz sobre a proporção ideal de testes:<br>• <b>Base (maioria):</b> Testes de Unidade (rápidos e baratos).<br>• <b>Meio:</b> Testes de Integração / Serviços.<br>• <b>Topo (minoria):</b> Testes Ponta a Ponta (E2E / UI - lentos e caros)."
+        },
+        {
+            category: "Aplicações & Práticas de Teste",
+            front: "O que é a **Matriz de Rastreabilidade de Requisitos (RTM)**?",
+            back: "Documento/ferramenta que mapeia e conecta cada requisito de software aos seus respectivos Casos de Teste, garantindo que 100% das necessidades do cliente foram cobertas por testes."
+        },
+        {
+            category: "Aplicações & Práticas de Teste",
+            front: "O que é o **Teste Exploratório** e em que cenários ele se destaca?",
+            back: "Abordagem de teste não roteirizada onde a aprendizagem, o desenho do teste e sua execução ocorrem simultaneamente, contando com a intuição e experiência do testador para encontrar defeitos complexos."
+        },
+        {
+            category: "Aplicações & Práticas de Teste",
+            front: "O que é **Teste de Injeção de Falhas** (ou Chaos Engineering)?",
+            back: "Prática de introduzir falhas deliberadas no sistema em execução (ex: queda de conexões, indisponibilidade de serviços) para validar a resiliência e a capacidade de recuperação (recovery) da infraestrutura."
+        },
+        {
+            category: "Aplicações & Práticas de Teste",
+            front: "O que significa a métrica de **Cobertura de Código (Code Coverage)** e qual seu limite?",
+            back: "Mede o percentual de código (linhas, instruções ou ramificações) executado pelos testes automatizados.<br><i>Atenção:</i> 100% de cobertura indica que o código foi executado, mas não garante que as regras de negócio estão corretas."
+        },
+
+        // --- GESTÃO DO CICLO DE VIDA DE TESTES - STLC (10 CARDS) ---
+        {
+            category: "Ciclo de Vida & Gestão de Testes",
+            front: "O que é o **STLC (Software Testing Life Cycle)** e quais são suas fases?",
+            back: "É a sequência de atividades executadas para garantir a qualidade do software.<br><b>Fases:</b> 1. Análise de Requisitos, 2. Planejamento de Testes, 3. Desenho de Casos de Teste, 4. Configuração do Ambiente, 5. Execução, 6. Encerramento."
+        },
+        {
+            category: "Ciclo de Vida & Gestão de Testes",
+            front: "O que deve conter um **Plano de Testes (Test Plan)**?",
+            back: "Documento estratégico contendo o **escopo**, estratégia de teste, recursos necessários, cronograma, critérios de entrada/saída, riscos, ferramentas e responsabilidades da equipe."
+        },
+        {
+            category: "Ciclo de Vida & Gestão de Testes",
+            front: "Quais são os **Critérios de Entrada (Entry Criteria)** e **Critérios de Saída (Exit Criteria)** em testes?",
+            back: "• <b>Entry Criteria:</b> Pré-condições necessárias para iniciar a fase de testes (ex: build estável e ambiente configurado).<br>• <b>Exit Criteria:</b> Condições para considerar os testes concluídos (ex: 95% de aprovação e nenhum bug crítico aberto)."
+        },
+        {
+            category: "Ciclo de Vida & Gestão de Testes",
+            front: "Quais são os estados do **Ciclo de Vida de um Defeito (Bug Lifecycle)**?",
+            back: "1. <b>Novo (New)</b> → 2. <b>Atribuído (Assigned)</b> → 3. <b>Em Correção (Open)</b> → 4. <b>Corrigido (Fixed)</b> → 5. <b>Pronto para Reteste (Pending Retest)</b> → 6. <b>Fechado (Closed)</b> ou <b>Reaberto (Reopened)</b>."
+        },
+        {
+            category: "Ciclo de Vida & Gestão de Testes",
+            front: "Qual a diferença entre **Gravidade (Severity)** e **Prioridade (Priority)** de um defeito?",
+            back: "• <b>Gravidade:</b> O impacto técnico do bug no funcionamento do sistema (ex: erro de cálculo ou crash = Alta).<br>• <b>Prioridade:</b> A urgência com que o bug precisa ser corrigido do ponto de vista do negócio."
+        },
+        {
+            category: "Ciclo de Vida & Gestão de Testes",
+            front: "Dê um exemplo de bug com **Alta Gravidade e Baixa Prioridade**.",
+            back: "Um erro crítico ou crash em uma funcionalidade legada ou administrativa que raramente é acessada por usuários finais ou usada apenas uma vez por ano."
+        },
+        {
+            category: "Ciclo de Vida & Gestão de Testes",
+            front: "Dê um exemplo de bug com **Baixa Gravidade e Alta Prioridade**.",
+            back: "Um erro de grafia grotesco na logomarca da empresa ou no título principal da página de login pública. O sistema funciona perfeitamente, mas a imagem da marca é afetada."
+        },
+        {
+            category: "Ciclo de Vida & Gestão de Testes",
+            front: "O que são as métricas **Defect Density** e **Defect Leakage**?",
+            back: "• <b>Defect Density:</b> Quantidade de defeitos confirmados dividida pelo tamanho do módulo (ex: KLOC ou pontos de função).<br>• <b>Defect Leakage:</b> Percentual de bugs que escaparam da fase de testes e foram descobertos em produção."
+        },
+        {
+            category: "Ciclo de Vida & Gestão de Testes",
+            front: "O que é o **Relatório de Encerramento de Testes (Test Summary Report)**?",
+            back: "Documento final gerado ao fim da fase de testes consolidando os resultados obtidos, estatísticas de bugs encontrados/corrigidos, cobertura realizada e parecer se o software está apto para produção."
+        },
+        {
+            category: "Ciclo de Vida & Gestão de Testes",
+            front: "Qual o papel do teste contínuo em pipelines de **CI/CD**?",
+            back: "Integrar a execução automatizada de testes (suítes de testes unitários, integração e fumaça) a cada commit/build, fornecendo **feedback imediato** aos desenvolvedores e impedindo que código com falhas avance."
+        }
+    ];
+
+    let currentIndex = 0;
+    const cardElement = document.getElementById('flashcard');
+    const categoryElement = document.getElementById('card-category');
+    const frontElement = document.getElementById('card-front');
+    const backElement = document.getElementById('card-back');
+    const trackerElement = document.getElementById('card-tracker');
+
+    // Helper function to render Markdown bold **text** to <b>text</b>
+    function parseFormatting(str) {
+        return str.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+    }
+
+    function updateCard() {
+        cardElement.classList.remove('is-flipped');
+        setTimeout(() => {
+            const currentData = cardsData[currentIndex];
+            categoryElement.innerText = currentData.category;
+            frontElement.innerHTML = parseFormatting(currentData.front);
+            backElement.innerHTML = parseFormatting(currentData.back);
+            trackerElement.innerText = `Card ${currentIndex + 1} de ${cardsData.length}`;
+        }, 150);
+    }
+
+    function flipCard() {
+        cardElement.classList.toggle('is-flipped');
+    }
+
+    function nextCard() {
+        currentIndex = (currentIndex + 1) % cardsData.length;
+        updateCard();
+    }
+
+    function prevCard() {
+        currentIndex = (currentIndex - 1 + cardsData.length) % cardsData.length;
+        updateCard();
+    }
+
+    // Initialize App
+    updateCard();
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight') nextCard();
+        if (e.key === 'ArrowLeft') prevCard();
+        if (e.key === ' ' || e.key === 'Enter') {
+            e.preventDefault();
+            flipCard();
+        }
+    });
+    </script>
+</body>
+</html>
