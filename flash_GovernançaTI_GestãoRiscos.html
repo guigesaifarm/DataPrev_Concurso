@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcards Interativos: Governança, Riscos e Gestão de TI</title>
+    <style>
+        :root {
+            --bg-color: #F5F5F5;
+            --card-bg: #FFFFFF;
+            --card-border: #B0A87A;
+
+            --primary-color: #171717;
+            --accent-color: #FFBB1C;
+
+            --text-color: #171717;
+            --text-muted: #B0A87A;
+
+            --card-back-bg: #FFFDF5;
+
+            --shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+            --border-radius: 20px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px 15px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            margin-top: 10px;
+        }
+
+        header h1 {
+            font-size: 2.3rem;
+            color: var(--accent-color);
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        .tracker {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            background: rgba(255, 187, 28, 0.15);
+            padding: 6px 18px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 187, 28, 0.3);
+        }
+
+        /* Flashcard Container */
+        .scene {
+            width: 100%;
+            max-width: 680px;
+            height: 400px;
+            perspective: 1200px;
+            margin-bottom: 25px;
+            cursor: pointer;
+        }
+
+        .card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+            transform-style: preserve-3d;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+
+        .card.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: var(--border-radius);
+            background: var(--card-bg);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 32px;
+            border: 1px solid var(--card-border);
+            overflow-y: auto;
+        }
+
+        .card-face-front {
+            background: linear-gradient(145deg, #FFFFFF, #F5F5F5);
+        }
+
+        .card-face-back {
+            background: linear-gradient(145deg, #FFFDF5, #FFFFFF);
+            transform: rotateY(180deg);
+            border-left: 6px solid var(--accent-color);
+        }
+
+        .card-category {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .card-content {
+            font-size: 1.35rem; 
+            line-height: 1.6;
+            color: var(--text-color);
+            font-weight: 500;
+            text-align: center;
+            margin: auto 0;
+        }
+
+        .card-face-back .card-content {
+            color: var(--primary-color);     
+            font-size: 1.05rem; 
+            text-align: left;
+        }
+
+        .card-face-back .card-content b {
+            color: var(--primary-color);
+            background: rgba(255, 187, 28, 0.3);
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+
+        .card-hint {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-align: center;
+            font-style: italic;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            border: 1px solid var(--card-border);
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            user-select: none;
+        }
+
+        button:hover {
+            background-color: var(--accent-color);
+            color: #171717;
+            border-color: var(--accent-color);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(255, 187, 28, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        /* Scrollbar custom styles */
+        .card-face::-webkit-scrollbar {
+            width: 6px;
+        }
+        .card-face::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 10px;
+        }
+        .card-face::-webkit-scrollbar-thumb {
+            background: var(--card-border);
+            border-radius: 10px;
+        }
+
+        @media (max-width: 640px) {
+            .scene {
+                height: 440px;
+            }
+            header h1 {
+                font-size: 1.6rem;
+            }
+            .card-content {
+                font-size: 1.15rem;
+            }
+            .card-face-back .card-content {
+                font-size: 0.95rem;
+            }
+            button {
+                padding: 10px 18px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Flashcards Interativos</h1>
+        <p>Governança de TI, Gestão de Riscos & Gestão de Serviços</p>
+    </header>
+
+    <div class="tracker" id="card-tracker">Card 1 de 40</div>
+
+    <div class="scene" onclick="flipCard()">
+        <div class="card" id="flashcard">
+            <div class="card-face card-face-front">
+                <div class="card-category" id="card-category">Categoria</div>
+                <div class="card-content" id="card-front">Carregando pergunta...</div>
+                <div class="card-hint">💡 Clique no card para ver a resposta</div>
+            </div>
+            <div class="card-face card-face-back">
+                <div class="card-category">Resposta Explicada</div>
+                <div class="card-content" id="card-back">Carregando resposta...</div>
+                <div class="card-hint">💡 Clique para virar novamente</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button onclick="prevCard()">Anterior</button>
+        <button onclick="flipCard()">Virar Card</button>
+        <button onclick="nextCard()">Próximo</button>
+    </div>
+
+    <script>
+    const cardsData = [
+        // --- CONCEITOS E GOVERNANÇA DE TI (10 CARDS) ---
+        {
+            category: "Governança de TI",
+            front: "O que é **Governança de TI**?",
+            back: "É o sistema de liderança, estruturas organizacionais e processos que garantem que a TI da empresa **sustente e expanda as estratégias e objetivos organizacionais**, gerando valor e controlando riscos."
+        },
+        {
+            category: "Governança de TI",
+            front: "Qual a principal diferença entre **Governança de TI** e **Gestão de TI**?",
+            back: "• <b>Governança:</b> Avalia, direciona e monitora (foco em 'fazer as coisas certas' e alinhar à estratégia). Responsabilidade da alta administração.<br>• <b>Gestão:</b> Planeja, constrói, executa e monitora as atividades operacionais (foco em 'fazer as coisas direito')."
+        },
+        {
+            category: "Governança de TI",
+            front: "Quais são os **5 pilares da Governança de TI**?",
+            back: "1. **Alinhamento Estratégico**<br>2. **Entrega de Valor**<br>3. **Gestão de Riscos**<br>4. **Gestão de Recursos**<br>5. **Mensuração de Desempenho**"
+        },
+        {
+            category: "Governança de TI",
+            front: "O que é o **COBIT**?",
+            back: "É um framework global mantido pela **ISACA** voltado para a **Governança e Gestão de TI Empresarial**, estruturado para alinhar os objetivos de TI aos objetivos estratégicos do negócio."
+        },
+        {
+            category: "Governança de TI",
+            front: "No COBIT 2019, qual a diferença entre o domínio de **Governança** e os domínios de **Gestão**?",
+            back: "• <b>Governança (EDM):</b> Avaliar, Direcionar e Monitorar.<br>• <b>Gestão (APO, BAI, DSS, MEA):</b> Alinhar, Planejar, Organizar, Construir, Adquirir, Implementar, Entregar, Dar Suporte e Monitorar."
+        },
+        {
+            category: "Governança de TI",
+            front: "O que significa o alinhamento de **Cascata de Objetivos** no COBIT?",
+            back: "Mecanismo que traduz as **necessidades das partes interessadas** em **objetivos corporativos**, que por sua vez se desdobram em **objetivos de alinhamento** e depois em **objetivos de governança e gestão**."
+        },
+        {
+            category: "Governança de TI",
+            front: "O que é o modelo **SLA (Service Level Agreement)**?",
+            back: "É um **Acordo de Nível de Serviço**: contrato formal entre o provedor de TI e o cliente que define expectativas, metas de desempenho (ex: disponibilidade, tempo de resposta) e responsabilidades."
+        },
+        {
+            category: "Governança de TI",
+            front: "Diferencie **SLA**, **OLA** e **UC** na gestão de acordos:",
+            back: "• <b>SLA:</b> Acordo entre TI e o **Cliente de Negócio**.<br>• <b>OLA (Operational Level Agreement):</b> Acordo interno entre **equipes operacionais da própria TI**.<br>• <b>UC (Underpinning Contract):</b> Contrato formal entre TI e **fornecedores externos**."
+        },
+        {
+            category: "Governança de TI",
+            front: "O que mede o indicador **ROI (Return on Investment)** em projetos de TI?",
+            back: "Mede o **retorno financeiro líquido** obtido em relação ao capital investido na solução de TI, calculado por: `(Ganho Obtido - Custo do Investimento) / Custo do Investimento`."
+        },
+        {
+            category: "Governança de TI",
+            front: "O que é o modelo **Balanced Scorecard (BSC)** aplicado à TI?",
+            back: "Ferramenta de gestão estratégica que avalia o desempenho da TI além da perspectiva financeira, cobrindo 4 dimensões: **Financeira, Clientes, Processos Internos e Aprendizado/Crescimento**."
+        },
+
+        // --- GESTÃO DE RISCOS EM TI (10 CARDS) ---
+        {
+            category: "Gestão de Riscos",
+            front: "O que é um **Risco de TI**?",
+            back: "É a probabilidade de ocorrência de um evento incerto envolvendo o uso ou dependência da TI que possa causar um **impacto negativo (financeiro, operacional ou reputacional)** nos objetivos do negócio."
+        },
+        {
+            category: "Gestão de Riscos",
+            front: "Qual a diferença entre **Ameaça**, **Vulnerabilidade** e **Risco**?",
+            back: "• <b>Ameaça:</b> Causa potencial de um incidente (ex: hacker, enchente).<br>• <b>Vulnerabilidade:</b> Fraqueza do sistema que pode ser explorada (ex: software sem atualização).<br>• <b>Risco:</b> Resultado do cruzamento da ameaça explorando a vulnerabilidade (Impacto x Probabilidade)."
+        },
+        {
+            category: "Gestão de Riscos",
+            front: "Quais são as fases do processo de **Gestão de Riscos (ISO 31000)**?",
+            back: "1. **Estabelecimento do Contexto**<br>2. **Identificação de Riscos**<br>3. **Análise de Riscos**<br>4. **Avaliação de Riscos**<br>5. **Tratamento de Riscos** (Acompanhado de Comunicação e Monitoramento contínuos)."
+        },
+        {
+            category: "Gestão de Riscos",
+            front: "Diferencie **Análise Qualitativa** e **Análise Quantitativa** de riscos:",
+            back: "• <b>Qualitativa:</b> Classifica os riscos por escalas descritivas/subjetivas (ex: Alto, Médio, Baixo).<br>• <b>Quantitativa:</b> Atribui valores numéricos e financeiros ao impacto e à probabilidade (ex: perda estimada de R$ 100.000,00/ano)."
+        },
+        {
+            category: "Gestão de Riscos",
+            front: "Quais são as 4 estratégias clássicas para o **Tratamento de Riscos**?",
+            back: "1. **Mitigar/Reduzir:** Aplicar controles para diminuir probabilidade ou impacto.<br>2. **Transferir/Compartilhar:** Repassar parte do risco (ex: contratar seguro, outsourcing).<br>3. **Evitar:** Descontinuar a atividade que gera o risco.<br>4. **Aceitar:** Assumir o risco quando o custo de tratamento for maior que o impacto."
+        },
+        {
+            category: "Gestão de Riscos",
+            front: "O que é **Risco Inerente** e **Risco Residual**?",
+            back: "• <b>Risco Inerente:</b> O risco existente antes da implementação de qualquer controle ou resposta.<br>• <b>Risco Residual:</b> O risco que remanesce mesmo após a aplicação das medidas e controles de segurança."
+        },
+        {
+            category: "Gestão de Riscos",
+            front: "O que é **Apetite ao Risco (Risk Appetite)**?",
+            back: "É a quantidade e o tipo de risco que uma organização está **disposta a aceitar** na busca de seus objetivos estratégicos antes que seja necessária qualquer ação corrective."
+        },
+        {
+            category: "Gestão de Riscos",
+            front: "O que é a matriz **Matriz de Probabilidade x Impacto**?",
+            back: "Ferramenta visual que cruza a **chance de ocorrência de um evento** com a **severidade dos danos causados**, auxiliando na priorização dos riscos que exigem ação imediata."
+        },
+        {
+            category: "Gestão de Riscos",
+            front: "O que é o cálculo de **ALE (Annualized Loss Expectancy)** em riscos quantitativos?",
+            back: "É a Expectativa de Perda Anualizada, obtida pela fórmula: `ALE = SLE x ARO` (onde SLE = Perda Única Esperada e ARO = Taxa Anual de Ocorrência)."
+        },
+        {
+            category: "Gestão de Riscos",
+            front: "O que é um **KRI (Key Risk Indicator)**?",
+            back: "Indicador-chave de risco usado para **sinalizar antecipadamente um aumento na exposição ao risco** ou alertar sobre a degradação de controles antes que o incidente ocorra."
+        },
+
+        // --- CONTINUIDADE DE NEGÓCIOS & SEGURANÇA (10 CARDS) ---
+        {
+            category: "Segurança e Continuidade",
+            front: "Quais são os 3 pilares da Segurança da Informação (**Tríade CIA**)?",
+            back: "• <b>Confidencialidade:</b> Garantir acesso apenas a pessoas autorizadas.<br>• <b>Integridade:</b> Garantir a exatidão e completude dos dados sem alterações indevidas.<br>• <b>Disponibilidade:</b> Garantir que os dados/sistemas estejam acessíveis quando necessários."
+        },
+        {
+            category: "Segurança e Continuidade",
+            front: "O que é o **BIA (Business Impact Analysis)**?",
+            back: "É a Análise de Impacto no Negócio, processo que identifica os **processos críticos da empresa** e avalia o impacto financeiro/operacional resultante da interrupção desses serviços."
+        },
+        {
+            category: "Segurança e Continuidade",
+            front: "Qual a diferença entre **RTO (Recovery Time Objective)** e **RPO (Recovery Point Objective)**?",
+            back: "• <b>RTO:</b> Tempo máximo aceitável que o sistema pode **ficar indisponível** após uma falha.<br>• <b>RPO:</b> Quantidade máxima aceitável de **perda de dados** medida em tempo (ex: tempo desde o último backup)."
+        },
+        {
+            category: "Segurança e Continuidade",
+            front: "O que é um **PCN (Plano de Continuidade de Negócios)**?",
+            back: "Conjunto de procedimentos e estratégias documentadas para garantir que as operações essenciais do negócio **continuem funcionando durante e após uma grande interrupção ou desastre**."
+        },
+        {
+            category: "Segurança e Continuidade",
+            front: "Qual a diferença entre um site de contingência **Hot Site**, **Warm Site** e **Cold Site**?",
+            back: "• <b>Hot Site:</b> Totalmente equipado e sincronizado, pronto para operação imediata.<br>• <b>Warm Site:</b> Equipado com hardware, mas exige restauração do backup antes da operação.<br>• <b>Cold Site:</b> Apenas a infraestrutura básica (espaço e energia), sem equipamentos pré-configurados."
+        },
+        {
+            category: "Segurança e Continuidade",
+            front: "O que orienta a norma **ISO/IEC 27001**?",
+            back: "É o padrão internacional para especificação e implementação de um **SGSI (Sistema de Gestão de Segurança da Informação)**, focado na gestão de riscos e proteção de ativos de informação."
+        },
+        {
+            category: "Segurança e Continuidade",
+            front: "O que aborda a norma **ISO/IEC 27002**?",
+            back: "É um **código de práticas e guia de controles de segurança da informação**, fornecendo recomendações práticas para a implementação dos controles previstos na ISO 27001."
+        },
+        {
+            category: "Segurança e Continuidade",
+            front: "O que é o princípio do **Menor Privilégio (Least Privilege)**?",
+            back: "Princípio de segurança que estabelece que cada usuário, sistema ou processo deve possuir **apenas as permissões mínimas estritamente necessárias** para executar suas funções."
+        },
+        {
+            category: "Segurança e Continuidade",
+            front: "O que caracteriza um **Plano de Recuperação de Desastres (DRP)**?",
+            back: "Foco específico da TI dentro do PCN, direcionado a **restaurar os sistemas, dados, infraestrutura e redes** após a ocorrência de um evento destrutivo."
+        },
+        {
+            category: "Segurança e Continuidade",
+            front: "O que é a **Engenharia Social** no contexto da segurança de TI?",
+            back: "Técnica de manipulação psicológica utilizada por invasores para induzir pessoas a tomarem ações impensadas ou **revelarem informações confidenciais** (ex: Phishing)."
+        },
+
+        // --- GESTÃO DE SERVIÇOS & PROCESSOS DE TI (ITIL 4) (10 CARDS) ---
+        {
+            category: "Gestão de Serviços (ITIL)",
+            front: "O que é a **ITIL (Information Technology Infrastructure Library)**?",
+            back: "É a biblioteca de boas práticas mais amplamente aceita no mundo para a **Gestão de Serviços de TI (GSTI)**, focada na co-criação de valor junto aos clientes."
+        },
+        {
+            category: "Gestão de Serviços (ITIL)",
+            front: "O que é um **Serviço** segundo a ITIL 4?",
+            back: "Meio de **co-criar valor**, facilitando os resultados que os clientes desejam alcançar, **sem que o cliente precise gerenciar custos e riscos específicos**."
+        },
+        {
+            category: "Gestão de Serviços (ITIL)",
+            front: "O que compõe o **Sistema de Valor de Serviço (SVS)** na ITIL 4?",
+            back: "1. **Princípios Orientadores**<br>2. **Governança**<br>3. **Cadeia de Valor do Serviço**<br>4. **Práticas**<br>5. **Melhoria Contínua**"
+        },
+        {
+            category: "Gestão de Serviços (ITIL)",
+            front: "Quais são as **4 Dimensões da Gestão de Serviços** na ITIL 4?",
+            back: "1. **Organizações e Pessoas**<br>2. **Informação e Tecnologia**<br>3. **Parceiros e Fornecedores**<br>4. **Fluxos de Valor e Processos**"
+        },
+        {
+            category: "Gestão de Serviços (ITIL)",
+            front: "Diferencie **Incidente** de **Problema** na ITIL:",
+            back: "• <b>Incidente:</b> Interrupção não planejada ou redução na qualidade de um serviço de TI (foco: restaurar o serviço rapidamente).<br>• <b>Problema:</b> Causa raiz desconhecida de um ou mais incidentes (foco: investigar e eliminar a causa)."
+        },
+        {
+            category: "Gestão de Serviços (ITIL)",
+            front: "O que é uma **Solução de Contorno (Workaround)**?",
+            back: "Solução temporária utilizada para **reduzir ou eliminar o impacto de um incidente ou problema** enquanto a solução definitiva/causa raiz ainda não foi identificada."
+        },
+        {
+            category: "Gestão de Serviços (ITIL)",
+            front: "O que é o **Gerenciamento de Mudanças (Change Enablement)**?",
+            back: "Prática que garante que as alterações em produtos e serviços de TI sejam avaliadas e implementadas com eficácia, minimizando os riscos de impactos negativos no ambiente de produção."
+        },
+        {
+            category: "Gestão de Serviços (ITIL)",
+            front: "O que é uma **Central de Serviços (Service Desk)**?",
+            back: "Ponto único de contato (SPOC) entre o provedor de serviços de TI e os usuários para tratamento de requisições de serviço e relatos de incidentes."
+        },
+        {
+            category: "Gestão de Serviços (ITIL)",
+            front: "O que é uma **Requisição de Serviço (Service Request)**?",
+            back: "Solicitação formal feita por um usuário para a entrega de algo rotineiro que já foi pré-aprovado (ex: troca de senha, solicitação de novo monitor, concessão de acesso)."
+        },
+        {
+            category: "Gestão de Serviços (ITIL)",
+            front: "O que prega o princípio orientador **'Começar de onde você está'** na ITIL 4?",
+            back: "Recomenda **avaliar o que já existe de útil** e reaproveitar serviços, processos ou recursos atuais, em vez de descartar tudo e reconstruir do zero sem necessidade."
+        }
+    ];
+
+    let currentIndex = 0;
+    const cardElement = document.getElementById('flashcard');
+    const categoryElement = document.getElementById('card-category');
+    const frontElement = document.getElementById('card-front');
+    const backElement = document.getElementById('card-back');
+    const trackerElement = document.getElementById('card-tracker');
+
+    // Helper function to render Markdown bold **text** to <b>text</b>
+    function parseFormatting(str) {
+        return str.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+    }
+
+    function updateCard() {
+        cardElement.classList.remove('is-flipped');
+        setTimeout(() => {
+            const currentData = cardsData[currentIndex];
+            categoryElement.innerText = currentData.category;
+            frontElement.innerHTML = parseFormatting(currentData.front);
+            backElement.innerHTML = parseFormatting(currentData.back);
+            trackerElement.innerText = `Card ${currentIndex + 1} de ${cardsData.length}`;
+        }, 150);
+    }
+
+    function flipCard() {
+        cardElement.classList.toggle('is-flipped');
+    }
+
+    function nextCard() {
+        currentIndex = (currentIndex + 1) % cardsData.length;
+        updateCard();
+    }
+
+    function prevCard() {
+        currentIndex = (currentIndex - 1 + cardsData.length) % cardsData.length;
+        updateCard();
+    }
+
+    // Initialize App
+    updateCard();
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight') nextCard();
+        if (e.key === 'ArrowLeft') prevCard();
+        if (e.key === ' ' || e.key === 'Enter') {
+            e.preventDefault();
+            flipCard();
+        }
+    });
+    </script>
+</body>
+</html>
